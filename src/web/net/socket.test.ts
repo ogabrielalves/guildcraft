@@ -3,6 +3,7 @@ import {
   GameSocket,
   RECONNECT_BASE_MS,
   RECONNECT_MAX_MS,
+  UNAUTHORIZED_CLOSE_CODE,
   TOKEN_STORAGE_KEY,
   decodeServerMessage,
   reconnectDelay,
@@ -36,9 +37,9 @@ class FakeSocket implements SocketLike {
     this.onopen?.({} as Event);
   }
 
-  drop(): void {
+  drop(code = 1006): void {
     this.readyState = 3;
-    this.onclose?.({} as CloseEvent);
+    this.onclose?.({ code } as CloseEvent);
   }
 
   receive(data: unknown): void {
@@ -56,12 +57,17 @@ function memoryStorage(initial: Record<string, string> = {}): TokenStorage {
   };
 }
 
-function harness() {
+function harness(failures = 0) {
+  let remainingFailures = failures;
   const sockets: FakeSocket[] = [];
   const timers: { callback: () => void; ms: number; cleared: boolean }[] = [];
   const socket = new GameSocket({
     url: 'ws://127.0.0.1:7777/ws?token=t',
     createSocket: (url) => {
+      if (remainingFailures > 0) {
+        remainingFailures -= 1;
+        throw new Error('SecurityError');
+      }
       const fake = new FakeSocket(url);
       sockets.push(fake);
       return fake;
@@ -243,6 +249,54 @@ describe('GameSocket', () => {
     expect(socket.getStatus()).toBe('connecting');
     expect(listener).not.toHaveBeenCalled();
     expect(timers).toHaveLength(1);
+  });
+
+  it('stops reconnecting when the server rejects the token', () => {
+    const { socket, timers, statuses, latest } = harness();
+    socket.connect();
+    latest().open();
+    latest().drop(UNAUTHORIZED_CLOSE_CODE);
+    expect(socket.getStatus()).toBe('unauthorized');
+    expect(statuses).toEqual(['connecting', 'open', 'unauthorized']);
+    expect(timers).toHaveLength(0);
+  });
+
+  it('allows connecting again after an unauthorized close', () => {
+    const { socket, sockets, latest } = harness();
+    socket.connect();
+    latest().drop(UNAUTHORIZED_CLOSE_CODE);
+    socket.connect();
+    expect(sockets).toHaveLength(2);
+    expect(socket.getStatus()).toBe('connecting');
+  });
+
+  it('retries when the socket cannot be created', () => {
+    const { socket, sockets, timers, statuses } = harness(2);
+    socket.connect();
+    expect(socket.getStatus()).toBe('closed');
+    expect(timers).toHaveLength(1);
+    timers[0]?.callback();
+    expect(timers[1]?.ms).toBe(RECONNECT_BASE_MS * 2);
+    timers[1]?.callback();
+    expect(sockets).toHaveLength(1);
+    expect(statuses.at(-1)).toBe('connecting');
+  });
+
+  it('keeps notifying when a listener throws', () => {
+    const { socket, latest } = harness();
+    const thrower = () => {
+      throw new Error('boom');
+    };
+    const onMessage = vi.fn();
+    const onStatus = vi.fn();
+    socket.onMessage(thrower);
+    socket.onMessage(onMessage);
+    socket.onStatus(thrower);
+    socket.onStatus(onStatus);
+    socket.connect();
+    latest().receive('{"type":"term:reset","agentId":"a"}');
+    expect(onStatus).toHaveBeenCalledWith('connecting');
+    expect(onMessage).toHaveBeenCalledTimes(1);
   });
 
   it('removes status listeners', () => {

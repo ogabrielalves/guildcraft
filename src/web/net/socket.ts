@@ -5,6 +5,7 @@ export const TOKEN_STORAGE_KEY = 'guildcraft.token';
 export const SOCKET_PATH = '/ws';
 export const RECONNECT_BASE_MS = 500;
 export const RECONNECT_MAX_MS = 10_000;
+export const UNAUTHORIZED_CLOSE_CODE = 4401;
 
 const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessage['type']>([
   'session:init',
@@ -19,7 +20,7 @@ const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessage['type']>
   'error',
 ]);
 
-export type SocketStatus = 'connecting' | 'open' | 'closed';
+export type SocketStatus = 'connecting' | 'open' | 'closed' | 'unauthorized';
 export type MessageListener = (message: ServerMessage) => void;
 export type StatusListener = (status: SocketStatus) => void;
 export type TokenStorage = Pick<Storage, 'getItem' | 'setItem'>;
@@ -41,6 +42,16 @@ export interface SocketOptions {
 }
 
 const OPEN = 1;
+
+function notify<T>(listeners: Iterable<(value: T) => void>, value: T): void {
+  for (const listener of listeners) {
+    try {
+      listener(value);
+    } catch {
+      continue;
+    }
+  }
+}
 
 export function decodeServerMessage(text: string): ServerMessage | null {
   try {
@@ -146,7 +157,14 @@ export class GameSocket {
   private open(): void {
     this.timer = null;
     this.setStatus('connecting');
-    const socket = this.createSocket(this.options.url);
+    let socket: SocketLike;
+    try {
+      socket = this.createSocket(this.options.url);
+    } catch {
+      this.setStatus('closed');
+      this.scheduleReconnect();
+      return;
+    }
     this.socket = socket;
     socket.onopen = () => {
       if (this.socket !== socket) return;
@@ -156,11 +174,16 @@ export class GameSocket {
     socket.onmessage = (event) => {
       if (this.socket !== socket || typeof event.data !== 'string') return;
       const message = decodeServerMessage(event.data);
-      if (message) for (const listener of this.messageListeners) listener(message);
+      if (message) notify(this.messageListeners, message);
     };
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       if (this.socket !== socket) return;
       this.socket = null;
+      if (event.code === UNAUTHORIZED_CLOSE_CODE) {
+        this.stopped = true;
+        this.setStatus('unauthorized');
+        return;
+      }
       this.setStatus('closed');
       this.scheduleReconnect();
     };
@@ -178,6 +201,6 @@ export class GameSocket {
   private setStatus(status: SocketStatus): void {
     if (status === this.status) return;
     this.status = status;
-    for (const listener of this.statusListeners) listener(status);
+    notify(this.statusListeners, status);
   }
 }
