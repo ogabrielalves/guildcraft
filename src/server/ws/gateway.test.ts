@@ -269,6 +269,20 @@ describe('gateway messages', () => {
     gateway.broadcast({ type: 'agent:removed', agentId: 'a1' });
   });
 
+  it('reports client count changes once per connection', async () => {
+    const counts: number[] = [];
+    await start({ onClientsChange: (count) => counts.push(count) });
+    const a = connect();
+    const b = connect();
+    await a.next(2);
+    await b.next(2);
+    a.socket.close();
+    b.socket.terminate();
+    await vi.waitFor(() => {
+      expect(counts).toEqual([1, 2, 1, 0]);
+    });
+  });
+
   it('replies with an error when a command throws', async () => {
     await start();
     manager.create.mockRejectedValue(new Error('disk full'));

@@ -25,6 +25,7 @@ export interface GatewayOptions {
   origins: readonly string[];
   skins: () => string[];
   maxBufferedBytes?: number;
+  onClientsChange?: (count: number) => void;
   log?: (message: string) => void;
 }
 
@@ -102,20 +103,25 @@ export class Gateway {
   private connect(socket: WebSocket): void {
     const client: Client = { socket, pending: [] };
     this.clients.add(client);
+    this.options.onClientsChange?.(this.clients.size);
     socket.on('message', (data, isBinary) => {
       void this.receive(socket, data, isBinary);
     });
     socket.on('close', () => {
-      this.clients.delete(client);
+      this.forget(client);
     });
     socket.on('error', () => {
-      this.clients.delete(client);
+      this.forget(client);
     });
     this.sync(client).catch((error: unknown) => {
       this.log(`ws: session sync failed: ${String(error)}`);
-      this.clients.delete(client);
+      this.forget(client);
       socket.close(INTERNAL_ERROR_CLOSE_CODE);
     });
+  }
+
+  private forget(client: Client): void {
+    if (this.clients.delete(client)) this.options.onClientsChange?.(this.clients.size);
   }
 
   private async sync(client: Client): Promise<void> {
