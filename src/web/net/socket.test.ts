@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import { UNAUTHORIZED_CLOSE_CODE } from '../../shared/constants.js';
 import {
   GameSocket,
   RECONNECT_BASE_MS,
   RECONNECT_MAX_MS,
-  UNAUTHORIZED_CLOSE_CODE,
   TOKEN_STORAGE_KEY,
   decodeServerMessage,
   reconnectDelay,

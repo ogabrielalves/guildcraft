@@ -1,11 +1,10 @@
+import { TOKEN_QUERY, UNAUTHORIZED_CLOSE_CODE } from '../../shared/constants.js';
 import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
 
-export const TOKEN_QUERY = 'token';
 export const TOKEN_STORAGE_KEY = 'guildcraft.token';
 export const SOCKET_PATH = '/ws';
 export const RECONNECT_BASE_MS = 500;
 export const RECONNECT_MAX_MS = 10_000;
-export const UNAUTHORIZED_CLOSE_CODE = 4401;
 
 const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessage['type']>([
   'session:init',

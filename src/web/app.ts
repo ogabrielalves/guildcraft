@@ -1,7 +1,8 @@
+import { TOKEN_QUERY } from '../shared/constants.js';
 import type { Locale } from './i18n/index.js';
 import { getLocale, onLocaleChange, t } from './i18n/index.js';
 import type { GameSocket } from './net/socket.js';
-import { TOKEN_QUERY, resolveToken, socketUrl, stripToken } from './net/socket.js';
+import { resolveToken, socketUrl, stripToken } from './net/socket.js';
 import type { Store } from './state/store.js';
 import { createTopbar } from './ui/topbar.js';
 
