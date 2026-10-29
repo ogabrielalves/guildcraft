@@ -175,6 +175,15 @@ describe('Villager', () => {
     expect(villager.pose).toBe('idle');
   });
 
+  it('remembers the last horizontal side it faced', () => {
+    const villager = new Villager('a', 0, map, 'write');
+    expect(villager.side).toBe('west');
+    villager.startVisit(7);
+    settle(villager);
+    expect(villager.facing).toBe('north');
+    expect(villager.side).toBe('east');
+  });
+
   it('walks at a steady speed', () => {
     const villager = new Villager('a', 0, map, 'read');
     const start = { ...villager.position };

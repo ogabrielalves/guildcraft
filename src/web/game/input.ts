@@ -2,17 +2,10 @@ import type { SelectMode } from '../state/store.js';
 import type { Point } from './map.js';
 import { contains } from './map.js';
 import type { Hover } from './renderer.js';
-import { manifestOf, villagerBounds } from './renderer.js';
-import type { SpriteSheet } from './sprite-sheet.js';
+import { villagerBounds } from './renderer.js';
 import type { World } from './world.js';
 
 export type Modifiers = Pick<MouseEvent, 'shiftKey' | 'ctrlKey' | 'metaKey'>;
-
-export interface HitTarget {
-  world: World;
-  skinOf: (agentId: string) => string | undefined;
-  sprites: { get(skin: string): SpriteSheet | null };
-}
 
 export interface InputOptions {
   canvas: HTMLCanvasElement;
@@ -23,11 +16,9 @@ export interface InputOptions {
   onHover(hover: Hover, clientX: number, clientY: number): void;
 }
 
-export function hitTest({ world, skinOf, sprites }: HitTarget, point: Point): Hover {
+export function hitTest(world: World, point: Point): Hover {
   for (const villager of world.byDepth().reverse()) {
-    const skin = skinOf(villager.id);
-    const manifest = manifestOf(skin === undefined ? null : sprites.get(skin));
-    if (contains(villagerBounds(villager, manifest), point)) {
+    if (contains(villagerBounds(villager), point)) {
       return { kind: 'villager', id: villager.id };
     }
   }

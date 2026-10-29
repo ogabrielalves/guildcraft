@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { AssetError } from './parse.js';
 import {
-  MapError,
+  DEFAULT_FLOOR,
   bayAt,
   contains,
   loadWorkshopMap,
@@ -22,7 +23,7 @@ function invalidAt(raw: unknown): string | undefined {
     parseWorkshopMap(raw);
     return undefined;
   } catch (error) {
-    if (error instanceof MapError) return error.path;
+    if (error instanceof AssetError) return error.path;
     throw error;
   }
 }
@@ -89,6 +90,98 @@ describe('parseWorkshopMap', () => {
   });
 });
 
+describe('parseWorkshopMap scenery, lights and embers', () => {
+  const base = provisionalWorkshop();
+
+  it('defaults to a plain floor with nothing else', () => {
+    expect(parseWorkshopMap(base)).toMatchObject({
+      floor: DEFAULT_FLOOR,
+      scenery: [],
+      lights: [],
+      embers: [],
+    });
+  });
+
+  it('reads fills, images, lights and embers', () => {
+    const map = parseWorkshopMap({
+      ...base,
+      floor: '#112233',
+      scenery: [
+        { color: '#000', area: { x: 0, y: 0, width: 10, height: 10 } },
+        {
+          image: 'tiles/a.png',
+          source: { x: 1, y: 2, width: 3, height: 4 },
+          at: { x: 5, y: 6 },
+          repeat: { width: 30, height: 40 },
+          flip: true,
+        },
+        { image: 'tiles/b.png', source: { x: 0, y: 0, width: 8, height: 8 }, at: { x: 0, y: 0 } },
+      ],
+      lights: [
+        { at: { x: 1, y: 2 }, radius: 3, color: '#fff' },
+        { at: { x: 4, y: 5 }, radius: 6, color: '#000', flicker: 0.1 },
+      ],
+      embers: [{ x: 7, y: 8 }],
+    });
+    expect(map.floor).toBe('#112233');
+    expect(map.scenery).toEqual([
+      { kind: 'fill', color: '#000', area: { x: 0, y: 0, width: 10, height: 10 } },
+      {
+        kind: 'image',
+        image: 'tiles/a.png',
+        source: { x: 1, y: 2, width: 3, height: 4 },
+        at: { x: 5, y: 6 },
+        repeat: { width: 30, height: 40 },
+        flip: true,
+      },
+      {
+        kind: 'image',
+        image: 'tiles/b.png',
+        source: { x: 0, y: 0, width: 8, height: 8 },
+        at: { x: 0, y: 0 },
+        repeat: null,
+        flip: false,
+      },
+    ]);
+    expect(map.lights).toEqual([
+      { at: { x: 1, y: 2 }, radius: 3, color: '#fff' },
+      { at: { x: 4, y: 5 }, radius: 6, color: '#000', flicker: 0.1 },
+    ]);
+    expect(map.embers).toEqual([{ x: 7, y: 8 }]);
+  });
+
+  it.each([
+    [{ floor: 'brown' }, '$.floor'],
+    [{ scenery: {} }, '$.scenery'],
+    [
+      { scenery: [{ color: 'x', area: { x: 0, y: 0, width: 1, height: 1 } }] },
+      '$.scenery[0].color',
+    ],
+    [{ scenery: [{ image: '../x.png' }] }, '$.scenery[0].image'],
+    [
+      {
+        scenery: [
+          {
+            image: 'a.png',
+            source: { x: 0, y: 0, width: 1, height: 1 },
+            at: { x: 0, y: 0 },
+            flip: 'yes',
+          },
+        ],
+      },
+      '$.scenery[0].flip',
+    ],
+    [{ lights: [{ at: { x: 0, y: 0 }, radius: 0, color: '#fff' }] }, '$.lights[0].radius'],
+    [
+      { lights: [{ at: { x: 0, y: 0 }, radius: 1, color: '#fff', flicker: -1 }] },
+      '$.lights[0].flicker',
+    ],
+    [{ embers: [{ x: 'a', y: 0 }] }, '$.embers[0].x'],
+  ])('rejects %j', (overrides, path) => {
+    expect(invalidAt({ ...base, ...overrides })).toBe(path);
+  });
+});
+
 describe('contains', () => {
   const area = { x: 10, y: 20, width: 30, height: 40 };
 
@@ -113,7 +206,7 @@ describe('loadWorkshopMap', () => {
 
   it('fails on an http error', async () => {
     const request = () => Promise.resolve(new Response('missing', { status: 404 }));
-    await expect(loadWorkshopMap('/map.json', request)).rejects.toBeInstanceOf(MapError);
+    await expect(loadWorkshopMap('/map.json', request)).rejects.toBeInstanceOf(AssetError);
   });
 });
 

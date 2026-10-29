@@ -1,6 +1,7 @@
 import type { AgentView } from '../../shared/agent.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store } from '../state/store.js';
+import type { Assets } from './assets.js';
 import { Particles } from './draw/effects.js';
 import type { LayerFactory } from './draw/lighting.js';
 import { Lighting } from './draw/lighting.js';
@@ -10,7 +11,6 @@ import { bindInput, hitTest } from './input.js';
 import type { WorkshopMap } from './map.js';
 import type { Hover } from './renderer.js';
 import { drawScene, emittersFor } from './renderer.js';
-import type { SpriteSheet } from './sprite-sheet.js';
 import { World } from './world.js';
 
 export const STAGE_BACKGROUND = '#17110d';
@@ -19,7 +19,7 @@ export interface GameOptions {
   store: Store;
   socket: Pick<GameSocket, 'onMessage'>;
   map: WorkshopMap;
-  sprites: { get(skin: string): SpriteSheet | null };
+  assets: Assets;
   onRecruit(bay: number): void;
   onHover?(hover: Hover, clientX: number, clientY: number): void;
   now?: () => number;
@@ -37,7 +37,7 @@ export interface Game {
 }
 
 export function createGame(options: GameOptions): Game {
-  const { store, map, sprites } = options;
+  const { store, map, assets } = options;
   const now = options.now ?? (() => Date.now());
   const canvas = document.createElement('canvas');
   canvas.className = 'game';
@@ -60,12 +60,12 @@ export function createGame(options: GameOptions): Game {
     background: STAGE_BACKGROUND,
     draw(ctx, dt, time) {
       world.update(dt);
-      particles.update(dt, emittersFor({ world, agents }));
+      particles.update(dt, emittersFor({ world, agents, assets }));
       const { selected, focused } = store.getState();
       drawScene(ctx, {
         world,
         agents,
-        sprites,
+        assets,
         selected: new Set(selected),
         focused,
         hovered,
@@ -92,7 +92,7 @@ export function createGame(options: GameOptions): Game {
   const unbindInput = bindInput({
     canvas,
     toWorld: (x, y) => engine.toWorld(x, y),
-    hit: (point) => hitTest({ world, sprites, skinOf: (id) => agents.get(id)?.skin }, point),
+    hit: (point) => hitTest(world, point),
     onSelect(agentId, mode) {
       store.select(agentId, mode);
     },

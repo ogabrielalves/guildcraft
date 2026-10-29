@@ -1,0 +1,24 @@
+{
+  "name": {
+    "en": "Workbench"
+  },
+  "image": "stations/workbench.png",
+  "origin": {
+    "x": 103,
+    "y": 60
+  },
+  "frame": {
+    "width": 73,
+    "height": 56
+  },
+  "anchor": {
+    "x": 36,
+    "y": 55
+  },
+  "emit": {
+    "x": 36,
+    "y": 22
+  },
+  "effect": "dust",
+  "light": "#ffd76a"
+}

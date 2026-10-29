@@ -1,0 +1,24 @@
+{
+  "name": {
+    "en": "Brick furnace"
+  },
+  "image": "stations/furnace.png",
+  "origin": {
+    "x": 54,
+    "y": 60
+  },
+  "frame": {
+    "width": 36,
+    "height": 66
+  },
+  "anchor": {
+    "x": 18,
+    "y": 65
+  },
+  "emit": {
+    "x": 18,
+    "y": 8
+  },
+  "effect": "embers",
+  "light": "#ff8a2a"
+}

@@ -1,9 +1,9 @@
 # LPC spritesheet row map (Guildcraft)
 
 Generated with the Universal LPC Spritesheet Character Generator on 2026-10-29.
-Each `<id>.json` holds the `hash` and `url` needed to recreate the character.
+Each `<id>/<id>.lpc.json` holds the `hash` and `url` needed to recreate the character.
 
-**Scale:** the sheets in this folder were **downscaled to 50% with nearest neighbor** (sampling pixel `2x, 2y`) to match the Pixel Crawler art. The 64 px originals are kept outside the repository. Every measurement below uses the downscaled size.
+**Scale:** the LPC sheets (`assets/characters/<id>/<id>.png`) were **downscaled to 50% with nearest neighbor** (sampling pixel `2x, 2y`) to match the Pixel Crawler art. The 64 px originals are kept outside the repository. Every measurement below uses the downscaled size.
 
 ## Standard area (same for all 6): y = 0–1727, 32x32 frames, 13 columns (416 px)
 

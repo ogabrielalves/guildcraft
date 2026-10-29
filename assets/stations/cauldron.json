@@ -1,0 +1,23 @@
+{
+  "name": {
+    "en": "Cauldron"
+  },
+  "image": "stations/cauldron.png",
+  "frame": {
+    "width": 48,
+    "height": 32
+  },
+  "columns": 4,
+  "frames": 4,
+  "fps": 6,
+  "anchor": {
+    "x": 25,
+    "y": 31
+  },
+  "emit": {
+    "x": 25,
+    "y": 8
+  },
+  "effect": "magic",
+  "light": "#b07cff"
+}

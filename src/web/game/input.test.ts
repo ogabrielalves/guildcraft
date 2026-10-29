@@ -24,11 +24,7 @@ function agent(id: string): AgentView {
 function target(ids: string[]) {
   const world = new World(map);
   world.sync(ids.map(agent));
-  return {
-    world,
-    skinOf: (id: string) => (id === 'ghost' ? undefined : id),
-    sprites: { get: () => null },
-  };
+  return world;
 }
 
 describe('hitTest', () => {
@@ -54,10 +50,13 @@ describe('hitTest', () => {
     expect(hitTest(target([]), { x: 240, y: 10 })).toBeNull();
   });
 
-  it('uses the default box for villagers without a skin', () => {
-    const hit = target(['ghost']);
-    const work = bayAt(map, 0).work;
-    expect(hitTest(hit, { x: work.x, y: work.y })).toEqual({ kind: 'villager', id: 'ghost' });
+  it('picks the villager in front when two overlap', () => {
+    const world = target(['a', 'b']);
+    const [a, b] = world.all();
+    if (!a || !b) throw new Error('missing villagers');
+    a.position = { x: 50, y: 120 };
+    b.position = { x: 52, y: 124 };
+    expect(hitTest(world, { x: 51, y: 110 })).toEqual({ kind: 'villager', id: 'b' });
   });
 });
 

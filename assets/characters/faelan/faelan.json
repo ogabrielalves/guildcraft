@@ -1,0 +1,50 @@
+{
+  "name": {
+    "en": "Faelan",
+    "pt-BR": "Faelan"
+  },
+  "source": "lpc",
+  "station": "sawmill",
+  "facing": "four",
+  "image": "faelan.png",
+  "frame": {
+    "width": 32,
+    "height": 32
+  },
+  "anchor": {
+    "x": 16,
+    "y": 30
+  },
+  "animations": {
+    "idle": {
+      "row": 22,
+      "frames": 2,
+      "fps": 2
+    },
+    "walk": {
+      "row": 8,
+      "start": 1,
+      "frames": 8,
+      "fps": 10
+    },
+    "work": {
+      "row": 0,
+      "frames": 7,
+      "fps": 8
+    },
+    "sit": {
+      "row": 30,
+      "start": 1,
+      "frames": 1,
+      "fps": 1
+    },
+    "cheer": {
+      "row": 34,
+      "start": 2,
+      "frames": 1,
+      "fps": 1
+    }
+  },
+  "license": "See assets/CREDITS.md and faelan.credits.txt",
+  "author": "Liberated Pixel Cup contributors"
+}

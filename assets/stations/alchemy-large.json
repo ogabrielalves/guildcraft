@@ -1,0 +1,23 @@
+{
+  "name": {
+    "en": "Large alchemy table"
+  },
+  "image": "stations/alchemy-large.png",
+  "frame": {
+    "width": 48,
+    "height": 64
+  },
+  "columns": 11,
+  "frames": 51,
+  "fps": 12,
+  "anchor": {
+    "x": 24,
+    "y": 63
+  },
+  "emit": {
+    "x": 24,
+    "y": 22
+  },
+  "effect": "bubbles",
+  "light": "#b07cff"
+}

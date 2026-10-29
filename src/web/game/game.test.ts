@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import { Store } from '../state/store.js';
+import { NO_ASSETS } from './assets.js';
 import { createGame } from './game.js';
 import { bayAt, parseWorkshopMap } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
@@ -42,7 +43,7 @@ function setup(agents: AgentView[] = []) {
     store,
     socket,
     map,
-    sprites: { get: () => null },
+    assets: NO_ASSETS,
     onRecruit,
     onHover,
     now: () => 5000,

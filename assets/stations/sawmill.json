@@ -1,0 +1,24 @@
+{
+  "name": {
+    "en": "Sawmill"
+  },
+  "image": "stations/sawmill.png",
+  "origin": {
+    "x": 48,
+    "y": 83
+  },
+  "frame": {
+    "width": 72,
+    "height": 45
+  },
+  "anchor": {
+    "x": 36,
+    "y": 44
+  },
+  "emit": {
+    "x": 36,
+    "y": 12
+  },
+  "effect": "sawdust",
+  "light": "#ffd76a"
+}

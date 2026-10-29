@@ -2,6 +2,35 @@
 
 Guildcraft's source code is released under the MIT License (see `LICENSE`). The art in `assets/` is **not** covered by the MIT License: each asset keeps the license chosen by its authors, listed below.
 
+## Workshop, stations and fixed cast — Pixel Crawler (Free Pack 2.11)
+
+- **Author:** Anokolisa
+- **Links:** <https://anokolisa.itch.io/free-pixel-art-asset-pack-topdown-tileset-rpg-16x16-sprites> · <https://www.patreon.com/Anokolisa> · <https://twitter.com/Anokolisa>
+- **Terms (summary of the pack's `Terms.txt`):**
+  - Free to use in any project, commercial or not.
+  - Credit is not required, but appreciated.
+  - The art may be modified.
+  - The art may **not** be sold, or marketed as a final product, modified or not. Only the author sells it.
+- Guildcraft ships only the sheets it uses, unmodified, renamed as listed below.
+
+| File in this repository | File in the pack |
+|---|---|
+| `assets/tiles/interior-walls.png` | `Environment/Structures/Buildings/Interior/Interior_Walls_01.png` |
+| `assets/tiles/interior-props.png` | `Environment/Structures/Buildings/Interior/Interior_Props_01.png` |
+| `assets/stations/alchemy-small.png` | `Environment/Structures/Stations/Alchemy/Alchemy_Table_01-Sheet.png` |
+| `assets/stations/alchemy-large.png` | `Environment/Structures/Stations/Alchemy/Alchemy_Table_02-Sheet.png` |
+| `assets/stations/anvil.png` | `Environment/Structures/Stations/Anvil/Anvil_01-Sheet.png` |
+| `assets/stations/cauldron.png` | `Environment/Structures/Stations/Cooking Station/Cooker/Cooker_03-Sheet.png` |
+| `assets/stations/grill.png` | `Environment/Structures/Stations/Cooking Station/Grill/Grill_01-Sheet.png` |
+| `assets/stations/workbench.png` | `Environment/Structures/Stations/Workbench/Workbench.png` |
+| `assets/stations/furnace.png` | `Environment/Structures/Stations/Furnace/Furnace.png` |
+| `assets/stations/sawmill.png` | `Environment/Structures/Stations/Sawmill/Base.png` |
+| `assets/characters/mortis/{idle,run,death}.png` | `Entities/Mobs/Skeleton Crew/Skeleton - Mage/{Idle,Run,Death}/*-Sheet.png` |
+| `assets/characters/corvin/{idle,run,death}.png` | `Entities/Npc's/Rogue/{Idle,Run,Death}/*-Sheet.png` |
+| `assets/characters/lyra/{idle,walk}.png` | `Entities/Npc's/Citizen_F/Peasant_A/{Idle,Walk}/*-Sheet.png` |
+
+Thanks to Anokolisa for the Pixel Crawler pack.
+
 ## Characters — Liberated Pixel Cup (LPC)
 
 Character sprites were composed with the [Universal LPC Spritesheet Character Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) from LPC art by the authors listed below.
@@ -23,7 +52,7 @@ Benjamin K. Smith (BenCreating), bluecarrot16, Dr. Jamgo, Durrani, Eliza Wyatt (
 
 ### Aldwin — human archmage
 
-File: `assets/characters/lpc/aldwin.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_Elderly_light&wrinkles=Wrinkles_light&hair=Long_white&beard=Winter_Beard_white&mustache=Big_Mustache_white&clothes=Longsleeve_navy&legs=Long_Pants_navy&apron=Overskirt_navy&shoes=Slippers_brown&hat=Wizard_Hat_Base_navy&hat_trim=Wizard_Hat_Belt_base_yellow&weapon=Simple_staff_simple>
+File: `assets/characters/aldwin/aldwin.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_Elderly_light&wrinkles=Wrinkles_light&hair=Long_white&beard=Winter_Beard_white&mustache=Big_Mustache_white&clothes=Longsleeve_navy&legs=Long_Pants_navy&apron=Overskirt_navy&shoes=Slippers_brown&hat=Wizard_Hat_Base_navy&hat_trim=Wizard_Hat_Belt_base_yellow&weapon=Simple_staff_simple>
 
 - **body/bodies/male** — bluecarrot16, JaidynReiman, Benjamin K. Smith (BenCreating), Evert, Eliza Wyatt (ElizaWy), TheraHedwig, MuffinElZangano, Durrani, Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle> <https://opengameart.org/content/lpc-revised-character-basics> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-character-bases>
@@ -51,7 +80,7 @@ File: `assets/characters/lpc/aldwin.png` · Recreate: <https://liberatedpixelcup
 
 ### Brom — dwarf blacksmith
 
-File: `assets/characters/lpc/brom.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_Plump_light&hair=Buzzcut_carrot&beard=Winter_Beard_carrot&mustache=Walrus_Mustache_carrot&clothes=Longsleeve_brown&overalls=Overalls_leather&legs=Pants_walnut&shoes=Revised_Boots_black&bracers=Bracers_cloth.leather&weapon=Hammer_steel>
+File: `assets/characters/brom/brom.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_Plump_light&hair=Buzzcut_carrot&beard=Winter_Beard_carrot&mustache=Walrus_Mustache_carrot&clothes=Longsleeve_brown&overalls=Overalls_leather&legs=Pants_walnut&shoes=Revised_Boots_black&bracers=Bracers_cloth.leather&weapon=Hammer_steel>
 
 - **body/bodies/male** — bluecarrot16, JaidynReiman, Benjamin K. Smith (BenCreating), Evert, Eliza Wyatt (ElizaWy), TheraHedwig, MuffinElZangano, Durrani, Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle> <https://opengameart.org/content/lpc-revised-character-basics> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-character-bases>
@@ -78,7 +107,7 @@ File: `assets/characters/lpc/brom.png` · Recreate: <https://liberatedpixelcup.g
 
 ### Seren — armored knight
 
-File: `assets/characters/lpc/seren.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_olive&head=Human_Female_olive&hair=Ponytail_chestnut&clothes=Longsleeve_gray&legs=Long_Pants_gray&armour=Plate_silver&shoulders=Pauldrons_metal.silver&bracers=Bracers_silver&arms=Armour_silver&shoes=Revised_Boots_gray&shoes_toe=Thick_Plated_Toe_silver&cape=Solid_red&weapon=Longsword_longsword>
+File: `assets/characters/seren/seren.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_olive&head=Human_Female_olive&hair=Ponytail_chestnut&clothes=Longsleeve_gray&legs=Long_Pants_gray&armour=Plate_silver&shoulders=Pauldrons_metal.silver&bracers=Bracers_silver&arms=Armour_silver&shoes=Revised_Boots_gray&shoes_toe=Thick_Plated_Toe_silver&cape=Solid_red&weapon=Longsword_longsword>
 
 - **body/bodies/female** — Benjamin K. Smith (BenCreating), bluecarrot16, TheraHedwig, Evert, MuffinElZangano, Durrani, Pierre Vigier (pvigier), ElizaWy, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-ladies> <https://opengameart.org/content/lpc-7-womens-shirts> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-revised-character-basics> <https://gitlab.com/vagabondgame/lpc-characters> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle>
@@ -111,7 +140,7 @@ File: `assets/characters/lpc/seren.png` · Recreate: <https://liberatedpixelcup.
 
 ### Oren — orc druid
 
-File: `assets/characters/lpc/oren.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_green&head=Orc_male_green&hair=Long_messy_dark_brown&beard=Medium_Beard_dark_brown&horns=Backwards_Horns_cloth.walnut&clothes=Longsleeve_forest&armour=Leather_brown&legs=Pants_brown&shoes=Sandals_brown&weapon=Gnarled_staff_medium>
+File: `assets/characters/oren/oren.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_green&head=Orc_male_green&hair=Long_messy_dark_brown&beard=Medium_Beard_dark_brown&horns=Backwards_Horns_cloth.walnut&clothes=Longsleeve_forest&armour=Leather_brown&legs=Pants_brown&shoes=Sandals_brown&weapon=Gnarled_staff_medium>
 
 - **body/bodies/male** — bluecarrot16, JaidynReiman, Benjamin K. Smith (BenCreating), Evert, Eliza Wyatt (ElizaWy), TheraHedwig, MuffinElZangano, Durrani, Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle> <https://opengameart.org/content/lpc-revised-character-basics> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-character-bases>
@@ -136,7 +165,7 @@ File: `assets/characters/lpc/oren.png` · Recreate: <https://liberatedpixelcup.g
 
 ### Faelan — elf archer
 
-File: `assets/characters/lpc/faelan.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&ears=Elven_ears_light&hair=Long_straight_blonde&clothes=Longsleeve_forest&legs=Pants_brown&shoes=Revised_Boots_brown&hat=Hood_forest&weapon=Normal_medium&quiver=Quiver_quiver>
+File: `assets/characters/faelan/faelan.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&ears=Elven_ears_light&hair=Long_straight_blonde&clothes=Longsleeve_forest&legs=Pants_brown&shoes=Revised_Boots_brown&hat=Hood_forest&weapon=Normal_medium&quiver=Quiver_quiver>
 
 - **body/bodies/male** — bluecarrot16, JaidynReiman, Benjamin K. Smith (BenCreating), Evert, Eliza Wyatt (ElizaWy), TheraHedwig, MuffinElZangano, Durrani, Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle> <https://opengameart.org/content/lpc-revised-character-basics> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-character-bases>
@@ -161,7 +190,7 @@ File: `assets/characters/lpc/faelan.png` · Recreate: <https://liberatedpixelcup
 
 ### Amara — cleric scribe
 
-File: `assets/characters/lpc/amara.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_brown&head=Human_Female_brown&hair=Afro_raven&hat=Tiara_tiara_gold&clothes=Longsleeve_white&legs=Long_Pants_white&apron=Overskirt_white&bracers=Bracers_gold&shoes=Revised_Shoes_tan&weapon=Mace_mace>
+File: `assets/characters/amara/amara.png` · Recreate: <https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_brown&head=Human_Female_brown&hair=Afro_raven&hat=Tiara_tiara_gold&clothes=Longsleeve_white&legs=Long_Pants_white&apron=Overskirt_white&bracers=Bracers_gold&shoes=Revised_Shoes_tan&weapon=Mace_mace>
 
 - **body/bodies/female** — Benjamin K. Smith (BenCreating), bluecarrot16, TheraHedwig, Evert, MuffinElZangano, Durrani, Pierre Vigier (pvigier), ElizaWy, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-ladies> <https://opengameart.org/content/lpc-7-womens-shirts> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-revised-character-basics> <https://gitlab.com/vagabondgame/lpc-characters> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle>

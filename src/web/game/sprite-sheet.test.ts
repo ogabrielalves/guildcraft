@@ -1,48 +1,153 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  LPC_MANIFEST,
-  SpriteLibrary,
-  characterUrl,
-  directionTo,
-  frameAt,
-  loadImage,
-} from './sprite-sheet.js';
+import { SIDE_CHARACTER } from './fake-assets.js';
+import { AssetError } from './parse.js';
+import type { CharacterManifest } from './sprite-sheet.js';
+import { directionTo, frameAt, loadImage, parseCharacterManifest } from './sprite-sheet.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function lpc(overrides: Record<string, unknown> = {}) {
+  return {
+    name: { en: 'Brom' },
+    source: 'lpc',
+    station: 'anvil',
+    facing: 'four',
+    image: 'brom.png',
+    frame: { width: 32, height: 32 },
+    anchor: { x: 16, y: 30 },
+    animations: {
+      idle: { row: 22, frames: 2, fps: 2 },
+      walk: { row: 8, start: 1, frames: 8, fps: 10 },
+      work: { row: 0, frames: 7, fps: 8 },
+      sit: { row: 30, start: 1, frames: 1, fps: 1 },
+      cheer: { row: 34, start: 2, frames: 1, fps: 1, hop: 2 },
+    },
+    ...overrides,
+  };
+}
+
+function failsAt(raw: unknown): string | undefined {
+  try {
+    parseCharacterManifest(raw);
+    return undefined;
+  } catch (error) {
+    if (error instanceof AssetError) return error.path;
+    throw error;
+  }
+}
+
+describe('parseCharacterManifest', () => {
+  it('fills animations from the sheet defaults', () => {
+    const manifest = parseCharacterManifest(lpc());
+    expect(manifest.station).toBe('anvil');
+    expect(manifest.facing).toBe('four');
+    expect(manifest.animations.walk).toEqual({
+      image: 'brom.png',
+      frame: { width: 32, height: 32 },
+      anchor: { x: 16, y: 30 },
+      row: 8,
+      start: 1,
+      frames: 8,
+      fps: 10,
+      hop: 0,
+    });
+    expect(manifest.animations.cheer.hop).toBe(2);
+  });
+
+  it('lets each animation bring its own sheet, frame and anchor', () => {
+    const raw = lpc({ image: undefined, frame: undefined, anchor: undefined, station: undefined });
+    const animations = Object.fromEntries(
+      Object.keys(raw.animations).map((pose) => [
+        pose,
+        {
+          image: `${pose}.png`,
+          frame: { width: 64, height: 32 },
+          anchor: { x: 32, y: 31 },
+          frames: 6,
+          fps: 10,
+        },
+      ]),
+    );
+    const manifest = parseCharacterManifest({ ...raw, facing: 'side', animations });
+    expect(manifest.station).toBeNull();
+    expect(manifest.animations.sit).toMatchObject({ image: 'sit.png', row: 0, start: 0 });
+  });
+
+  it.each<[string, Record<string, unknown>, string]>([
+    ['a bad facing', { facing: 'up' }, '$.facing'],
+    ['missing animations', { animations: null }, '$.animations'],
+    ['a missing pose', { animations: { ...lpc().animations, sit: undefined } }, '$.animations.sit'],
+    ['an unsafe sheet', { image: '../secret.png' }, '$.image'],
+    ['a non-png sheet', { image: 'brom.gif' }, '$.image'],
+    ['an empty station', { station: '' }, '$.station'],
+    ['a bad frame', { frame: { width: 0, height: 32 } }, '$.frame.width'],
+    ['a bad anchor', { anchor: { x: 'a', y: 1 } }, '$.anchor.x'],
+  ])('rejects %s', (_, overrides, path) => {
+    expect(failsAt(lpc(overrides))).toBe(path);
+  });
+
+  it.each([
+    [{ frames: 0, fps: 2 }, '$.animations.idle.frames'],
+    [{ frames: 2, fps: 0 }, '$.animations.idle.fps'],
+    [{ frames: 2, fps: 2, row: 1.5 }, '$.animations.idle.row'],
+    [{ frames: 2, fps: 2, start: -1 }, '$.animations.idle.start'],
+  ])('rejects the idle animation %j', (idle, path) => {
+    expect(failsAt(lpc({ animations: { ...lpc().animations, idle } }))).toBe(path);
+  });
+
+  it('needs a sheet, frame and anchor somewhere', () => {
+    expect(failsAt(lpc({ image: undefined }))).toBe('$.animations.idle.image');
+    expect(failsAt(lpc({ frame: undefined }))).toBe('$.animations.idle.frame');
+    expect(failsAt(lpc({ anchor: undefined }))).toBe('$.animations.idle.anchor');
+  });
+
+  it('rejects a non-object manifest', () => {
+    expect(failsAt([])).toBe('$');
+  });
+});
+
 describe('frameAt', () => {
-  it('picks the row of the facing direction', () => {
-    expect(frameAt(LPC_MANIFEST, 'idle', 'north', 0)).toEqual({
+  const four = parseCharacterManifest(lpc());
+
+  it('picks the row of the facing direction on four-way sheets', () => {
+    expect(frameAt(four, 'idle', 'north', 'east', 0)).toEqual({
+      image: 'brom.png',
       sx: 0,
       sy: 22 * 32,
       width: 32,
       height: 32,
+      anchor: { x: 16, y: 30 },
+      flip: false,
+      lift: 0,
     });
-    expect(frameAt(LPC_MANIFEST, 'idle', 'east', 0).sy).toBe(25 * 32);
+    expect(frameAt(four, 'idle', 'east', 'west', 0)).toMatchObject({ sy: 25 * 32, flip: false });
   });
 
-  it('advances frames with time and loops', () => {
-    expect(frameAt(LPC_MANIFEST, 'walk', 'south', 0).sx).toBe(32);
-    expect(frameAt(LPC_MANIFEST, 'walk', 'south', 0.25).sx).toBe(3 * 32);
-    expect(frameAt(LPC_MANIFEST, 'walk', 'south', 0.8).sx).toBe(32);
+  it('advances frames with time, loops and clamps negative time', () => {
+    expect(frameAt(four, 'walk', 'south', 'east', 0).sx).toBe(32);
+    expect(frameAt(four, 'walk', 'south', 'east', 0.25).sx).toBe(3 * 32);
+    expect(frameAt(four, 'walk', 'south', 'east', 0.8).sx).toBe(32);
+    expect(frameAt(four, 'sit', 'west', 'east', -3).sx).toBe(32);
   });
 
-  it('holds still poses and clamps negative time', () => {
-    expect(frameAt(LPC_MANIFEST, 'sit', 'west', 9).sx).toBe(32);
-    expect(frameAt(LPC_MANIFEST, 'cheer', 'south', -3).sx).toBe(64);
+  it('mirrors side sheets for the west side and keeps their single row', () => {
+    const side: CharacterManifest = SIDE_CHARACTER;
+    expect(frameAt(side, 'walk', 'north', 'west', 0)).toMatchObject({
+      image: 'run.png',
+      sy: 0,
+      width: 64,
+      anchor: { x: 30, y: 63 },
+      flip: true,
+    });
+    expect(frameAt(side, 'walk', 'south', 'east', 0).flip).toBe(false);
+    expect(frameAt(side, 'sit', 'south', 'east', 0).sx).toBe(5 * 64);
   });
 
-  it('ignores the direction on single-row animations', () => {
-    const manifest = {
-      ...LPC_MANIFEST,
-      animations: {
-        ...LPC_MANIFEST.animations,
-        sit: { row: 20, start: 5, frames: 1, fps: 1, directional: false },
-      },
-    };
-    expect(frameAt(manifest, 'sit', 'east', 0)).toMatchObject({ sx: 160, sy: 640 });
+  it('lifts hopping poses with time', () => {
+    expect(frameAt(SIDE_CHARACTER, 'cheer', 'south', 'east', 0).lift).toBe(0);
+    expect(frameAt(SIDE_CHARACTER, 'cheer', 'south', 'east', 0.25).lift).toBe(3);
   });
 });
 
@@ -55,37 +160,6 @@ describe('directionTo', () => {
     [0, 0, 'west'],
   ] as const)('maps (%d, %d) to %s', (dx, dy, expected) => {
     expect(directionTo(dx, dy, 'west')).toBe(expected);
-  });
-});
-
-describe('characterUrl', () => {
-  it('points to the lpc sheet', () => {
-    expect(characterUrl('brom')).toBe('/assets/characters/lpc/brom.png');
-    expect(characterUrl('a b')).toBe('/assets/characters/lpc/a%20b.png');
-  });
-});
-
-describe('SpriteLibrary', () => {
-  it('loads each skin once and caches the sheet', async () => {
-    const image = {} as CanvasImageSource;
-    const load = vi.fn(() => Promise.resolve(image));
-    const library = new SpriteLibrary(load);
-    expect(library.get('brom')).toBeNull();
-    expect(library.get('brom')).toBeNull();
-    await Promise.resolve();
-    expect(library.get('brom')).toEqual({ image, manifest: LPC_MANIFEST });
-    expect(load).toHaveBeenCalledTimes(1);
-    expect(load).toHaveBeenCalledWith('/assets/characters/lpc/brom.png');
-  });
-
-  it('keeps a missing skin empty without retrying', async () => {
-    const load = vi.fn(() => Promise.reject(new Error('404')));
-    const library = new SpriteLibrary(load);
-    library.get('mortis');
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(library.get('mortis')).toBeNull();
-    expect(load).toHaveBeenCalledTimes(1);
   });
 });
 

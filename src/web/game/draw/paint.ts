@@ -25,6 +25,8 @@ export type Paint = Pick<
   | 'createRadialGradient'
   | 'save'
   | 'restore'
+  | 'translate'
+  | 'scale'
 >;
 
 export const TAU = Math.PI * 2;

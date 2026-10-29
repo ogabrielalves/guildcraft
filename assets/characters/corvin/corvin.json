@@ -1,0 +1,80 @@
+{
+  "name": {
+    "en": "Corvin",
+    "pt-BR": "Corvin"
+  },
+  "source": "pixel-crawler",
+  "station": "workbench",
+  "facing": "side",
+  "animations": {
+    "idle": {
+      "image": "idle.png",
+      "frame": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 31
+      },
+      "frames": 4,
+      "fps": 6
+    },
+    "walk": {
+      "image": "run.png",
+      "frame": {
+        "width": 64,
+        "height": 64
+      },
+      "anchor": {
+        "x": 31,
+        "y": 63
+      },
+      "frames": 6,
+      "fps": 10
+    },
+    "work": {
+      "image": "idle.png",
+      "frame": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 31
+      },
+      "frames": 4,
+      "fps": 8
+    },
+    "sit": {
+      "image": "death.png",
+      "frame": {
+        "width": 64,
+        "height": 32
+      },
+      "anchor": {
+        "x": 32,
+        "y": 31
+      },
+      "frames": 1,
+      "fps": 1,
+      "start": 5
+    },
+    "cheer": {
+      "image": "idle.png",
+      "frame": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 31
+      },
+      "frames": 4,
+      "fps": 8,
+      "hop": 3
+    }
+  },
+  "license": "Pixel Crawler Free Pack terms (see assets/CREDITS.md)",
+  "author": "Anokolisa"
+}

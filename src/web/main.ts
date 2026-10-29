@@ -10,9 +10,11 @@ import './styles/feedback.css';
 import './styles/game.css';
 import { bindSocket, launchToken, mountShell } from './app.js';
 import { createGame } from './game/game.js';
-import { parseWorkshopMap } from './game/map.js';
+import { AssetLibrary } from './game/assets.js';
+import type { WorkshopMap } from './game/map.js';
+import { loadWorkshopMap, parseWorkshopMap } from './game/map.js';
 import { provisionalWorkshop } from './game/provisional-workshop.js';
-import { SpriteLibrary, loadImage } from './game/sprite-sheet.js';
+import { loadImage } from './game/sprite-sheet.js';
 import { DemoSocket, demoListFolders, parseDemoOptions } from './demo/demo.js';
 import { initI18n, t } from './i18n/index.js';
 import { createApi } from './net/api.js';
@@ -75,36 +77,44 @@ if (root) {
   hud.className = 'hud';
   hud.append(recruit.element, createStats(store).element, createFeed(store).element);
   const tooltip = createTooltip();
-  const game = createGame({
-    store,
-    socket,
-    map: parseWorkshopMap(provisionalWorkshop()),
-    sprites: new SpriteLibrary(loadImage),
-    onRecruit: () => {
-      dialog.open();
-    },
-    onHover: (hover, clientX, clientY) => {
-      const agent = hover?.kind === 'villager' ? store.agent(hover.id) : undefined;
-      const text =
-        hover?.kind === 'bay'
-          ? t('workshop.recruit')
-          : agent
-            ? `${agent.name} · ${agent.tool !== null && agent.tool.detail !== '' ? agent.tool.detail : t(statusKey(agent.status))}`
-            : null;
-      const bounds = game.element.getBoundingClientRect();
-      if (text === null) tooltip.hide();
-      else tooltip.show(text, clientX - bounds.left, clientY - bounds.top);
+  mountShell(root, store, [hud, panel.element, compose.element, toasts.element, tooltip.element]);
+  const request = (input: string, init?: RequestInit) => globalThis.fetch(input, init);
+  const assets = new AssetLibrary({
+    loadImage,
+    request,
+    onError: (url, error) => {
+      console.warn(`guildcraft: could not load ${url}`, error);
     },
   });
-  mountShell(root, store, [
-    game.element,
-    hud,
-    panel.element,
-    compose.element,
-    toasts.element,
-    tooltip.element,
-  ]);
-  game.start();
+  const startGame = (map: WorkshopMap) => {
+    const game = createGame({
+      store,
+      socket,
+      map,
+      assets,
+      onRecruit: () => {
+        dialog.open();
+      },
+      onHover: (hover, clientX, clientY) => {
+        const agent = hover?.kind === 'villager' ? store.agent(hover.id) : undefined;
+        const text =
+          hover?.kind === 'bay'
+            ? t('workshop.recruit')
+            : agent
+              ? `${agent.name} · ${agent.tool !== null && agent.tool.detail !== '' ? agent.tool.detail : t(statusKey(agent.status))}`
+              : null;
+        const bounds = game.element.getBoundingClientRect();
+        if (text === null) tooltip.hide();
+        else tooltip.show(text, clientX - bounds.left, clientY - bounds.top);
+      },
+    });
+    root.querySelector('.stage')?.prepend(game.element);
+    game.start();
+  };
+  loadWorkshopMap(assets.url('maps/workshop.json'), request).then(startGame, (error: unknown) => {
+    console.warn('guildcraft: using the provisional workshop', error);
+    startGame(parseWorkshopMap(provisionalWorkshop()));
+  });
   createNotifications({ store, socket, toasts, isHandled: (message) => dialog.handles(message) });
   createShortcuts({
     store,

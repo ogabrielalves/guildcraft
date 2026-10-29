@@ -26,6 +26,8 @@ const METHODS = [
   'drawImage',
   'save',
   'restore',
+  'translate',
+  'scale',
 ] as const;
 
 export function recordingPaint(): RecordingPaint {

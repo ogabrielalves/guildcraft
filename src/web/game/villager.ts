@@ -33,6 +33,7 @@ function anchorOf(activity: Activity): BayPoint | null {
 export class Villager {
   position: Point;
   facing: Direction = 'south';
+  private sideNow: 'east' | 'west' = 'east';
   private path: Point[] = [];
   private travelled = 0;
   private length = 0;
@@ -53,6 +54,10 @@ export class Villager {
     this.position = { ...start.point };
     this.destination = start;
     this.faceAnchor();
+  }
+
+  get side(): 'east' | 'west' {
+    return this.sideNow;
   }
 
   get activity(): Activity {
@@ -153,7 +158,7 @@ export class Villager {
     const before = this.position;
     this.travelled = Math.min(this.length, this.travelled + WALK_SPEED * dt);
     this.position = pointAlong(this.path, this.travelled);
-    this.facing = directionTo(this.position.x - before.x, this.position.y - before.y, this.facing);
+    this.face(directionTo(this.position.x - before.x, this.position.y - before.y, this.facing));
     if (this.travelled >= this.length) {
       this.path = [];
       this.arrive();
@@ -169,7 +174,7 @@ export class Villager {
     }
     if (this.visit?.phase === 'going') {
       this.visit = { ...this.visit, phase: 'lingering', timer: VISIT_LINGER };
-      this.facing = 'north';
+      this.face('north');
       return;
     }
     this.faceAnchor();
@@ -177,13 +182,18 @@ export class Villager {
     this.pause = min + this.random() * (max - min);
   }
 
+  private face(direction: Direction): void {
+    this.facing = direction;
+    if (direction === 'east' || direction === 'west') this.sideNow = direction;
+  }
+
   private faceAnchor(): void {
     const anchor = anchorOf(this.activityNow);
     if (anchor === 'work') {
       const { station, work } = bayAt(this.map, this.bay);
-      this.facing = directionTo(station.x - work.x, station.y - work.y, this.facing);
+      this.face(directionTo(station.x - work.x, station.y - work.y, this.facing));
     } else if (anchor !== null) {
-      this.facing = 'south';
+      this.face('south');
     }
   }
 }
