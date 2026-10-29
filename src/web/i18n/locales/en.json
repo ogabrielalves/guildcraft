@@ -82,6 +82,7 @@
   },
   "errors": {
     "AGENT_NOT_FOUND": "Adventurer not found",
+    "AGENT_ID_TAKEN": "An adventurer with this id already exists",
     "AGENT_NAME_TAKEN": "There is already an adventurer named {name}",
     "AGENT_LIMIT_REACHED": "The workshop is full",
     "INVALID_NAME": "Invalid name",
