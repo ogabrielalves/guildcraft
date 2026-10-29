@@ -43,7 +43,7 @@ export interface SocketOptions {
 
 const OPEN = 1;
 
-function notify<T>(listeners: Iterable<(value: T) => void>, value: T): void {
+export function notify<T>(listeners: Iterable<(value: T) => void>, value: T): void {
   for (const listener of listeners) {
     try {
       listener(value);
