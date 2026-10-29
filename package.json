@@ -26,6 +26,8 @@
     "assets"
   ],
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/js": "^9.39.5",
     "@types/node": "^20.19.43",
     "@vitest/coverage-v8": "^3.2.7",
