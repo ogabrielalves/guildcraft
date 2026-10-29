@@ -5,7 +5,9 @@ import { AgentRegistry } from './agent-registry.js';
 import type { CreateInput, ManagerDeps, ProcessHandle, SpawnSpec } from './agent-manager.js';
 import {
   AgentManager,
+  MAX_TRUST_ATTEMPTS,
   READY_TIMEOUT_MS,
+  TRUST_RETRY_MS,
   VISIT_DELAY_MS,
   formatAgentMessage,
   preview,
@@ -221,9 +223,9 @@ describe('create', () => {
   it('becomes idle when SessionStart never arrives', async () => {
     const ctx = setup();
     const { id } = await created(ctx);
-    vi.advanceTimersByTime(READY_TIMEOUT_MS - 1);
+    await vi.advanceTimersByTimeAsync(READY_TIMEOUT_MS - 1);
     expect(ctx.statusOf(id)).toBe('starting');
-    vi.advanceTimersByTime(1);
+    await vi.advanceTimersByTimeAsync(1);
     expect(ctx.statusOf(id)).toBe('idle');
   });
 
@@ -382,13 +384,90 @@ describe('terminal', () => {
 describe('trust prompt', () => {
   const PROMPT = 'Do you trust the files in this folder?\n❯ 1. Yes, proceed\n  2. No, exit\n';
 
-  it('accepts the trust prompt once', async () => {
+  it('answers a prompt drawn in chunks that arrive during a pending snapshot', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    const pending: (() => void)[] = [];
+    process.snapshot = () => {
+      const screen = process.screen;
+      return new Promise<string>((resolve) => {
+        pending.push(() => {
+          resolve(screen);
+        });
+      });
+    };
+    const question = 'Is this a project you created or one you trust?';
+    process.screen = 'Accessing workspace:';
+    process.emit('a');
+    process.screen = `Accessing workspace:\n${question}\n`;
+    process.emit('b');
+    process.screen = `Accessing workspace:\n${question}\n❯ 1. No, exit\n  2. Yes, I trust this folder\n`;
+    process.emit('c');
+    expect(pending).toHaveLength(1);
+    pending.shift()?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pending).toHaveLength(1);
+    pending.shift()?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(process.written).toEqual(['\x1b[B\r']);
+    expect(ctx.statusOf(id)).toBe('starting');
+  });
+
+  it('checks the screen once more before the ready timeout marks the agent idle', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = 'Do you trust the files in this folder?\n  maybe\n';
+    await vi.advanceTimersByTimeAsync(READY_TIMEOUT_MS);
+    expect(ctx.statusOf(id)).toBe('waiting');
+    ctx.manager.sendPrompt([id], 'go');
+    expect(process.written).toEqual([]);
+  });
+
+  it('accepts the trust prompt once when the dialog closes', async () => {
     const ctx = setup();
     const { process } = await created(ctx);
     process.screen = PROMPT;
     process.emit('x');
     process.emit('y');
+    await vi.advanceTimersByTimeAsync(0);
+    process.screen = 'Welcome';
     await vi.runAllTimersAsync();
+    expect(process.written).toEqual(['\r']);
+  });
+
+  it('answers again while the dialog ignores the keys, up to the limit', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = PROMPT;
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(process.written).toEqual(['\r']);
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS);
+    expect(process.written).toEqual(['\r', '\r']);
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * 5);
+    expect(process.written).toHaveLength(MAX_TRUST_ATTEMPTS);
+    expect(ctx.statusOf(id)).toBe('starting');
+  });
+
+  it('stops retrying once the agent starts working', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = PROMPT;
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    ctx.manager.hook(id, 'UserPromptSubmit', {});
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * 5);
+    expect(process.written).toEqual(['\r']);
+  });
+
+  it('stops retrying when the agent is removed', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = PROMPT;
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    await ctx.manager.remove(id);
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * 5);
     expect(process.written).toEqual(['\r']);
   });
 

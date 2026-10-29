@@ -25,6 +25,8 @@ import { detectTrustPrompt, trustAnswer } from './trust-prompt.js';
 export const READY_TIMEOUT_MS = 10_000;
 export const VISIT_DELAY_MS = 2_500;
 export const PREVIEW_LENGTH = 80;
+export const TRUST_RETRY_MS = 1_000;
+export const MAX_TRUST_ATTEMPTS = 3;
 
 export interface ProcessHandle {
   readonly running: boolean;
@@ -79,10 +81,12 @@ interface Runtime {
   queue: MessageQueue;
   readyTimer: ReturnType<typeof setTimeout> | null;
   visitTimers: Set<ReturnType<typeof setTimeout>>;
-  trustHandled: boolean;
+  trustAttempts: number;
+  trustRetry: ReturnType<typeof setTimeout> | null;
   trustOpen: boolean;
   trustWindow: boolean;
-  checkingTrust: boolean;
+  trustCheck: Promise<void> | null;
+  recheckTrust: boolean;
   hold: QueueHold;
   unsubscribe: (() => void)[];
 }
@@ -97,6 +101,15 @@ const BUSY_STATUSES: readonly Agent['status'][] = ['thinking', 'tool', 'waiting'
 
 export function visibleTail(screen: string, lines = VISIBLE_LINES): string {
   return screen.split(/\r?\n/).slice(-lines).join('\n');
+}
+
+function clearTrustRetry(runtime: Runtime): void {
+  if (runtime.trustRetry) clearTimeout(runtime.trustRetry);
+  runtime.trustRetry = null;
+}
+
+function wantsRecheck(runtime: Runtime): boolean {
+  return runtime.recheckTrust && runtime.trustWindow;
 }
 
 function ok<T>(value: T): ManagerResult<T> {
@@ -298,6 +311,7 @@ export class AgentManager {
     if (runtime && WORK_HOOKS.includes(event)) {
       runtime.trustWindow = false;
       runtime.trustOpen = false;
+      clearTrustRetry(runtime);
     }
     if (runtime) this.advanceHold(runtime, event);
     const outcome = handleHook(event, parseHookPayload(rawPayload), agent.status);
@@ -329,10 +343,12 @@ export class AgentManager {
       }),
       readyTimer: null,
       visitTimers: new Set(),
-      trustHandled: false,
+      trustAttempts: 0,
+      trustRetry: null,
       trustOpen: false,
       trustWindow: true,
-      checkingTrust: false,
+      trustCheck: null,
+      recheckTrust: false,
       hold: 'none',
       unsubscribe: [],
     };
@@ -343,6 +359,7 @@ export class AgentManager {
       }),
       process.onExit(() => {
         this.clearReadyTimer(agent.id);
+        clearTrustRetry(runtime);
         runtime.queue.clear();
         agent.queued = 0;
         this.update(agent, 'offline');
@@ -358,7 +375,7 @@ export class AgentManager {
     this.update(agent, 'starting');
     runtime.readyTimer = setTimeout(() => {
       runtime.readyTimer = null;
-      if (agent.status === 'starting') this.update(agent, 'idle');
+      void this.settleReady(agent, runtime);
     }, READY_TIMEOUT_MS);
     return true;
   }
@@ -381,31 +398,66 @@ export class AgentManager {
     };
   }
 
-  private async checkTrust(agent: Agent, runtime: Runtime): Promise<void> {
-    if (runtime.checkingTrust) return;
-    runtime.checkingTrust = true;
-    try {
-      const screen = visibleTail(await runtime.process.snapshot());
-      const wasOpen = runtime.trustOpen;
-      runtime.trustOpen = detectTrustPrompt(screen);
-      if (!runtime.trustOpen) {
-        if (!wasOpen) return;
-        if (agent.status === 'starting') this.tryDeliver(agent);
-        else this.update(agent, 'idle');
-        return;
-      }
-      const answer = trustAnswer(screen);
-      if (answer) {
-        runtime.trustHandled = true;
-        runtime.trustWindow = false;
-        runtime.trustOpen = false;
-        runtime.process.write(answer);
-      } else if (!wasOpen) {
-        this.update(agent, 'waiting');
-      }
-    } finally {
-      runtime.checkingTrust = false;
+  private async settleReady(agent: Agent, runtime: Runtime): Promise<void> {
+    if (runtime.trustWindow) await this.checkTrust(agent, runtime);
+    if (agent.status === 'starting' && !runtime.trustOpen) this.update(agent, 'idle');
+  }
+
+  private checkTrust(agent: Agent, runtime: Runtime): Promise<void> {
+    if (runtime.trustCheck) {
+      runtime.recheckTrust = true;
+      return runtime.trustCheck;
     }
+    runtime.trustCheck = this.runTrustChecks(agent, runtime).catch(() => undefined);
+    return runtime.trustCheck;
+  }
+
+  private async runTrustChecks(agent: Agent, runtime: Runtime): Promise<void> {
+    try {
+      do {
+        runtime.recheckTrust = false;
+        await this.inspectTrust(agent, runtime);
+      } while (wantsRecheck(runtime));
+    } finally {
+      runtime.trustCheck = null;
+    }
+  }
+
+  private async inspectTrust(agent: Agent, runtime: Runtime): Promise<void> {
+    const screen = visibleTail(await runtime.process.snapshot());
+    const wasOpen = runtime.trustOpen;
+    runtime.trustOpen = detectTrustPrompt(screen);
+    if (!runtime.trustOpen) {
+      if (!wasOpen) return;
+      if (agent.status === 'starting') this.tryDeliver(agent);
+      else this.update(agent, 'idle');
+      return;
+    }
+    const answer = trustAnswer(screen);
+    if (answer) {
+      runtime.trustWindow = false;
+      runtime.trustOpen = false;
+      this.answerTrust(agent, runtime, answer);
+    } else if (!wasOpen) {
+      this.update(agent, 'waiting');
+    }
+  }
+
+  private answerTrust(agent: Agent, runtime: Runtime, answer: string): void {
+    runtime.trustAttempts += 1;
+    runtime.process.write(answer);
+    if (runtime.trustAttempts >= MAX_TRUST_ATTEMPTS) return;
+    runtime.trustRetry = setTimeout(() => {
+      runtime.trustRetry = null;
+      void this.verifyTrust(agent, runtime).catch(() => undefined);
+    }, TRUST_RETRY_MS);
+  }
+
+  private async verifyTrust(agent: Agent, runtime: Runtime): Promise<void> {
+    const screen = visibleTail(await runtime.process.snapshot());
+    if (this.runtimes.get(agent.id) !== runtime || runtime.trustRetry !== null) return;
+    const answer = detectTrustPrompt(screen) ? trustAnswer(screen) : null;
+    if (answer) this.answerTrust(agent, runtime, answer);
   }
 
   private tryDeliver(agent: Agent): void {
@@ -455,6 +507,7 @@ export class AgentManager {
     const runtime = this.runtimes.get(id);
     if (!runtime) return;
     this.clearReadyTimer(id);
+    clearTrustRetry(runtime);
     for (const timer of runtime.visitTimers) clearTimeout(timer);
     runtime.visitTimers.clear();
     for (const unsubscribe of runtime.unsubscribe) unsubscribe();
