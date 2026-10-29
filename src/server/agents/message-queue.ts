@@ -18,6 +18,7 @@ export interface QueueOptions {
   limit?: number;
   schedule?: (callback: () => void, ms: number) => unknown;
   cancel?: (handle: unknown) => void;
+  isPending?: (text: string) => Promise<boolean>;
 }
 
 const PASTE_START = '\x1b[200~';
@@ -40,7 +41,9 @@ export class MessageQueue {
   private readonly limit: number;
   private readonly schedule: (callback: () => void, ms: number) => unknown;
   private readonly cancel: (handle: unknown) => void;
+  private readonly isPending: (text: string) => Promise<boolean>;
   private pendingSubmit: unknown = null;
+  private round = 0;
 
   constructor(
     private readonly write: (data: string) => void,
@@ -55,6 +58,7 @@ export class MessageQueue {
       ((handle) => {
         clearTimeout(handle as ReturnType<typeof setTimeout>);
       });
+    this.isPending = options.isPending ?? (() => Promise.resolve(false));
   }
 
   get size(): number {
@@ -82,11 +86,12 @@ export class MessageQueue {
     if (!next) return null;
     this.confirmSubmit();
     this.write(bracketedPaste(next.text));
-    this.scheduleSubmit(this.submitDelayMs, MAX_SUBMIT_RETRIES);
+    this.scheduleSubmit(next.text, this.submitDelayMs, MAX_SUBMIT_RETRIES, false);
     return next;
   }
 
   confirmSubmit(): void {
+    this.round += 1;
     if (this.pendingSubmit === null) return;
     this.cancel(this.pendingSubmit);
     this.pendingSubmit = null;
@@ -97,11 +102,18 @@ export class MessageQueue {
     this.confirmSubmit();
   }
 
-  private scheduleSubmit(ms: number, retries: number): void {
+  private scheduleSubmit(text: string, ms: number, retries: number, isRetry: boolean): void {
+    const round = this.round;
     this.pendingSubmit = this.schedule(() => {
       this.pendingSubmit = null;
-      this.write('\r');
-      if (retries > 0) this.scheduleSubmit(this.submitRetryMs, retries - 1);
+      void this.submit(text, round, retries, isRetry);
     }, ms);
+  }
+
+  private async submit(text: string, round: number, retries: number, isRetry: boolean) {
+    if (isRetry && !(await this.isPending(text).catch(() => false))) return;
+    if (round !== this.round) return;
+    this.write('\r');
+    if (retries > 0) this.scheduleSubmit(text, this.submitRetryMs, retries - 1, true);
   }
 }

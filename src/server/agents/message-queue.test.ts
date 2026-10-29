@@ -9,7 +9,7 @@ import {
   sanitizePrompt,
 } from './message-queue.js';
 
-function setup(limit?: number) {
+function setup(limit?: number, isPending?: (text: string) => Promise<boolean>) {
   const written: string[] = [];
   const timers = new Map<number, { callback: () => void; ms: number }>();
   let nextHandle = 1;
@@ -22,13 +22,19 @@ function setup(limit?: number) {
       return handle;
     },
     cancel: (handle) => timers.delete(handle as number),
+    ...(isPending ? { isPending } : {}),
   });
   const flushTimers = () => {
     const pending = [...timers.values()];
     timers.clear();
     for (const timer of pending) timer.callback();
   };
-  return { queue, written, timers, flushTimers };
+  const flushRetry = async () => {
+    flushTimers();
+    await new Promise((resolve) => setImmediate(resolve));
+  };
+  const enters = () => written.filter((data) => data === '\r').length;
+  return { queue, written, timers, flushTimers, flushRetry, enters };
 }
 
 describe('sanitizePrompt', () => {
@@ -140,25 +146,63 @@ describe('MessageQueue', () => {
     expect(cancel).not.toHaveBeenCalled();
   });
 
-  it('presses Enter again until the submit is confirmed', () => {
-    const { queue, written, timers, flushTimers } = setup();
+  it('presses Enter again while the pasted text is still in the input', async () => {
+    const isPending = vi.fn(() => Promise.resolve(true));
+    const { queue, timers, flushTimers, flushRetry, enters } = setup(undefined, isPending);
     queue.enqueue({ fromId: null, text: 'x' });
     queue.deliverNext();
     flushTimers();
     expect([...timers.values()][0]?.ms).toBe(SUBMIT_RETRY_MS);
-    flushTimers();
-    expect(written.filter((data) => data === '\r')).toHaveLength(2);
+    await flushRetry();
+    expect(isPending).toHaveBeenCalledWith('x');
+    expect(enters()).toBe(2);
     queue.confirmSubmit();
     expect(timers.size).toBe(0);
   });
 
-  it(`stops after ${MAX_SUBMIT_RETRIES} extra Enters`, () => {
-    const { queue, written, timers, flushTimers } = setup();
+  it(`stops after ${MAX_SUBMIT_RETRIES} extra Enters`, async () => {
+    const { queue, timers, flushRetry, enters } = setup(undefined, () => Promise.resolve(true));
     queue.enqueue({ fromId: null, text: 'x' });
     queue.deliverNext();
-    for (let i = 0; i < 5; i++) flushTimers();
-    expect(written.filter((data) => data === '\r')).toHaveLength(MAX_SUBMIT_RETRIES + 1);
+    for (let i = 0; i < 5; i++) await flushRetry();
+    expect(enters()).toBe(MAX_SUBMIT_RETRIES + 1);
     expect(timers.size).toBe(0);
+  });
+
+  it.each([
+    ['the text left the input', () => Promise.resolve(false)],
+    ['the screen cannot be read', () => Promise.reject(new Error('gone'))],
+  ])('stops retrying when %s', async (_, isPending) => {
+    const { queue, timers, flushRetry, enters } = setup(undefined, isPending);
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.deliverNext();
+    await flushRetry();
+    await flushRetry();
+    expect(enters()).toBe(1);
+    expect(timers.size).toBe(0);
+  });
+
+  it('never retries without a way to read the input', async () => {
+    const { queue, flushRetry, enters } = setup();
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.deliverNext();
+    await flushRetry();
+    await flushRetry();
+    expect(enters()).toBe(1);
+  });
+
+  it('drops a retry confirmed while the screen was being read', async () => {
+    let answer: (pending: boolean) => void = () => undefined;
+    const isPending = () => new Promise<boolean>((resolve) => (answer = resolve));
+    const { queue, flushTimers, enters } = setup(undefined, isPending);
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.deliverNext();
+    flushTimers();
+    flushTimers();
+    queue.confirmSubmit();
+    answer(true);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(enters()).toBe(1);
   });
 
   it('cancels the previous retry when delivering the next message', () => {

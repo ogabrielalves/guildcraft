@@ -19,6 +19,7 @@ import type { StoredAgent } from '../store/agent-store.js';
 import type { Agent } from './agent.js';
 import type { AgentRegistry } from './agent-registry.js';
 import type { AgentFilePaths } from './agent-files.js';
+import { holdsPrompt } from './input-box.js';
 import { MessageQueue, sanitizePrompt } from './message-queue.js';
 import { detectTrustPrompt, trustAnswer } from './trust-prompt.js';
 
@@ -339,9 +340,12 @@ export class AgentManager {
     const process = this.deps.createProcess(this.spawnSpec(agent, files));
     const runtime: Runtime = {
       process,
-      queue: new MessageQueue((data) => {
-        process.write(data);
-      }),
+      queue: new MessageQueue(
+        (data) => {
+          process.write(data);
+        },
+        { isPending: async (text) => holdsPrompt(visibleTail(await process.snapshot()), text) },
+      ),
       readyTimer: null,
       visitTimers: new Set(),
       trustAttempts: 0,

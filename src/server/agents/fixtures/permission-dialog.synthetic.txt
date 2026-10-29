@@ -1,0 +1,17 @@
+ ▐▛███▛█   Claude Code v2.1.312
+▝▜██████▀  Opus 5.5 · Claude Pro
+────────────────────────────────────────────────────────────────────────────────
+❯ Summarize the README of this repository in two short sentences please
+
+● Bash(cat README.md)
+
+────────────────────────────────────────────────────────────────────────────────
+ Bash command
+
+   cat README.md
+   Read the project readme
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for cat commands in this folder
+   3. No, and tell Claude what to do differently (esc)

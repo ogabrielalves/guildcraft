@@ -21,6 +21,8 @@ import {
 } from '../../shared/constants.js';
 import { SUBMIT_DELAY_MS, SUBMIT_RETRY_MS } from './message-queue.js';
 
+const RULE = '─'.repeat(40);
+
 class FakeProcess implements ProcessHandle {
   running = false;
   written: string[] = [];
@@ -644,16 +646,31 @@ describe('prompts', () => {
     expect(b.process.written.at(-1)).toBe('\r');
   });
 
-  it('presses Enter again until the prompt submit hook arrives', async () => {
+  it('presses Enter again only while the prompt waits in the input', async () => {
     const ctx = setup();
     const a = await created(ctx);
+    const enters = () => a.process.written.filter((data) => data === '\r').length;
     ctx.manager.hook(a.id, 'SessionStart', {});
+    a.process.screen = `${RULE}\n❯ run tests\n${RULE}\n  ? for shortcuts`;
     ctx.manager.sendPrompt([a.id], 'run tests');
-    vi.advanceTimersByTime(SUBMIT_DELAY_MS + SUBMIT_RETRY_MS);
-    expect(a.process.written.filter((data) => data === '\r')).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(SUBMIT_DELAY_MS + SUBMIT_RETRY_MS);
+    expect(enters()).toBe(2);
+    a.process.screen = `${RULE}\n❯ \n${RULE}`;
+    await vi.advanceTimersByTimeAsync(SUBMIT_RETRY_MS * 5);
+    expect(enters()).toBe(2);
+  });
+
+  it('stops pressing Enter once the prompt submit hook arrives', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    const enters = () => a.process.written.filter((data) => data === '\r').length;
+    ctx.manager.hook(a.id, 'SessionStart', {});
+    a.process.screen = `${RULE}\n❯ run tests\n${RULE}`;
+    ctx.manager.sendPrompt([a.id], 'run tests');
+    await vi.advanceTimersByTimeAsync(SUBMIT_DELAY_MS);
     ctx.manager.hook(a.id, 'UserPromptSubmit', {});
-    vi.advanceTimersByTime(SUBMIT_RETRY_MS * 5);
-    expect(a.process.written.filter((data) => data === '\r')).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(SUBMIT_RETRY_MS * 5);
+    expect(enters()).toBe(1);
   });
 
   it('enqueues once per agent when ids repeat', async () => {
