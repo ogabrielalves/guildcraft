@@ -1,0 +1,898 @@
+{
+  "version": 2,
+  "bodyType": "female",
+  "selections": {
+    "body": {
+      "itemId": "body",
+      "subId": null,
+      "variant": "",
+      "recolor": "olive",
+      "name": "Body Color (olive)"
+    },
+    "head": {
+      "itemId": "heads_human_female",
+      "subId": null,
+      "variant": "",
+      "recolor": "olive",
+      "name": "Human Female (olive)"
+    },
+    "hair": {
+      "itemId": "hair_ponytail",
+      "subId": null,
+      "variant": "",
+      "recolor": "chestnut",
+      "name": "Ponytail (chestnut)"
+    },
+    "clothes": {
+      "itemId": "torso_clothes_longsleeve",
+      "subId": null,
+      "variant": "",
+      "recolor": "gray",
+      "name": "Longsleeve (gray)"
+    },
+    "legs": {
+      "itemId": "legs_pants2",
+      "subId": null,
+      "variant": "",
+      "recolor": "gray",
+      "name": "Long Pants (gray)"
+    },
+    "armour": {
+      "itemId": "torso_armour_plate",
+      "subId": null,
+      "variant": "",
+      "recolor": "silver",
+      "name": "Plate (silver)"
+    },
+    "shoulders": {
+      "itemId": "shoulders_pauldrons",
+      "subId": null,
+      "variant": "",
+      "recolor": "metal.silver",
+      "name": "Pauldrons (silver)"
+    },
+    "bracers": {
+      "itemId": "arms_bracers",
+      "subId": null,
+      "variant": "",
+      "recolor": "silver",
+      "name": "Bracers (silver)"
+    },
+    "arms": {
+      "itemId": "arms_armour",
+      "subId": null,
+      "variant": "",
+      "recolor": "silver",
+      "name": "Armour (silver)"
+    },
+    "shoes": {
+      "itemId": "feet_boots_revised",
+      "subId": null,
+      "variant": "",
+      "recolor": "gray",
+      "name": "Revised Boots (gray)"
+    },
+    "shoes_toe": {
+      "itemId": "feet_plate_toe_thick",
+      "subId": null,
+      "variant": "",
+      "recolor": "silver",
+      "name": "Thick Plated Toe (silver)"
+    },
+    "cape": {
+      "itemId": "cape_solid",
+      "subId": null,
+      "variant": "",
+      "recolor": "red",
+      "name": "Solid (red)"
+    },
+    "weapon": {
+      "itemId": "weapon_sword_longsword",
+      "subId": null,
+      "variant": "longsword",
+      "recolor": "",
+      "name": "Longsword (longsword)"
+    }
+  },
+  "selectedAnimation": "walk",
+  "showTransparencyGrid": true,
+  "applyTransparencyMask": false,
+  "matchBodyColorEnabled": true,
+  "compactDisplay": false,
+  "enabledLicenses": {
+    "CC0": true,
+    "CC-BY-SA": true,
+    "CC-BY": true,
+    "OGA-BY": true,
+    "GPL": true
+  },
+  "enabledAnimations": {
+    "spellcast": false,
+    "thrust": false,
+    "walk": false,
+    "slash": false,
+    "shoot": false,
+    "hurt": false,
+    "climb": false,
+    "idle": false,
+    "jump": false,
+    "sit": false,
+    "emote": false,
+    "run": false,
+    "watering": false,
+    "combat": false,
+    "1h_slash": false,
+    "1h_backslash": false,
+    "1h_halfslash": false
+  },
+  "url": "https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=female&body=Body_Color_olive&head=Human_Female_olive&hair=Ponytail_chestnut&clothes=Longsleeve_gray&legs=Long_Pants_gray&armour=Plate_silver&shoulders=Pauldrons_metal.silver&bracers=Bracers_silver&arms=Armour_silver&shoes=Revised_Boots_gray&shoes_toe=Thick_Plated_Toe_silver&cape=Solid_red&weapon=Longsword_longsword",
+  "layers": [
+    {
+      "itemId": "cape_solid",
+      "name": "Solid (red)",
+      "variant": "",
+      "recolors": {
+        "cape": "red"
+      },
+      "zPos": 5,
+      "layerNum": 2,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "cape/solid/bg/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle"
+      ]
+    },
+    {
+      "itemId": "hair_ponytail",
+      "name": "Ponytail (chestnut)",
+      "variant": "",
+      "recolors": {
+        "hair": "chestnut"
+      },
+      "zPos": 9,
+      "layerNum": 2,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "hair/ponytail/adult/bg/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "weapon_sword_longsword",
+      "name": "Longsword (longsword)",
+      "variant": "longsword",
+      "recolors": null,
+      "zPos": 9,
+      "layerNum": 2,
+      "yPos": 512,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "weapon/sword/longsword/universal_behind/walk/longsword.png"
+      },
+      "supportedAnimations": [
+        "walk",
+        "hurt"
+      ]
+    },
+    {
+      "itemId": "body",
+      "name": "Body Color (olive)",
+      "variant": "",
+      "recolors": {
+        "body": "olive"
+      },
+      "zPos": 10,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "body/bodies/female/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "legs_pants2",
+      "name": "Long Pants (gray)",
+      "variant": "",
+      "recolors": {
+        "legs": "gray"
+      },
+      "zPos": 20,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "legs/pants2/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "feet_boots_revised",
+      "name": "Revised Boots (gray)",
+      "variant": "",
+      "recolors": {
+        "shoes": "gray"
+      },
+      "zPos": 25,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "feet/boots/revised/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "feet_plate_toe_thick",
+      "name": "Thick Plated Toe (silver)",
+      "variant": "",
+      "recolors": {
+        "shoes_toe": "silver"
+      },
+      "zPos": 27,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "feet/accessory/plate_toe_thick/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "torso_clothes_longsleeve",
+      "name": "Longsleeve (gray)",
+      "variant": "",
+      "recolors": {
+        "clothes": "gray"
+      },
+      "zPos": 35,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "torso/clothes/longsleeve/longsleeve/female/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "torso_armour_plate",
+      "name": "Plate (silver)",
+      "variant": "",
+      "recolors": {
+        "armour": "silver"
+      },
+      "zPos": 60,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "torso/armour/plate/female/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "shoulders_pauldrons",
+      "name": "Pauldrons (silver)",
+      "variant": "",
+      "recolors": {
+        "shoulders": "metal.silver"
+      },
+      "zPos": 60,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "shoulders/pauldrons/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "arms_armour",
+      "name": "Armour (silver)",
+      "variant": "",
+      "recolors": {
+        "arms": "silver"
+      },
+      "zPos": 60,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "arms/armour/plate/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote"
+      ]
+    },
+    {
+      "itemId": "arms_bracers",
+      "name": "Bracers (silver)",
+      "variant": "",
+      "recolors": {
+        "bracers": "silver"
+      },
+      "zPos": 70,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "arms/bracers/thin/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run"
+      ]
+    },
+    {
+      "itemId": "cape_solid",
+      "name": "Solid (red)",
+      "variant": "",
+      "recolors": {
+        "cape": "red"
+      },
+      "zPos": 85,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "cape/solid/fg/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle"
+      ]
+    },
+    {
+      "itemId": "heads_human_female",
+      "name": "Human Female (olive)",
+      "variant": "",
+      "recolors": {
+        "head": "olive"
+      },
+      "zPos": 100,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "head/heads/human/female/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "hair_ponytail",
+      "name": "Ponytail (chestnut)",
+      "variant": "",
+      "recolors": {
+        "hair": "chestnut"
+      },
+      "zPos": 120,
+      "layerNum": 1,
+      "yPos": 0,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "hair/ponytail/adult/fg/spellcast.png"
+      },
+      "supportedAnimations": [
+        "spellcast",
+        "thrust",
+        "walk",
+        "slash",
+        "shoot",
+        "hurt",
+        "climb",
+        "idle",
+        "jump",
+        "sit",
+        "emote",
+        "run",
+        "combat_idle",
+        "backslash",
+        "halfslash"
+      ]
+    },
+    {
+      "itemId": "weapon_sword_longsword",
+      "name": "Longsword (longsword)",
+      "variant": "longsword",
+      "recolors": null,
+      "zPos": 140,
+      "layerNum": 1,
+      "yPos": 512,
+      "needsRecolor": false,
+      "source": {
+        "kind": "catalog",
+        "spritePath": "weapon/sword/longsword/walk/longsword.png"
+      },
+      "supportedAnimations": [
+        "walk",
+        "hurt"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "fileName": "body/bodies/female/walk.png",
+      "file": "body/bodies/female",
+      "notes": "see details at https://opengameart.org/content/lpc-character-bases",
+      "authors": [
+        "Benjamin K. Smith (BenCreating)",
+        "bluecarrot16",
+        "TheraHedwig",
+        "Evert",
+        "MuffinElZangano",
+        "Durrani",
+        "Pierre Vigier (pvigier)",
+        "ElizaWy",
+        "Matthew Krohn (makrohn)",
+        "Johannes Sjölund (wulax)",
+        "Stephen Challener (Redshrike)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+        "https://opengameart.org/content/lpc-ladies",
+        "https://opengameart.org/content/lpc-7-womens-shirts",
+        "https://opengameart.org/content/lpc-jump-expanded",
+        "https://opengameart.org/content/lpc-be-seated",
+        "https://opengameart.org/content/lpc-revised-character-basics",
+        "https://gitlab.com/vagabondgame/lpc-characters",
+        "https://opengameart.org/content/lpc-male-jumping-animation-by-durrani",
+        "https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle"
+      ]
+    },
+    {
+      "fileName": "head/heads/human/female/walk.png",
+      "file": "head/heads/human/female",
+      "notes": "original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16",
+      "authors": [
+        "bluecarrot16",
+        "Benjamin K. Smith (BenCreating)",
+        "Stephen Challener (Redshrike)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/",
+        "https://opengameart.org/content/lpc-character-bases"
+      ]
+    },
+    {
+      "fileName": "hair/ponytail/adult/fg/walk.png",
+      "file": "hair/ponytail",
+      "notes": "",
+      "authors": [
+        "JaidynReiman",
+        "Manuel Riecke (MrBeast)"
+      ],
+      "licenses": [
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+        "https://opengameart.org/content/lpc-expanded-hair"
+      ]
+    },
+    {
+      "fileName": "torso/clothes/longsleeve/longsleeve/female/walk.png",
+      "file": "torso/clothes/longsleeve/longsleeve/female",
+      "notes": "original by ElizaWy, edited to v3 bases by bluecarrot16; cleanup and climb/jump/run/sit/emote/revised combat adapted from LPC Revised by JaidynReiman",
+      "authors": [
+        "bluecarrot16",
+        "ElizaWy",
+        "JaidynReiman",
+        "Stephen Challener (Redshrike)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+        "https://opengameart.org/content/lpc-7-womens-shirts",
+        "http://opengameart.org/content/lpc-clothing-updates",
+        "https://opengameart.org/content/lpc-revised-character-basics",
+        "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+        "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+        "https://opengameart.org/content/lpc-expanded-simple-shirts"
+      ]
+    },
+    {
+      "fileName": "legs/pants2/thin/walk.png",
+      "file": "legs/pants2",
+      "notes": "Original bases by Redshrike, thrust/shoot bases by Wulax, original pants by ElizaWy, climb/jump/run/sit/emotes/revised combat by JaidynReiman",
+      "authors": [
+        "ElizaWy",
+        "JaidynReiman",
+        "Johannes Sjölund (wulax)",
+        "Stephen Challener (Redshrike)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0"
+      ],
+      "urls": [
+        "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+        "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+        "https://opengameart.org/content/lpc-expanded-pants"
+      ]
+    },
+    {
+      "fileName": "torso/armour/plate/female/walk.png",
+      "file": "torso/armour/plate/female",
+      "notes": "original by wulax, adapted to female base by makrohn, recolor by bigbeargames, color reduced to 7 colors and adapted to v3 bases by bluecarrot16, run/jump/sit/climb/revised combat by JaidynReiman, reduced colors to 6 (based on Napsio's Vitruvian)",
+      "authors": [
+        "JaidynReiman",
+        "bluecarrot16",
+        "Michael Whitlock (bigbeargames)",
+        "Matthew Krohn (makrohn)",
+        "Johannes Sjölund (wulax)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+        "https://opengameart.org/content/lpc-combat-armor-for-women",
+        "http://opengameart.org/content/lpc-clothing-updates"
+      ]
+    },
+    {
+      "fileName": "shoulders/pauldrons/thin/walk.png",
+      "file": "shoulders/pauldrons",
+      "notes": "adapted to female base by makrohn, adapted to v3 bases by bluecarrot16, climb/jump/sit/emote/run/revised combat by JaidynReiman",
+      "authors": [
+        "Matthew Krohn (makrohn)",
+        "Johannes Sjölund (wulax)",
+        "bluecarrot16",
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+        "http://opengameart.org/content/lpc-clothing-updates"
+      ]
+    },
+    {
+      "fileName": "arms/bracers/thin/walk.png",
+      "file": "arms/bracers",
+      "notes": "original by wulax, adjustments by Makrohn, climb/emote/jump/sit/run by JaidynReiman",
+      "authors": [
+        "Matthew Krohn (makrohn)",
+        "Johannes Sjölund (wulax)",
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites"
+      ]
+    },
+    {
+      "fileName": "arms/armour/plate/thin/walk.png",
+      "file": "arms/armour/plate/thin",
+      "notes": "original by wulax, adapted to female by makrohn, recolors by bigbeargames; adapted to v3 bases and further recolors by bluecarrot16, climb/emote by JaidynReiman",
+      "authors": [
+        "Michael Whitlock (bigbeargames)",
+        "Matthew Krohn (makrohn)",
+        "Johannes Sjölund (wulax)",
+        "bluecarrot16",
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+        "https://opengameart.org/content/lpc-combat-armor-for-women",
+        "http://opengameart.org/content/lpc-clothing-updates"
+      ]
+    },
+    {
+      "fileName": "feet/boots/revised/thin/walk.png",
+      "file": "feet/boots/revised",
+      "notes": "original by ElizaWy, remaining frames by JaidynReiman",
+      "authors": [
+        "ElizaWy",
+        "JaidynReiman",
+        "Stephen Challener (Redshrike)",
+        "Johannes Sjölund (wulax)"
+      ],
+      "licenses": [
+        "OGA-BY 3.0"
+      ],
+      "urls": [
+        "https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing",
+        "https://opengameart.org/content/lpc-expanded-sit-run-jump-more",
+        "https://opengameart.org/content/lpc-expanded-socks-shoes"
+      ]
+    },
+    {
+      "fileName": "feet/accessory/plate_toe_thick/thin/walk.png",
+      "file": "feet/accessory/plate_toe_thick",
+      "notes": "",
+      "authors": [
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0+",
+        "CC-BY 3.0+",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-kimono-relm",
+        "https://opengameart.org/content/lpc-expanded-socks-shoes"
+      ]
+    },
+    {
+      "fileName": "cape/solid/fg/walk.png",
+      "file": "cape/solid/fg",
+      "notes": "",
+      "authors": [
+        "bluecarrot16",
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-curly-hair-elven-ears-white-cape-with-blue-trim-and-more",
+        "https://opengameart.org/content/lpc-roman-armor",
+        "http://opengameart.org/content/lpc-clothing-updates"
+      ]
+    },
+    {
+      "fileName": "cape/solid/bg/walk.png",
+      "file": "cape/solid/bg",
+      "notes": "",
+      "authors": [
+        "Nila122",
+        "JaidynReiman"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0",
+        "GPL 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-curly-hair-elven-ears-white-cape-with-blue-trim-and-more",
+        "https://opengameart.org/content/lpc-roman-armor"
+      ]
+    },
+    {
+      "fileName": "weapon/sword/longsword/walk/longsword.png",
+      "file": "weapon/sword/longsword",
+      "notes": "",
+      "authors": [
+        "Johannes Sjölund (wulax)",
+        "bluecarrot16"
+      ],
+      "licenses": [
+        "OGA-BY 3.0",
+        "CC-BY-SA 3.0"
+      ],
+      "urls": [
+        "https://opengameart.org/content/lpc-medieval-fantasy-character-sprites",
+        "https://opengameart.org/content/lpc-extended-weapon-animations"
+      ]
+    }
+  ],
+  "hash": "sex=female&body=Body_Color_olive&head=Human_Female_olive&hair=Ponytail_chestnut&clothes=Longsleeve_gray&legs=Long_Pants_gray&armour=Plate_silver&shoulders=Pauldrons_metal.silver&bracers=Bracers_silver&arms=Armour_silver&shoes=Revised_Boots_gray&shoes_toe=Thick_Plated_Toe_silver&cape=Solid_red&weapon=Longsword_longsword"
+}
