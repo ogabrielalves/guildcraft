@@ -83,13 +83,17 @@ interface Runtime {
   trustOpen: boolean;
   trustWindow: boolean;
   checkingTrust: boolean;
+  hold: QueueHold;
   unsubscribe: (() => void)[];
 }
+
+type QueueHold = 'none' | 'interrupted' | 'resumed';
 
 const ESC = '\x1b';
 const VISIBLE_LINES = 40;
 const SUBMIT_KEY = /^(?:[1-9]|.*\r.*)$/s;
 const WORK_HOOKS: readonly HookEvent[] = ['UserPromptSubmit', 'PreToolUse'];
+const BUSY_STATUSES: readonly Agent['status'][] = ['thinking', 'tool', 'waiting'];
 
 export function visibleTail(screen: string, lines = VISIBLE_LINES): string {
   return screen.split(/\r?\n/).slice(-lines).join('\n');
@@ -196,6 +200,7 @@ export class AgentManager {
     runtime.process.write(data);
     // esc interrupts the turn without firing a stop hook
     if (data === ESC && agent.status !== 'offline' && agent.status !== 'starting') {
+      if (BUSY_STATUSES.includes(agent.status)) runtime.hold = 'interrupted';
       this.update(agent, 'idle');
     } else if (agent.status === 'waiting' && SUBMIT_KEY.test(data)) {
       this.update(agent, 'thinking');
@@ -232,6 +237,7 @@ export class AgentManager {
     if (targets.some(([, runtime]) => runtime.queue.isFull)) return fail('QUEUE_FULL');
     const results: SendResult[] = [];
     for (const [agent, runtime] of targets) {
+      runtime.hold = 'none';
       const queued = runtime.queue.enqueue({ fromId: null, text });
       if (!queued.ok) return queued;
       agent.queued = runtime.queue.size;
@@ -293,12 +299,18 @@ export class AgentManager {
       runtime.trustWindow = false;
       runtime.trustOpen = false;
     }
+    if (runtime) this.advanceHold(runtime, event);
     const outcome = handleHook(event, parseHookPayload(rawPayload), agent.status);
     if (!outcome) return ok(undefined);
     this.clearReadyTimer(id);
     this.update(agent, outcome.status, outcome.tool);
     if (outcome.event) this.record(outcome.event, id);
     return ok(undefined);
+  }
+
+  private advanceHold(runtime: Runtime, event: HookEvent): void {
+    if (event === 'UserPromptSubmit' && runtime.hold === 'interrupted') runtime.hold = 'resumed';
+    else if (event === 'Stop' && runtime.hold === 'resumed') runtime.hold = 'none';
   }
 
   private async spawn(agent: Agent): Promise<boolean> {
@@ -321,6 +333,7 @@ export class AgentManager {
       trustOpen: false,
       trustWindow: true,
       checkingTrust: false,
+      hold: 'none',
       unsubscribe: [],
     };
     runtime.unsubscribe.push(
@@ -397,7 +410,7 @@ export class AgentManager {
 
   private tryDeliver(agent: Agent): void {
     const runtime = this.runtimes.get(agent.id);
-    if (!runtime || runtime.trustOpen || agent.status !== 'idle') return;
+    if (!runtime || runtime.trustOpen || runtime.hold !== 'none' || agent.status !== 'idle') return;
     const message = runtime.queue.deliverNext();
     if (!message) return;
     agent.queued = runtime.queue.size;

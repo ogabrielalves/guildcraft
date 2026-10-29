@@ -322,6 +322,45 @@ describe('terminal', () => {
     ctx.manager.input(id, '\x1b');
     expect(ctx.statusOf(id)).toBe('starting');
   });
+
+  it('holds the queue after an interrupt until the next prompt finishes', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    ctx.manager.hook(id, 'SessionStart', {});
+    ctx.manager.sendPrompt([id], 'first');
+    ctx.manager.sendPrompt([id], 'second');
+    ctx.manager.interrupt(id);
+    expect(ctx.statusOf(id)).toBe('idle');
+    ctx.manager.hook(id, 'Stop', {});
+    expect(ctx.deps.registry.get(id)?.queued).toBe(1);
+
+    ctx.manager.hook(id, 'UserPromptSubmit', {});
+    expect(ctx.deps.registry.get(id)?.queued).toBe(1);
+    ctx.manager.hook(id, 'Stop', {});
+    expect(process.written.at(-1)).toBe('\x1b[200~second\x1b[201~');
+    expect(ctx.deps.registry.get(id)?.queued).toBe(0);
+  });
+
+  it('releases the hold when the user sends a prompt', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    ctx.manager.hook(id, 'PreToolUse', { tool_name: 'Bash' });
+    ctx.manager.interrupt(id);
+    ctx.manager.sendPrompt([id], 'go on');
+    expect(process.written.at(-1)).toBe('\x1b[200~go on\x1b[201~');
+    expect(ctx.statusOf(id)).toBe('thinking');
+  });
+
+  it('does not hold the queue on escape while idle', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    const b = await created(ctx, { name: 'Corvin', skin: 'corvin' });
+    ctx.manager.hook(b.id, 'SessionStart', {});
+    ctx.manager.input(b.id, '\x1b');
+    ctx.manager.sendMessage(a.id, 'Corvin', 'hi');
+    vi.advanceTimersByTime(VISIT_DELAY_MS);
+    expect(b.process.written.at(-1)).toBe('\x1b[200~[Message from Mortis]\nhi\x1b[201~');
+  });
 });
 
 describe('trust prompt', () => {
