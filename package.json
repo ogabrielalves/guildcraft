@@ -1,0 +1,19 @@
+{
+  "name": "guildcraft",
+  "version": "0.0.0",
+  "description": "A pixel-art guild workshop where every adventurer is a live Claude Code agent",
+  "keywords": ["claude-code", "agents", "pixel-art", "terminal", "mcp"],
+  "homepage": "https://github.com/ogabrielalves/guildcraft#readme",
+  "bugs": "https://github.com/ogabrielalves/guildcraft/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ogabrielalves/guildcraft.git"
+  },
+  "license": "MIT",
+  "author": "Gabriel Alves",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "assets"]
+}
