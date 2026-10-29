@@ -3,6 +3,10 @@ export const DEFAULT_PORT = 7777;
 export const DEFAULT_HOST = '127.0.0.1';
 export const ENV_PREFIX = 'GUILDCRAFT_';
 
+export const TOKEN_HEADER = 'x-guildcraft-token';
+export const TOKEN_QUERY = 'token';
+export const UNAUTHORIZED_CLOSE_CODE = 4401;
+
 export const AGENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 export const MAX_NAME_LENGTH = 32;
 export const MAX_PATH_LENGTH = 4096;

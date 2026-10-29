@@ -7,6 +7,10 @@ The token reaches hooks and the MCP server through the `GUILDCRAFT_TOKEN` enviro
 each agent, so it is never written to disk or shown in process arguments. Commands an agent runs
 inherit that variable too. This is expected: agents already talk to the server through MCP.
 
+Any agent holding the token can call the local API on behalf of another agent, for example to send
+a message signed with another name. Agents already run commands on your machine, so this does not
+grant anything new; treat every agent you recruit as trusted.
+
 ## Reporting a vulnerability
 
 Do not open a public issue. Use

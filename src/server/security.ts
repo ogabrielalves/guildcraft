@@ -1,8 +1,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { TOKEN_QUERY } from '../shared/constants.js';
 
 export const TOKEN_BYTES = 32;
-export const TOKEN_HEADER = 'x-guildcraft-token';
-export const TOKEN_QUERY = 'token';
 
 export function createToken(): string {
   return randomBytes(TOKEN_BYTES).toString('base64url');

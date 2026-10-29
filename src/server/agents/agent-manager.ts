@@ -4,7 +4,12 @@ import type {
   VillageEvent,
   VillageEventKind,
 } from '../../shared/agent.js';
-import { ENV_PREFIX, MAX_EVENTS } from '../../shared/constants.js';
+import {
+  ENV_PREFIX,
+  MAX_EVENTS,
+  MAX_NAME_LENGTH,
+  MAX_PROMPT_LENGTH,
+} from '../../shared/constants.js';
 import type { ErrorCode } from '../../shared/errors.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import type { HookEvent } from '../hooks/hook-events.js';
@@ -96,6 +101,12 @@ function ok<T>(value: T): ManagerResult<T> {
 
 function fail(code: ErrorCode): { ok: false; code: ErrorCode } {
   return { ok: false, code };
+}
+
+function checkText(text: string): ErrorCode | null {
+  if (text.length > MAX_PROMPT_LENGTH) return 'INVALID_MESSAGE';
+  if (sanitizePrompt(text).trim() === '') return 'EMPTY_PROMPT';
+  return null;
 }
 
 export function formatAgentMessage(fromName: string, text: string): string {
@@ -216,7 +227,8 @@ export class AgentManager {
       if (!target.ok) return target;
       targets.push(target.value);
     }
-    if (sanitizePrompt(text).trim() === '') return fail('EMPTY_PROMPT');
+    const invalid = checkText(text);
+    if (invalid) return fail(invalid);
     if (targets.some(([, runtime]) => runtime.queue.isFull)) return fail('QUEUE_FULL');
     const results: SendResult[] = [];
     for (const [agent, runtime] of targets) {
@@ -234,12 +246,14 @@ export class AgentManager {
   sendMessage(fromId: string, toName: string, text: string): ManagerResult<SendResult> {
     const from = this.deps.registry.get(fromId);
     if (!from) return fail('AGENT_NOT_FOUND');
+    if (toName.length > MAX_NAME_LENGTH) return fail('INVALID_MESSAGE');
     const recipient = this.deps.registry.findByName(toName);
     if (!recipient || recipient.id === from.id) return fail('AGENT_NOT_FOUND');
     const target = this.target(recipient.id);
     if (!target.ok) return target;
     const [to, runtime] = target.value;
-    if (sanitizePrompt(text).trim() === '') return fail('EMPTY_PROMPT');
+    const invalid = checkText(text);
+    if (invalid) return fail(invalid);
     const queued = runtime.queue.enqueue({
       fromId: from.id,
       text: formatAgentMessage(from.name, text),
@@ -266,8 +280,9 @@ export class AgentManager {
     return ok([agent, runtime]);
   }
 
-  others(id: string): AgentView[] {
-    return this.views().filter((view) => view.id !== id);
+  others(id: string): ManagerResult<AgentView[]> {
+    if (!this.deps.registry.get(id)) return fail('AGENT_NOT_FOUND');
+    return ok(this.views().filter((view) => view.id !== id));
   }
 
   hook(id: string, event: HookEvent, rawPayload: unknown): ManagerResult {

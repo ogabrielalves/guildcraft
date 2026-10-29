@@ -11,7 +11,12 @@ import {
   preview,
   visibleTail,
 } from './agent-manager.js';
-import { MAX_EVENTS, MAX_QUEUED } from '../../shared/constants.js';
+import {
+  MAX_EVENTS,
+  MAX_NAME_LENGTH,
+  MAX_PROMPT_LENGTH,
+  MAX_QUEUED,
+} from '../../shared/constants.js';
 import { SUBMIT_DELAY_MS } from './message-queue.js';
 
 class FakeProcess implements ProcessHandle {
@@ -524,6 +529,18 @@ describe('prompts', () => {
     const a = await created(ctx);
     expect(ctx.manager.sendPrompt([a.id], '  ')).toEqual({ ok: false, code: 'EMPTY_PROMPT' });
   });
+
+  it('rejects prompts longer than the limit', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    expect(ctx.manager.sendPrompt([a.id], 'x'.repeat(MAX_PROMPT_LENGTH + 1))).toEqual({
+      ok: false,
+      code: 'INVALID_MESSAGE',
+    });
+    expect(ctx.manager.sendPrompt([a.id], 'x'.repeat(MAX_PROMPT_LENGTH))).toMatchObject({
+      ok: true,
+    });
+  });
 });
 
 describe('agent messages', () => {
@@ -593,7 +610,24 @@ describe('agent messages', () => {
     const ctx = setup();
     const a = await created(ctx);
     const b = await created(ctx, { name: 'Corvin', skin: 'corvin' });
-    expect(ctx.manager.others(a.id).map((v) => v.id)).toEqual([b.id]);
+    const others = ctx.manager.others(a.id);
+    expect(others.ok && others.value.map((v) => v.id)).toEqual([b.id]);
+    expect(ctx.manager.others('nope')).toEqual({ ok: false, code: 'AGENT_NOT_FOUND' });
+  });
+
+  it('rejects oversized messages and recipient names', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    await created(ctx, { name: 'Corvin', skin: 'corvin' });
+    expect(ctx.manager.sendMessage(a.id, 'Corvin', 'x'.repeat(MAX_PROMPT_LENGTH + 1))).toEqual({
+      ok: false,
+      code: 'INVALID_MESSAGE',
+    });
+    expect(ctx.manager.sendMessage(a.id, 'C'.repeat(MAX_NAME_LENGTH + 1), 'hi')).toEqual({
+      ok: false,
+      code: 'INVALID_MESSAGE',
+    });
+    expect(ctx.ofType('agent:visit')).toEqual([]);
   });
 });
 
