@@ -71,8 +71,8 @@ async function boot(overrides: Partial<BootDeps> = {}, configOverrides: Partial<
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'guildcraft-boot-'));
-  await mkdir(join(root, 'assets', 'characters', 'lpc'), { recursive: true });
-  await writeFile(join(root, 'assets', 'characters', 'lpc', 'oren.json'), '{}');
+  await mkdir(join(root, 'assets', 'characters', 'oren'), { recursive: true });
+  await writeFile(join(root, 'assets', 'characters', 'oren', 'oren.json'), '{}');
   await mkdir(join(root, 'dist', 'web'), { recursive: true });
   await writeFile(join(root, 'dist', 'web', 'index.html'), '<p>workshop</p>');
   config = {

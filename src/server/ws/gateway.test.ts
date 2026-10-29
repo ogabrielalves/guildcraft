@@ -69,9 +69,11 @@ function connect({
   token = TOKEN,
   origin,
   path = '/ws',
-}: { token?: string; origin?: string; path?: string } = {}): Connection {
+  host,
+}: { token?: string; origin?: string; path?: string; host?: string } = {}): Connection {
   const socket = new WebSocket(`ws://127.0.0.1:${port}${path}?token=${token}`, {
     origin: origin ?? `http://127.0.0.1:${port}`,
+    ...(host ? { headers: { host } } : {}),
   });
   const messages: ServerMessage[] = [];
   let waiter: (() => void) | null = null;
@@ -184,6 +186,13 @@ describe('gateway handshake', () => {
     const { socket } = connect({ origin: 'http://evil.test' });
     expect(await failed(socket)).toBe(403);
     expect(logs).toEqual(['ws: rejected origin http://evil.test']);
+  });
+
+  it('rejects a foreign host such as a rebound domain', async () => {
+    await start();
+    const { socket } = connect({ host: `evil.test:${port}` });
+    expect(await failed(socket)).toBe(403);
+    expect(logs).toEqual([`ws: rejected host evil.test:${port}`]);
   });
 
   it('rejects other paths', async () => {

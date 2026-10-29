@@ -3,6 +3,7 @@ import {
   allowedOrigins,
   createToken,
   isAllowedOrigin,
+  isLoopbackHost,
   launchUrl,
   tokenFromUrl,
   tokensMatch,
@@ -41,6 +42,24 @@ describe('origins', () => {
     undefined,
   ])('blocks %s', (origin) => {
     expect(isAllowedOrigin(origin, origins)).toBe(false);
+  });
+});
+
+describe('isLoopbackHost', () => {
+  it.each(['127.0.0.1:7777', 'localhost:5173', 'LOCALHOST', '127.0.0.1'])('allows %s', (host) => {
+    expect(isLoopbackHost(host)).toBe(true);
+  });
+
+  it.each([
+    'evil.test:7777',
+    'localhost.evil.test',
+    '127.0.0.1.nip.io:7777',
+    'evil.test@localhost',
+    '[::1]:7777',
+    '',
+    undefined,
+  ])('blocks %s', (host) => {
+    expect(isLoopbackHost(host)).toBe(false);
   });
 });
 

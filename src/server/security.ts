@@ -34,3 +34,16 @@ export function tokenFromUrl(url: string | undefined): string | null {
 export function launchUrl(port: number, token: string): string {
   return `http://127.0.0.1:${port}/?${TOKEN_QUERY}=${encodeURIComponent(token)}`;
 }
+
+const LOOPBACK_HOST = /^(?:127\.0\.0\.1|localhost)(?::\d{1,5})?$/i;
+
+export function isLoopbackHost(host: string | undefined): boolean {
+  return host !== undefined && LOOPBACK_HOST.test(host);
+}
+
+export const SECURITY_HEADERS: Readonly<Record<string, string>> = {
+  'Content-Security-Policy': "frame-ancestors 'none'",
+  'Referrer-Policy': 'no-referrer',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+};

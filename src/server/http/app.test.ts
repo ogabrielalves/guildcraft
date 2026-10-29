@@ -1,3 +1,4 @@
+import { request as httpRequest } from 'node:http';
 import type { Server } from 'node:http';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
@@ -91,6 +92,32 @@ describe('static files', () => {
 
   it('hides the framework header', async () => {
     expect((await fetch(`${base}/`)).headers.get('x-powered-by')).toBeNull();
+  });
+});
+
+describe('hardening', () => {
+  function withHost(host: string): Promise<number | undefined> {
+    return new Promise((resolve, reject) => {
+      const req = httpRequest(`${base}/`, { headers: { host } }, (res) => {
+        res.resume();
+        resolve(res.statusCode);
+      });
+      req.on('error', reject);
+      req.end();
+    });
+  }
+
+  it('rejects requests for a foreign host such as a rebound domain', async () => {
+    expect(await withHost('evil.test')).toBe(403);
+    expect(await withHost('localhost:5173')).toBe(200);
+  });
+
+  it('sends security headers', async () => {
+    const { headers } = await fetch(`${base}/`);
+    expect(headers.get('x-content-type-options')).toBe('nosniff');
+    expect(headers.get('referrer-policy')).toBe('no-referrer');
+    expect(headers.get('x-frame-options')).toBe('DENY');
+    expect(headers.get('content-security-policy')).toBe("frame-ancestors 'none'");
   });
 });
 

@@ -7,7 +7,7 @@ import type { Failure } from '../../shared/errors.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import { decodeClientMessage } from '../../shared/protocol.js';
 import type { AgentManager } from '../agents/agent-manager.js';
-import { isAllowedOrigin, tokenFromUrl, tokensMatch } from '../security.js';
+import { isAllowedOrigin, isLoopbackHost, tokenFromUrl, tokensMatch } from '../security.js';
 import type { CommandTarget } from './handlers.js';
 import { handleClientMessage } from './handlers.js';
 
@@ -85,6 +85,11 @@ export class Gateway {
   private upgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void {
     if (pathOf(req.url) !== WS_PATH) {
       reject(socket, 404, 'Not Found');
+      return;
+    }
+    if (!isLoopbackHost(req.headers.host)) {
+      this.log(`ws: rejected host ${req.headers.host ?? '(none)'}`);
+      reject(socket, 403, 'Forbidden');
       return;
     }
     if (!isAllowedOrigin(req.headers.origin, this.options.origins)) {

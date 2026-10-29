@@ -42,6 +42,22 @@ describe('inputBoxText', () => {
   });
 });
 
+describe.each([
+  ['LF', '\n'],
+  ['CRLF', '\r\n'],
+])('screens with %s line endings', (_, eol) => {
+  const withEol = (name: string) => fixture(name).replace(/\r?\n/g, eol);
+
+  it('reads the pending input', () => {
+    expect(inputBoxText(withEol('input-pending.serialized.txt'))).toBe(PROMPT);
+    expect(holdsPrompt(withEol('input-multiline.serialized.txt'), PROMPT)).toBe(true);
+  });
+
+  it('refuses a permission dialog', () => {
+    expect(holdsPrompt(withEol('permission-dialog.synthetic.txt'), PROMPT)).toBe(false);
+  });
+});
+
 describe('holdsPrompt', () => {
   it('matches the pasted text still waiting in the input', () => {
     expect(holdsPrompt(fixture('input-pending.serialized.txt'), PROMPT)).toBe(true);

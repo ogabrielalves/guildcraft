@@ -18,8 +18,8 @@ let root: string;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'guildcraft-e2e-'));
-  await mkdir(join(root, 'assets', 'characters', 'lpc'), { recursive: true });
-  await writeFile(join(root, 'assets', 'characters', 'lpc', 'oren.json'), '{}');
+  await mkdir(join(root, 'assets', 'characters', 'oren'), { recursive: true });
+  await writeFile(join(root, 'assets', 'characters', 'oren', 'oren.json'), '{}');
   await mkdir(join(root, 'dist', 'bin'), { recursive: true });
   await writeFile(join(root, 'package.json'), '{ "type": "module" }');
   await writeFile(

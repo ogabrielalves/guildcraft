@@ -54,12 +54,12 @@ describe('resolveClaudeBinary', () => {
       options({
         platform: 'win32',
         home: WIN_HOME,
-        env: { PATH: dir },
+        env: { PATH: dir, SystemRoot: String.raw`D:\Win` },
         files: [win32.join(dir, 'claude.cmd')],
       }),
     );
     expect(result).toEqual({
-      command: 'cmd.exe',
+      command: String.raw`D:\Win\System32\cmd.exe`,
       args: ['/d', '/s', '/c', win32.join(dir, 'claude.cmd')],
     });
   });
@@ -82,7 +82,21 @@ describe('resolveClaudeBinary', () => {
     const result = resolveClaudeBinary(
       options({ override: bat, platform: 'win32', home: WIN_HOME, files: [bat] }),
     );
-    expect(result?.command).toBe('cmd.exe');
+    expect(result?.command).toBe(String.raw`C:\Windows\System32\cmd.exe`);
+  });
+
+  it.each([
+    ['windows', 'win32', String.raw`.;tools;C:\bin`, String.raw`C:\bin\claude.exe`],
+    ['unix', 'linux', '.:bin:/usr/bin', '/usr/bin/claude'],
+  ] as const)('skips relative %s PATH entries', (_, platform, path, installed) => {
+    const planted =
+      platform === 'win32'
+        ? ['claude.exe', String.raw`tools\claude.exe`]
+        : ['claude', 'bin/claude'];
+    const result = resolveClaudeBinary(
+      options({ platform, home: WIN_HOME, env: { PATH: path }, files: [...planted, installed] }),
+    );
+    expect(result?.command).toBe(installed);
   });
 
   it('rejects a missing override even when claude is on PATH', () => {

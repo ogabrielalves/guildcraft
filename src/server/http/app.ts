@@ -1,7 +1,7 @@
 import express from 'express';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { TOKEN_HEADER } from '../../shared/constants.js';
-import { tokensMatch } from '../security.js';
+import { SECURITY_HEADERS, isLoopbackHost, tokensMatch } from '../security.js';
 import { sendError } from './respond.js';
 import type { FsDeps } from './routes/fs.js';
 import { fsRouter } from './routes/fs.js';
@@ -30,6 +30,14 @@ export function requireToken(token: string) {
 export function createApp(options: AppOptions): Express {
   const app = express();
   app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    if (!isLoopbackHost(req.headers.host)) {
+      res.status(403).end();
+      return;
+    }
+    res.set(SECURITY_HEADERS);
+    next();
+  });
   app.use('/assets', express.static(options.assetsDir, { fallthrough: false }));
   if (options.webDir) app.use(express.static(options.webDir));
 
