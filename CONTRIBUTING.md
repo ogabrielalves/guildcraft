@@ -32,7 +32,7 @@ Scopes: `shared`, `server`, `agents`, `hooks`, `mcp`, `cli`, `platform`, `web`, 
 | ------------ | ---------------------------------------------- |
 | `pre-commit` | ESLint, Prettier and tests related to the diff |
 | `commit-msg` | commitlint                                     |
-| `pre-push`   | Typecheck and the full suite with coverage     |
+| `pre-push`   | Typecheck, full suite with coverage and build  |
 
 ## Pull requests
 
