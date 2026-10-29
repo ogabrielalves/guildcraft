@@ -100,7 +100,7 @@ describe('createGame', () => {
     game.start();
     expect(callbacks).toHaveLength(1);
     callbacks.shift()?.(16);
-    expect(drawn).toEqual(['a']);
+    expect(drawn).toEqual(['a', '💭']);
     expect(callbacks).toHaveLength(1);
   });
 

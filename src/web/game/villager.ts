@@ -62,6 +62,10 @@ export class Villager {
     return this.visit !== null;
   }
 
+  get atStation(): boolean {
+    return isWorkingActivity(this.activityNow) && !this.moving && this.visit === null;
+  }
+
   get pose(): Pose {
     if (this.moving) return 'walk';
     if (this.cheer > 0) return 'cheer';

@@ -143,6 +143,19 @@ describe('Villager', () => {
     expect(villager.visiting).toBe(false);
   });
 
+  it('is at its station only while working there', () => {
+    const villager = new Villager('a', 0, map, 'write');
+    expect(villager.atStation).toBe(true);
+    villager.startVisit(2);
+    expect(villager.atStation).toBe(false);
+    const reader = new Villager('b', 1, map, 'read');
+    expect(reader.atStation).toBe(false);
+    reader.setActivity('term');
+    expect(reader.atStation).toBe(false);
+    settle(reader);
+    expect(reader.atStation).toBe(true);
+  });
+
   it('cheers for a moment when it finishes', () => {
     const villager = new Villager('a', 0, map, 'write');
     villager.celebrate();

@@ -1,11 +1,14 @@
 import type { AgentView } from '../../shared/agent.js';
 import type { Store } from '../state/store.js';
+import { Particles } from './draw/effects.js';
+import type { LayerFactory } from './draw/lighting.js';
+import { Lighting } from './draw/lighting.js';
 import type { EngineOptions } from './engine.js';
 import { Engine } from './engine.js';
 import { bindInput, hitTest } from './input.js';
 import type { WorkshopMap } from './map.js';
 import type { Hover } from './renderer.js';
-import { drawScene } from './renderer.js';
+import { drawScene, emittersFor } from './renderer.js';
 import type { SpriteSheet } from './sprite-sheet.js';
 import { World } from './world.js';
 
@@ -20,6 +23,7 @@ export interface GameOptions {
   now?: () => number;
   random?: () => number;
   frames?: Pick<EngineOptions, 'requestFrame' | 'cancelFrame' | 'pixelRatio'>;
+  lightLayer?: LayerFactory;
 }
 
 export interface Game {
@@ -38,6 +42,8 @@ export function createGame(options: GameOptions): Game {
   const world = new World(map, options.random);
   let agents = new Map<string, AgentView>();
   let hovered: Hover = null;
+  const particles = new Particles(options.random);
+  const lighting = new Lighting(map.width, map.height, options.lightLayer);
 
   const syncAgents = (list: readonly AgentView[]) => {
     agents = new Map(list.map((agent) => [agent.id, agent]));
@@ -52,6 +58,7 @@ export function createGame(options: GameOptions): Game {
     background: STAGE_BACKGROUND,
     draw(ctx, dt, time) {
       world.update(dt);
+      particles.update(dt, emittersFor({ world, agents }));
       const { selected, focused } = store.getState();
       drawScene(ctx, {
         world,
@@ -61,6 +68,8 @@ export function createGame(options: GameOptions): Game {
         focused,
         hovered,
         time,
+        particles,
+        lighting,
       });
     },
   });

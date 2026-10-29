@@ -1,0 +1,30 @@
+export type Paint = Pick<
+  CanvasRenderingContext2D,
+  | 'fillStyle'
+  | 'strokeStyle'
+  | 'lineWidth'
+  | 'font'
+  | 'textAlign'
+  | 'textBaseline'
+  | 'globalAlpha'
+  | 'globalCompositeOperation'
+  | 'fillRect'
+  | 'strokeRect'
+  | 'clearRect'
+  | 'beginPath'
+  | 'moveTo'
+  | 'lineTo'
+  | 'closePath'
+  | 'ellipse'
+  | 'arc'
+  | 'fill'
+  | 'stroke'
+  | 'fillText'
+  | 'measureText'
+  | 'drawImage'
+  | 'createRadialGradient'
+  | 'save'
+  | 'restore'
+>;
+
+export const TAU = Math.PI * 2;
