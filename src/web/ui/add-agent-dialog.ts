@@ -248,8 +248,12 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   };
 
   const showError = (code: ErrorCode | null, params?: Record<string, string>) => {
+    const name = pending ?? trimmedName();
     pending = null;
-    error = code === null ? { key: 'connection.lost' } : { key: `errors.${code}`, params };
+    error =
+      code === null
+        ? { key: 'connection.lost' }
+        : { key: `errors.${code}`, params: params ?? { name } };
     render();
   };
 

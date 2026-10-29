@@ -302,13 +302,29 @@ describe('createAddAgentDialog', () => {
     expect(ctx.one('.recruit__error').hidden).toBe(true);
     ctx.buttonByText('Recruit').click();
     ctx.emit({ type: 'event', event: { kind: 'joined', agentId: 'x', at: 0 } });
-    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN', params: { name: 'web' } });
+    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN', params: { name: 'Web' } });
     expect(ctx.one('.recruit__error').hidden).toBe(false);
-    expect(ctx.one('.recruit__error').textContent).toBe('There is already an adventurer named web');
+    expect(ctx.one('.recruit__error').textContent).toBe('There is already an adventurer named Web');
     expect(ctx.buttonByText('Recruit').disabled).toBe(false);
     ctx.buttonByText('Back').click();
     expect(ctx.one('.recruit__error').hidden).toBe(true);
     expect(ctx.buttonByText('Next').hidden).toBe(false);
+  });
+
+  it('fills the name the dialog sent when the server omits params', async () => {
+    const ctx = setup();
+    await openAt(ctx, 'web');
+    ctx.typeName('  Smith ');
+    ctx.buttonByText('Next').click();
+    ctx.buttonByText('Recruit').click();
+    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN' });
+    expect(ctx.one('.recruit__error').textContent).toBe(
+      'There is already an adventurer named Smith',
+    );
+    ctx.typeName('Other');
+    expect(ctx.one('.recruit__error').textContent).toBe(
+      'There is already an adventurer named Smith',
+    );
   });
 
   it('reports a lost connection when the message cannot be sent', async () => {
