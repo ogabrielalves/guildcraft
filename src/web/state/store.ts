@@ -1,9 +1,8 @@
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
+import { MAX_EVENTS } from '../../shared/constants.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 
-export const MAX_EVENTS = 50;
-
-export type ConnectionState = 'connecting' | 'open' | 'closed';
+export type ConnectionState = 'connecting' | 'open' | 'closed' | 'unauthorized';
 export type SelectMode = 'replace' | 'toggle' | 'add';
 
 export interface StoreState {

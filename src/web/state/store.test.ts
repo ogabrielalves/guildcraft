@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
+import { MAX_EVENTS } from '../../shared/constants.js';
 import {
   INITIAL_STATE,
-  MAX_EVENTS,
   Store,
   addEvent,
   applyServerMessage,
@@ -183,6 +183,7 @@ describe('setConnection', () => {
   it('only changes when the value differs', () => {
     expect(setConnection(INITIAL_STATE, 'connecting')).toBe(INITIAL_STATE);
     expect(setConnection(INITIAL_STATE, 'open').connection).toBe('open');
+    expect(setConnection(INITIAL_STATE, 'unauthorized').connection).toBe('unauthorized');
   });
 });
 
