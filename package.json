@@ -56,5 +56,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.server.json && tsc -p tsconfig.web.json"
+  },
+  "dependencies": {
+    "open": "^10.2.0",
+    "tree-kill": "^1.2.2"
   }
 }
