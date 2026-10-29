@@ -31,17 +31,30 @@
     "@eslint/js": "^9.39.5",
     "@types/node": "^20.19.43",
     "@vitest/coverage-v8": "^3.2.7",
+    "concurrently": "^9.2.5",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.9.10",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",
+    "vite": "^6.4.5",
     "vitest": "^3.2.7"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepare": "husky",
+    "dev": "concurrently -k -n server,web \"tsx watch src/server/index.ts\" \"vite\"",
+    "build": "vite build && tsup",
+    "start": "node dist/bin/cli.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.server.json && tsc -p tsconfig.web.json"
   }
 }
