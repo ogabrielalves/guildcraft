@@ -1,0 +1,95 @@
+{
+  "app": {
+    "title": "Guildcraft",
+    "language": "Language"
+  },
+  "stats": {
+    "agents": "{count} adventurers",
+    "working": "{count} working",
+    "waiting": "{count} waiting for you"
+  },
+  "status": {
+    "starting": "Starting",
+    "idle": "Idle",
+    "thinking": "Thinking",
+    "tool": "Working",
+    "waiting": "Waiting for you",
+    "offline": "Offline"
+  },
+  "workshop": {
+    "recruit": "+ RECRUIT",
+    "full": "The workshop is full ({max} adventurers)",
+    "queue": "{count} queued"
+  },
+  "panel": {
+    "changeSkin": "Change look",
+    "interrupt": "Esc",
+    "restart": "Restart",
+    "remove": "Remove",
+    "removeAll": "Remove all",
+    "confirmRemove": "Remove {name}? The agent will be stopped.",
+    "confirmRemoveAll": "Remove all adventurers? Every agent will be stopped.",
+    "copy": "Copy",
+    "paste": "Paste"
+  },
+  "compose": {
+    "placeholder": "Send a prompt to {count} selected",
+    "send": "Send",
+    "hint": "Enter sends, Shift+Enter adds a new line"
+  },
+  "recruit": {
+    "title": "Recruit an adventurer",
+    "folder": "Project folder",
+    "name": "Name",
+    "character": "Character",
+    "inUse": "In use",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Recruit",
+    "trustTitle": "Trust this folder?",
+    "trustWarning": "The agent will read, edit and run commands in {path}.",
+    "permissionMode": "Permission mode",
+    "permission": {
+      "default": "Ask before every action",
+      "acceptEdits": "Accept file edits",
+      "plan": "Plan only"
+    }
+  },
+  "folders": {
+    "home": "Home",
+    "drives": "Drives",
+    "up": "Up",
+    "select": "Select this folder",
+    "empty": "No subfolders",
+    "error": "Could not open this folder"
+  },
+  "feed": {
+    "joined": "{name} joined the workshop",
+    "left": "{name} left the workshop",
+    "finished": "{name} finished",
+    "needsApproval": "{name} needs your approval",
+    "message": "{from} sent a message to {to}",
+    "delivered": "Message delivered to {name}"
+  },
+  "notifications": {
+    "approvalTitle": "{name} is waiting for you",
+    "approvalBody": "Open the workshop to approve or reply."
+  },
+  "connection": {
+    "lost": "Connection lost. Reconnecting...",
+    "restored": "Connected"
+  },
+  "errors": {
+    "AGENT_NOT_FOUND": "Adventurer not found",
+    "AGENT_NAME_TAKEN": "There is already an adventurer named {name}",
+    "AGENT_LIMIT_REACHED": "The workshop is full",
+    "INVALID_NAME": "Invalid name",
+    "INVALID_CWD": "This folder does not exist or cannot be opened",
+    "SKIN_NOT_FOUND": "Character not found",
+    "SPAWN_FAILED": "Could not start the agent",
+    "CLAUDE_NOT_FOUND": "Claude Code was not found. Install it and log in first.",
+    "INVALID_MESSAGE": "Invalid request",
+    "UNAUTHORIZED": "Session expired. Reopen Guildcraft from the terminal."
+  }
+}

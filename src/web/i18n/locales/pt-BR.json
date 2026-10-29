@@ -1,0 +1,95 @@
+{
+  "app": {
+    "title": "Guildcraft",
+    "language": "Idioma"
+  },
+  "stats": {
+    "agents": "{count} aventureiros",
+    "working": "{count} trabalhando",
+    "waiting": "{count} esperando você"
+  },
+  "status": {
+    "starting": "Iniciando",
+    "idle": "Livre",
+    "thinking": "Pensando",
+    "tool": "Trabalhando",
+    "waiting": "Esperando você",
+    "offline": "Offline"
+  },
+  "workshop": {
+    "recruit": "+ RECRUTAR",
+    "full": "A oficina está cheia ({max} aventureiros)",
+    "queue": "{count} na fila"
+  },
+  "panel": {
+    "changeSkin": "Trocar visual",
+    "interrupt": "Esc",
+    "restart": "Reiniciar",
+    "remove": "Remover",
+    "removeAll": "Remover todos",
+    "confirmRemove": "Remover {name}? O agente será encerrado.",
+    "confirmRemoveAll": "Remover todos os aventureiros? Todos os agentes serão encerrados.",
+    "copy": "Copiar",
+    "paste": "Colar"
+  },
+  "compose": {
+    "placeholder": "Enviar prompt para {count} selecionados",
+    "send": "Enviar",
+    "hint": "Enter envia, Shift+Enter quebra a linha"
+  },
+  "recruit": {
+    "title": "Recrutar aventureiro",
+    "folder": "Pasta do projeto",
+    "name": "Nome",
+    "character": "Personagem",
+    "inUse": "Em uso",
+    "next": "Próximo",
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "confirm": "Recrutar",
+    "trustTitle": "Confiar nesta pasta?",
+    "trustWarning": "O agente vai ler, editar e executar comandos em {path}.",
+    "permissionMode": "Modo de permissão",
+    "permission": {
+      "default": "Perguntar antes de cada ação",
+      "acceptEdits": "Aceitar edições de arquivos",
+      "plan": "Só planejar"
+    }
+  },
+  "folders": {
+    "home": "Início",
+    "drives": "Unidades",
+    "up": "Subir",
+    "select": "Selecionar esta pasta",
+    "empty": "Nenhuma subpasta",
+    "error": "Não foi possível abrir esta pasta"
+  },
+  "feed": {
+    "joined": "{name} entrou na oficina",
+    "left": "{name} saiu da oficina",
+    "finished": "{name} terminou",
+    "needsApproval": "{name} precisa da sua aprovação",
+    "message": "{from} mandou uma mensagem para {to}",
+    "delivered": "Mensagem entregue para {name}"
+  },
+  "notifications": {
+    "approvalTitle": "{name} está esperando você",
+    "approvalBody": "Abra a oficina para aprovar ou responder."
+  },
+  "connection": {
+    "lost": "Conexão perdida. Reconectando...",
+    "restored": "Conectado"
+  },
+  "errors": {
+    "AGENT_NOT_FOUND": "Aventureiro não encontrado",
+    "AGENT_NAME_TAKEN": "Já existe um aventureiro chamado {name}",
+    "AGENT_LIMIT_REACHED": "A oficina está cheia",
+    "INVALID_NAME": "Nome inválido",
+    "INVALID_CWD": "Esta pasta não existe ou não pode ser aberta",
+    "SKIN_NOT_FOUND": "Personagem não encontrado",
+    "SPAWN_FAILED": "Não foi possível iniciar o agente",
+    "CLAUDE_NOT_FOUND": "O Claude Code não foi encontrado. Instale e faça login antes.",
+    "INVALID_MESSAGE": "Pedido inválido",
+    "UNAUTHORIZED": "A sessão expirou. Abra o Guildcraft de novo pelo terminal."
+  }
+}
