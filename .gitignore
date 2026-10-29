@@ -1,0 +1,26 @@
+# Third-party art pack (raw source, not redistributed)
+Pixel Crawler - Free Pack/
+
+# Local planning notes (not published)
+planning/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
