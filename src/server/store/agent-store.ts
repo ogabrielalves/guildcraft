@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PermissionMode } from '../../shared/agent.js';
@@ -30,6 +31,8 @@ function pick({ id, name, cwd, skin, permissionMode }: StoredAgent): StoredAgent
 }
 
 export class AgentStore {
+  private writing: Promise<void> = Promise.resolve();
+
   constructor(private readonly dataDir: string) {}
 
   get filePath(): string {
@@ -55,10 +58,17 @@ export class AgentStore {
     }
   }
 
-  async save(agents: readonly StoredAgent[]): Promise<void> {
+  save(agents: readonly StoredAgent[]): Promise<void> {
+    const content = `${JSON.stringify(agents.map(pick), null, 2)}\n`;
+    const task = this.writing.then(() => this.write(content));
+    this.writing = task.catch(() => undefined);
+    return task;
+  }
+
+  private async write(content: string): Promise<void> {
     await mkdir(this.dataDir, { recursive: true });
-    const temp = `${this.filePath}.${process.pid}.tmp`;
-    await writeFile(temp, `${JSON.stringify(agents.map(pick), null, 2)}\n`, 'utf8');
+    const temp = `${this.filePath}.${process.pid}.${randomUUID()}.tmp`;
+    await writeFile(temp, content, 'utf8');
     await rename(temp, this.filePath);
   }
 }

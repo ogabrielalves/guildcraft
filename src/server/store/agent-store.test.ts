@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -69,6 +69,26 @@ describe('AgentStore', () => {
     await store.save([]);
     await writeFile(store.filePath, content);
     await expect(store.load()).resolves.toEqual([]);
+  });
+
+  it('keeps concurrent saves in order without colliding temp files', async () => {
+    const store = new AgentStore(dataDir);
+    const lists = Array.from({ length: 8 }, (_, count) =>
+      Array.from({ length: count + 1 }, (__, index) => ({ ...MORTIS, id: `a${index}` })),
+    );
+    await Promise.all(lists.map((list) => store.save(list)));
+    await expect(store.load()).resolves.toEqual(lists.at(-1));
+    expect(await readdir(dataDir)).toEqual(['agents.json']);
+  });
+
+  it('keeps saving after a failed write', async () => {
+    const store = new AgentStore(dataDir);
+    await mkdir(join(root, 'nested'));
+    await writeFile(dataDir, 'not a folder');
+    await expect(store.save([MORTIS])).rejects.toThrow();
+    await rm(dataDir);
+    await store.save([MORTIS]);
+    await expect(store.load()).resolves.toEqual([MORTIS]);
   });
 
   it('places per-agent files under agents/<id>', () => {

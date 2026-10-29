@@ -169,7 +169,12 @@ export class AgentManager {
     if (!this.deps.hasSkin(input.skin)) return fail('SKIN_NOT_FOUND');
     const result = this.deps.registry.add(input);
     if (!result.ok) return result;
-    await this.persist();
+    try {
+      await this.persist();
+    } catch (error) {
+      this.deps.registry.remove(result.agent.id);
+      throw error;
+    }
     this.record('joined', result.agent.id);
     const spawned = await this.spawn(result.agent);
     if (!spawned) return fail('SPAWN_FAILED');

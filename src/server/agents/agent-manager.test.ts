@@ -163,6 +163,18 @@ describe('helpers', () => {
 });
 
 describe('create', () => {
+  it('forgets the agent when saving it fails', async () => {
+    const saveAgents = vi.fn<ManagerDeps['saveAgents']>(() =>
+      Promise.reject(new Error('disk full')),
+    );
+    const ctx = setup({ saveAgents });
+    await expect(ctx.manager.create(INPUT)).rejects.toThrow('disk full');
+    expect(ctx.manager.views()).toEqual([]);
+    expect(ctx.processes).toHaveLength(0);
+    saveAgents.mockResolvedValue(undefined);
+    await expect(ctx.manager.create(INPUT)).resolves.toMatchObject({ ok: true });
+  });
+
   it('spawns the agent cli with settings, mcp config and env', async () => {
     const ctx = setup();
     const { id, process } = await created(ctx, { permissionMode: 'plan' });
