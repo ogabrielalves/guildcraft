@@ -3,11 +3,13 @@ import './styles/topbar.css';
 import '@xterm/xterm/css/xterm.css';
 import './styles/terminal.css';
 import './styles/panel.css';
+import './styles/compose.css';
 import { bindSocket, launchSocketUrl, mountShell } from './app.js';
 import { DemoSocket, parseDemoOptions } from './demo/demo.js';
 import { initI18n } from './i18n/index.js';
 import { GameSocket } from './net/socket.js';
 import { Store } from './state/store.js';
+import { createCompose } from './ui/compose.js';
 import { createPanel } from './ui/panel.js';
 import { createTerminalView } from './ui/terminal-view.js';
 import { createXterm } from './ui/xterm.js';
@@ -39,7 +41,8 @@ if (root) {
       });
   const terminal = createTerminalView({ store, socket, createTerminal: createXterm });
   const panel = createPanel({ store, socket, terminal });
-  mountShell(root, store, [panel.element]);
+  const compose = createCompose({ store, socket });
+  mountShell(root, store, [panel.element, compose.element]);
   bindSocket(socket, store);
   socket.connect();
 }
