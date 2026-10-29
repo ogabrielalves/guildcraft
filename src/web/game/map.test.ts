@@ -7,9 +7,9 @@ import {
   parseWorkshopMap,
   wanderPoint,
 } from './map.js';
-import { rawWorkshop } from './workshop.fixture.js';
+import { provisionalWorkshop } from './provisional-workshop.js';
 
-type RawWorkshop = ReturnType<typeof rawWorkshop>;
+type RawWorkshop = ReturnType<typeof provisionalWorkshop>;
 
 function rawBay(raw: RawWorkshop, index: number): RawWorkshop['bays'][number] {
   const bay = raw.bays[index];
@@ -29,14 +29,14 @@ function invalidAt(raw: unknown): string | undefined {
 
 describe('parseWorkshopMap', () => {
   it('reads the size, corridor and all bays', () => {
-    const map = parseWorkshopMap(rawWorkshop());
+    const map = parseWorkshopMap(provisionalWorkshop());
     expect(map).toMatchObject({ width: 480, height: 272, tileSize: 16, corridorY: 160 });
     expect(map.bays).toHaveLength(8);
-    expect(map.bays[5]).toEqual(rawWorkshop().bays[5]);
+    expect(map.bays[5]).toEqual(provisionalWorkshop().bays[5]);
   });
 
   it('drops unknown fields', () => {
-    const raw = { ...rawWorkshop(), extra: true };
+    const raw = { ...provisionalWorkshop(), extra: true };
     raw.bays[0] = { ...rawBay(raw, 0), ...{ note: 'x' } };
     const map = parseWorkshopMap(raw);
     expect(map).not.toHaveProperty('extra');
@@ -55,35 +55,35 @@ describe('parseWorkshopMap', () => {
     ['corridorY', 300],
     ['corridorY', -1],
   ])('rejects %s = %j', (field, value) => {
-    expect(invalidAt({ ...rawWorkshop(), [field]: value })).toBe(`$.${field}`);
+    expect(invalidAt({ ...provisionalWorkshop(), [field]: value })).toBe(`$.${field}`);
   });
 
   it('requires exactly one bay per agent', () => {
-    const raw = rawWorkshop();
+    const raw = provisionalWorkshop();
     expect(invalidAt({ ...raw, bays: raw.bays.slice(1) })).toBe('$.bays');
     expect(invalidAt({ ...raw, bays: {} })).toBe('$.bays');
   });
 
   it('rejects a bay point outside its area', () => {
-    const raw = rawWorkshop();
+    const raw = provisionalWorkshop();
     rawBay(raw, 2).nap = { x: 0, y: 0 };
     expect(invalidAt(raw)).toBe('$.bays[2].nap');
   });
 
   it('rejects a missing or malformed point', () => {
-    const raw = rawWorkshop();
+    const raw = provisionalWorkshop();
     rawBay(raw, 1).guest = { x: 100, y: null } as unknown as { x: number; y: number };
     expect(invalidAt(raw)).toBe('$.bays[1].guest.y');
   });
 
   it('rejects a bay with an empty area', () => {
-    const raw = rawWorkshop();
+    const raw = provisionalWorkshop();
     rawBay(raw, 3).area.width = 0;
     expect(invalidAt(raw)).toBe('$.bays[3].area.width');
   });
 
   it('rejects a bay that leaves the map', () => {
-    const raw = rawWorkshop();
+    const raw = provisionalWorkshop();
     rawBay(raw, 7).area.width = 600;
     expect(invalidAt(raw)).toBe('$.bays[7].area');
   });
@@ -105,7 +105,7 @@ describe('contains', () => {
 
 describe('loadWorkshopMap', () => {
   it('fetches and parses the map', async () => {
-    const request = vi.fn(() => Promise.resolve(Response.json(rawWorkshop())));
+    const request = vi.fn(() => Promise.resolve(Response.json(provisionalWorkshop())));
     const map = await loadWorkshopMap('/assets/maps/workshop.json', request);
     expect(request).toHaveBeenCalledWith('/assets/maps/workshop.json');
     expect(map.bays).toHaveLength(8);
@@ -119,7 +119,7 @@ describe('loadWorkshopMap', () => {
 
 describe('bayAt', () => {
   it('returns the bay or rejects an unknown index', () => {
-    const map = parseWorkshopMap(rawWorkshop());
+    const map = parseWorkshopMap(provisionalWorkshop());
     expect(bayAt(map, 3)).toBe(map.bays[3]);
     expect(() => bayAt(map, 8)).toThrow(RangeError);
   });
@@ -127,9 +127,9 @@ describe('bayAt', () => {
 
 describe('wanderPoint', () => {
   it('picks a point inside the bay area', () => {
-    const bay = bayAt(parseWorkshopMap(rawWorkshop()), 4);
-    expect(wanderPoint(bay, () => 0)).toEqual({ x: 0, y: 176 });
-    expect(wanderPoint(bay, () => 0.5)).toEqual({ x: 48, y: 208 });
+    const bay = bayAt(parseWorkshopMap(provisionalWorkshop()), 4);
+    expect(wanderPoint(bay, () => 0)).toEqual({ x: 12, y: 196 });
+    expect(wanderPoint(bay, () => 1)).toEqual({ x: 84, y: 232 });
     expect(contains(bay.area, wanderPoint(bay))).toBe(true);
   });
 });

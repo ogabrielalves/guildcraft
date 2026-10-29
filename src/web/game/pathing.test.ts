@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { bayAt, parseWorkshopMap } from './map.js';
 import { pointAlong, route, routeLength } from './pathing.js';
-import { rawWorkshop } from './workshop.fixture.js';
+import { provisionalWorkshop } from './provisional-workshop.js';
 
-const map = parseWorkshopMap(rawWorkshop());
+const map = parseWorkshopMap(provisionalWorkshop());
 
 describe('route', () => {
   it('walks straight inside the same bay', () => {

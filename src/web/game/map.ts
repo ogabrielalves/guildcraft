@@ -118,7 +118,13 @@ export function bayAt(map: WorkshopMap, index: number): Bay {
   return bay;
 }
 
+export const WANDER_MARGIN = { side: 12, top: 20, bottom: 8 };
+
 export function wanderPoint(bay: Bay, random: () => number = Math.random): Point {
   const { x, y, width, height } = bay.area;
-  return { x: x + random() * width, y: y + random() * height };
+  const { side, top, bottom } = WANDER_MARGIN;
+  return {
+    x: x + side + random() * (width - 2 * side),
+    y: y + top + random() * (height - top - bottom),
+  };
 }

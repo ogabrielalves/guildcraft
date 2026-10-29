@@ -16,7 +16,7 @@ function rawBay(x: number, y: number, doorY: number) {
   };
 }
 
-export function rawWorkshop() {
+export function provisionalWorkshop() {
   return {
     width: 480,
     height: 272,
