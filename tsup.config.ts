@@ -8,13 +8,21 @@ const ENTRIES = {
   'bin/mcp': 'src/bin/mcp.ts',
 };
 
-export default defineConfig({
-  entry: Object.fromEntries(Object.entries(ENTRIES).filter(([, path]) => existsSync(path))),
-  format: 'esm',
-  platform: 'node',
-  target: 'node20',
-  outDir: 'dist',
-  clean: false,
-  sourcemap: true,
-  splitting: false,
-});
+const entry = Object.fromEntries(Object.entries(ENTRIES).filter(([, path]) => existsSync(path)));
+
+export default defineConfig(
+  Object.keys(entry).length === 0
+    ? []
+    : [
+        {
+          entry,
+          format: 'esm',
+          platform: 'node',
+          target: 'node20',
+          outDir: 'dist',
+          clean: false,
+          sourcemap: true,
+          splitting: false,
+        },
+      ],
+);
