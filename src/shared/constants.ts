@@ -3,6 +3,7 @@ export const DEFAULT_PORT = 7777;
 export const DEFAULT_HOST = '127.0.0.1';
 export const ENV_PREFIX = 'GUILDCRAFT_';
 
+export const AGENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 export const MAX_NAME_LENGTH = 32;
 export const MAX_PATH_LENGTH = 4096;
 export const MAX_PROMPT_LENGTH = 100_000;

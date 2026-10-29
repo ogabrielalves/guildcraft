@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PermissionMode } from '../../shared/agent.js';
 import { isPermissionMode } from '../../shared/agent.js';
+import { AGENT_ID_PATTERN } from '../../shared/constants.js';
 
 export interface StoredAgent {
   id: string;
@@ -19,6 +20,7 @@ function isStoredAgent(value: unknown): value is StoredAgent {
   const record = value as Record<string, unknown>;
   return (
     STRING_FIELDS.every((field) => typeof record[field] === 'string' && record[field] !== '') &&
+    AGENT_ID_PATTERN.test(record.id as string) &&
     isPermissionMode(record.permissionMode)
   );
 }
