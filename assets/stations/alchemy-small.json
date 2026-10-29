@@ -3,7 +3,15 @@
     "en": "Small alchemy table"
   },
   "image": "stations/alchemy-small.png",
+  "origin": {
+    "x": 0,
+    "y": 24
+  },
   "frame": {
+    "width": 32,
+    "height": 40
+  },
+  "cell": {
     "width": 32,
     "height": 64
   },
@@ -12,11 +20,11 @@
   "fps": 12,
   "anchor": {
     "x": 16,
-    "y": 63
+    "y": 39
   },
   "emit": {
     "x": 16,
-    "y": 28
+    "y": 4
   },
   "effect": "bubbles",
   "light": "#b07cff"

@@ -221,8 +221,8 @@ describe('bayAt', () => {
 describe('wanderPoint', () => {
   it('picks a point inside the bay area', () => {
     const bay = bayAt(parseWorkshopMap(provisionalWorkshop()), 4);
-    expect(wanderPoint(bay, () => 0)).toEqual({ x: 12, y: 196 });
-    expect(wanderPoint(bay, () => 1)).toEqual({ x: 84, y: 232 });
+    expect(wanderPoint(bay, () => 0)).toEqual({ x: 16, y: 196 });
+    expect(wanderPoint(bay, () => 1)).toEqual({ x: 80, y: 232 });
     expect(contains(bay.area, wanderPoint(bay))).toBe(true);
   });
 });

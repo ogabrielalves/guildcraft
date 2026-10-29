@@ -110,6 +110,8 @@ Frames of different animations can have different sizes. The anchor keeps the fe
 | `effect`        | required             | `bubbles`, `sparks`, `magic`, `smoke`, `dust`, `embers`, `sawdust` or `paper` |
 | `light`         | required             | color of the light the station casts, `#rgb`, `#rrggbb` or `#rrggbbaa`        |
 
+Crop stations tightly: the `frame` box is what has to fit inside a bay. For example, the anvil sheet has 64 × 80 cells, but the anvil itself only uses rows 17 to 78, so its manifest says `"origin": { "x": 0, "y": 17 }`, `"frame": { "width": 64, "height": 62 }` and `"cell": { "width": 64, "height": 80 }`.
+
 The station shows frame 0 while its owner is away. It animates, emits particles and lights up only while the owner works at it.
 
 ## Workshop map
@@ -141,7 +143,11 @@ Each bay has an `area` and six points, all inside the area:
 | `nap`     | where the owner sleeps                                                          |
 | `guest`   | where a visitor stops                                                           |
 
-When idle, the owner wanders inside the area, away from its edges.
+Pillars stand on the left and right edges of every bay and take 8 px of each side. The usable part of a bay is its area minus those 8 px:
+
+- any station, placed by its `anchor` on the `station` point, must fit inside the usable part, because any character can take any bay;
+- the `work` point must leave room for the worker (16 px wide) between the station and the pillar;
+- when idle, the owner wanders inside the usable part.
 
 Scenery items are either a color fill:
 
@@ -169,6 +175,7 @@ Stations and adventurers are sorted by their feet, so someone standing behind a 
 - every character and station manifest is valid;
 - every referenced sheet exists and every frame fits inside it;
 - every station a character names exists;
-- the map has 8 bays and every scenery crop fits its sheet.
+- the map has 8 bays and every scenery crop fits its sheet;
+- every station fits every bay without crossing a pillar or an edge, with the worker beside it.
 
 To see the result, run `npm run dev` and open the page with `?demo` to get a workshop full of fake adventurers.

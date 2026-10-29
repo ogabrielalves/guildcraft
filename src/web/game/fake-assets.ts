@@ -92,6 +92,7 @@ export const STOVE: StationManifest = {
   image: 'stations/stove.png',
   origin: { x: 0, y: 0 },
   frame: { width: 48, height: 32 },
+  cell: { width: 48, height: 32 },
   columns: 4,
   frames: 4,
   fps: 6,

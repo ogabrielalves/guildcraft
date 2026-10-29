@@ -3,7 +3,15 @@
     "en": "Large alchemy table"
   },
   "image": "stations/alchemy-large.png",
+  "origin": {
+    "x": 0,
+    "y": 11
+  },
   "frame": {
+    "width": 48,
+    "height": 53
+  },
+  "cell": {
     "width": 48,
     "height": 64
   },
@@ -12,11 +20,11 @@
   "fps": 12,
   "anchor": {
     "x": 24,
-    "y": 63
+    "y": 52
   },
   "emit": {
     "x": 24,
-    "y": 22
+    "y": 11
   },
   "effect": "bubbles",
   "light": "#b07cff"

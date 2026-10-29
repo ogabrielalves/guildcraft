@@ -27,6 +27,7 @@ export interface StationManifest {
   image: string;
   origin: Point;
   frame: Size;
+  cell: Size;
   columns: number;
   frames: number;
   fps: number;
@@ -60,6 +61,7 @@ export function parseStationManifest(value: unknown): StationManifest {
     image: imagePath(raw.image, '$.image'),
     origin: optional(raw.origin, point, '$.origin', { x: 0, y: 0 }),
     frame,
+    cell: optional(raw.cell, size, '$.cell', frame),
     columns: optional(raw.columns, (v, p) => count(v, p, 1), '$.columns', frames),
     frames,
     fps: optional(raw.fps, positive, '$.fps', 1),
@@ -75,11 +77,11 @@ export function stationFrame(
   active: boolean,
   time: number,
 ): StationFrame {
-  const { origin, frame, columns, frames, fps } = manifest;
+  const { origin, frame, cell, columns, frames, fps } = manifest;
   const index = active ? Math.floor(Math.max(0, time) * fps) % frames : 0;
   return {
-    sx: origin.x + (index % columns) * frame.width,
-    sy: origin.y + Math.floor(index / columns) * frame.height,
+    sx: origin.x + (index % columns) * cell.width,
+    sy: origin.y + Math.floor(index / columns) * cell.height,
     width: frame.width,
     height: frame.height,
   };

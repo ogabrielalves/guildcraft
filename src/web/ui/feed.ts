@@ -41,8 +41,14 @@ export function createFeed(store: Store): Feed {
   const nameOf: NameOf = (agentId) =>
     agentId === undefined ? UNKNOWN_NAME : (names.get(agentId) ?? UNKNOWN_NAME);
 
-  const remember = (state: StoreState) => {
-    for (const agent of state.agents) names.set(agent.id, agent.name);
+  const remember = (state: StoreState): boolean => {
+    let learned = false;
+    for (const agent of state.agents) {
+      if (names.get(agent.id) === agent.name) continue;
+      names.set(agent.id, agent.name);
+      learned = true;
+    }
+    return learned;
   };
 
   const render = () => {
@@ -61,8 +67,8 @@ export function createFeed(store: Store): Feed {
   remember(store.getState());
   render();
   const unsubscribeStore = store.subscribe((state, previous) => {
-    if (state.agents !== previous.agents) remember(state);
-    if (state.events !== previous.events) render();
+    const learned = state.agents !== previous.agents && remember(state);
+    if (learned || state.events !== previous.events) render();
   });
   const unsubscribeLocale = onLocaleChange(render);
 

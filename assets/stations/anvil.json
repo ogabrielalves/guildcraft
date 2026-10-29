@@ -3,7 +3,15 @@
     "en": "Anvil"
   },
   "image": "stations/anvil.png",
+  "origin": {
+    "x": 0,
+    "y": 17
+  },
   "frame": {
+    "width": 64,
+    "height": 62
+  },
+  "cell": {
     "width": 64,
     "height": 80
   },
@@ -12,11 +20,11 @@
   "fps": 12,
   "anchor": {
     "x": 32,
-    "y": 78
+    "y": 61
   },
   "emit": {
     "x": 28,
-    "y": 46
+    "y": 29
   },
   "effect": "sparks",
   "light": "#ffd76a"

@@ -3,7 +3,15 @@
     "en": "Cauldron"
   },
   "image": "stations/cauldron.png",
+  "origin": {
+    "x": 2,
+    "y": 6
+  },
   "frame": {
+    "width": 46,
+    "height": 26
+  },
+  "cell": {
     "width": 48,
     "height": 32
   },
@@ -11,12 +19,12 @@
   "frames": 4,
   "fps": 6,
   "anchor": {
-    "x": 25,
-    "y": 31
+    "x": 23,
+    "y": 25
   },
   "emit": {
-    "x": 25,
-    "y": 8
+    "x": 23,
+    "y": 2
   },
   "effect": "magic",
   "light": "#b07cff"

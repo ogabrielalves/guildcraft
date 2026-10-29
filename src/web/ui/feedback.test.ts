@@ -179,6 +179,22 @@ describe('feed', () => {
   });
 });
 
+describe('feed names', () => {
+  it('fills in the name when the agent arrives after its event', () => {
+    const store = storeWith([]);
+    const feed = createFeed(store);
+    const items = () => [...feed.element.children].map((n) => n.textContent);
+    store.apply({ type: 'event', event: event('joined', 'n') });
+    expect(items()).toEqual(['? joined the workshop']);
+    store.apply({ type: 'agent:updated', agent: agent('n') });
+    expect(items()).toEqual(['Agent n joined the workshop']);
+    const before = feed.element.firstChild;
+    store.apply({ type: 'agent:updated', agent: agent('n', 'thinking') });
+    expect(feed.element.firstChild).toBe(before);
+    feed.destroy();
+  });
+});
+
 describe('stats', () => {
   it('counts working and waiting agents', () => {
     expect(

@@ -4,20 +4,20 @@
   },
   "image": "stations/workbench.png",
   "origin": {
-    "x": 103,
-    "y": 60
+    "x": 48,
+    "y": 72
   },
   "frame": {
-    "width": 73,
-    "height": 56
+    "width": 48,
+    "height": 44
   },
   "anchor": {
-    "x": 36,
-    "y": 55
+    "x": 24,
+    "y": 43
   },
   "emit": {
-    "x": 36,
-    "y": 22
+    "x": 24,
+    "y": 14
   },
   "effect": "dust",
   "light": "#ffd76a"

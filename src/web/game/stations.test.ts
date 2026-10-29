@@ -34,6 +34,7 @@ describe('parseStationManifest', () => {
       image: 'stations/anvil.png',
       origin: { x: 0, y: 0 },
       frame: { width: 64, height: 80 },
+      cell: { width: 64, height: 80 },
       columns: 8,
       frames: 35,
       fps: 12,
@@ -85,6 +86,22 @@ describe('stationFrame', () => {
     expect(stationFrame(manifest, true, 1)).toMatchObject({ sx: 4 * 64, sy: 80 });
     expect(stationFrame(manifest, true, 35 / 12)).toMatchObject({ sx: 0, sy: 0 });
     expect(stationFrame(manifest, true, -1)).toMatchObject({ sx: 0, sy: 0 });
+  });
+
+  it('crops each cell of a grid when the frame is smaller than the cell', () => {
+    const tight = parseStationManifest(
+      anvil({
+        origin: { x: 0, y: 17 },
+        frame: { width: 64, height: 62 },
+        cell: { width: 64, height: 80 },
+      }),
+    );
+    expect(stationFrame(tight, true, 1)).toEqual({
+      sx: 4 * 64,
+      sy: 17 + 80,
+      width: 64,
+      height: 62,
+    });
   });
 
   it('offsets crops by their origin', () => {
