@@ -1,0 +1,14 @@
+export const MAX_AGENTS = 8;
+export const DEFAULT_PORT = 7777;
+export const DEFAULT_HOST = '127.0.0.1';
+export const ENV_PREFIX = 'GUILDCRAFT_';
+
+export const MAX_NAME_LENGTH = 32;
+export const MAX_PATH_LENGTH = 4096;
+export const MAX_PROMPT_LENGTH = 100_000;
+export const MAX_TERM_INPUT_LENGTH = 65_536;
+export const MAX_TERM_COLS = 1000;
+export const MAX_TERM_ROWS = 500;
+
+export const LOCALES = ['en', 'pt-BR'] as const;
+export type Locale = (typeof LOCALES)[number];
