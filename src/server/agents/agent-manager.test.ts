@@ -446,6 +446,32 @@ describe('trust prompt', () => {
     expect(process.written).toEqual(['\r', '\r']);
     await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * 5);
     expect(process.written).toHaveLength(MAX_TRUST_ATTEMPTS);
+    expect(ctx.statusOf(id)).toBe('waiting');
+    expect(ctx.manager.recentEvents().at(-1)).toMatchObject({ kind: 'waiting', agentId: id });
+    await vi.advanceTimersByTimeAsync(READY_TIMEOUT_MS);
+    expect(ctx.statusOf(id)).toBe('waiting');
+  });
+
+  it('waits for the user when the dialog outlives SessionStart and every answer', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = PROMPT;
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    ctx.manager.hook(id, 'SessionStart', { source: 'startup' });
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * MAX_TRUST_ATTEMPTS);
+    expect(ctx.statusOf(id)).toBe('waiting');
+  });
+
+  it('starts normally when the last answer lands', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = PROMPT;
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS * (MAX_TRUST_ATTEMPTS - 1));
+    process.screen = 'Welcome';
+    await vi.advanceTimersByTimeAsync(TRUST_RETRY_MS);
+    expect(process.written).toHaveLength(MAX_TRUST_ATTEMPTS);
     expect(ctx.statusOf(id)).toBe('starting');
   });
 
@@ -479,6 +505,7 @@ describe('trust prompt', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(ctx.statusOf(id)).toBe('waiting');
+    expect(ctx.manager.recentEvents().at(-1)).toMatchObject({ kind: 'waiting', agentId: id });
     expect(process.written).toEqual([]);
   });
 

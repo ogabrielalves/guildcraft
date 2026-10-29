@@ -439,14 +439,18 @@ export class AgentManager {
       runtime.trustOpen = false;
       this.answerTrust(agent, runtime, answer);
     } else if (!wasOpen) {
-      this.update(agent, 'waiting');
+      this.awaitUser(agent);
     }
+  }
+
+  private awaitUser(agent: Agent): void {
+    this.update(agent, 'waiting');
+    this.record('waiting', agent.id);
   }
 
   private answerTrust(agent: Agent, runtime: Runtime, answer: string): void {
     runtime.trustAttempts += 1;
     runtime.process.write(answer);
-    if (runtime.trustAttempts >= MAX_TRUST_ATTEMPTS) return;
     runtime.trustRetry = setTimeout(() => {
       runtime.trustRetry = null;
       void this.verifyTrust(agent, runtime).catch(() => undefined);
@@ -456,8 +460,13 @@ export class AgentManager {
   private async verifyTrust(agent: Agent, runtime: Runtime): Promise<void> {
     const screen = visibleTail(await runtime.process.snapshot());
     if (this.runtimes.get(agent.id) !== runtime || runtime.trustRetry !== null) return;
-    const answer = detectTrustPrompt(screen) ? trustAnswer(screen) : null;
-    if (answer) this.answerTrust(agent, runtime, answer);
+    if (!detectTrustPrompt(screen)) return;
+    const answer = trustAnswer(screen);
+    if (answer && runtime.trustAttempts < MAX_TRUST_ATTEMPTS) {
+      this.answerTrust(agent, runtime, answer);
+      return;
+    }
+    if (agent.status === 'starting' || agent.status === 'idle') this.awaitUser(agent);
   }
 
   private tryDeliver(agent: Agent): void {

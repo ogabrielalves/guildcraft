@@ -197,15 +197,21 @@ describe('startServer', () => {
 });
 
 describe('childEnv', () => {
-  it('drops guildcraft and nested claude variables', () => {
+  it('drops guildcraft and parent session variables but keeps claude config', () => {
     expect(
       childEnv({
         PATH: '/bin',
         GUILDCRAFT_TOKEN: 'x',
         CLAUDECODE: '1',
         CLAUDE_CODE_ENTRYPOINT: 'cli',
+        CLAUDE_CODE_CHILD_SESSION: '1',
+        CLAUDE_CODE_SESSION_ID: 's',
+        CLAUDE_CODE_MESSAGING_TOKEN: 't',
+        CLAUDE_PID: '42',
+        CLAUDE_CODE_USE_BEDROCK: '1',
+        ANTHROPIC_API_KEY: 'k',
         EMPTY: undefined,
       }),
-    ).toEqual({ PATH: '/bin' });
+    ).toEqual({ PATH: '/bin', CLAUDE_CODE_USE_BEDROCK: '1', ANTHROPIC_API_KEY: 'k' });
   });
 });
