@@ -9,6 +9,8 @@ export const ERROR_CODES = [
   'SPAWN_FAILED',
   'CLAUDE_NOT_FOUND',
   'INVALID_MESSAGE',
+  'EMPTY_PROMPT',
+  'QUEUE_FULL',
   'UNAUTHORIZED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

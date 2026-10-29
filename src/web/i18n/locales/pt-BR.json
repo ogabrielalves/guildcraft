@@ -91,6 +91,8 @@
     "SPAWN_FAILED": "Não foi possível iniciar o agente",
     "CLAUDE_NOT_FOUND": "O Claude Code não foi encontrado. Instale e faça login antes.",
     "INVALID_MESSAGE": "Pedido inválido",
+    "EMPTY_PROMPT": "O prompt está vazio",
+    "QUEUE_FULL": "Esse aventureiro tem mensagens pendentes demais",
     "UNAUTHORIZED": "A sessão expirou. Abra o Guildcraft de novo pelo terminal."
   }
 }
