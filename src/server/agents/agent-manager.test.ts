@@ -351,6 +351,22 @@ describe('terminal', () => {
     expect(ctx.statusOf(id)).toBe('thinking');
   });
 
+  it('delivers the user prompt ahead of queued agent messages after an interrupt', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    const b = await created(ctx, { name: 'Corvin', skin: 'corvin' });
+    const c = await created(ctx, { name: 'Lyra', skin: 'lyra' });
+    ctx.manager.hook(a.id, 'SessionStart', {});
+    ctx.manager.sendPrompt([a.id], 'work');
+    ctx.manager.sendMessage(b.id, 'Mortis', 'msgA');
+    ctx.manager.sendMessage(c.id, 'Mortis', 'msgB');
+    vi.advanceTimersByTime(VISIT_DELAY_MS);
+    ctx.manager.interrupt(a.id);
+    ctx.manager.sendPrompt([a.id], 'redirect');
+    expect(a.process.written.at(-1)).toBe('\x1b[200~redirect\x1b[201~');
+    expect(ctx.deps.registry.get(a.id)?.queued).toBe(2);
+  });
+
   it('does not hold the queue on escape while idle', async () => {
     const ctx = setup();
     const a = await created(ctx);

@@ -52,7 +52,7 @@ describe('MessageQueue', () => {
   it('delivers in order, pasting first and submitting after the delay', () => {
     const { queue, written, timers, flushTimers } = setup();
     expect(queue.enqueue({ fromId: 'a1', text: 'first' })).toEqual({ ok: true, size: 1 });
-    expect(queue.enqueue({ fromId: null, text: 'second' })).toEqual({ ok: true, size: 2 });
+    expect(queue.enqueue({ fromId: 'b2', text: 'second' })).toEqual({ ok: true, size: 2 });
 
     expect(queue.deliverNext()).toEqual({ fromId: 'a1', text: 'first' });
     expect(written).toEqual(['\x1b[200~first\x1b[201~']);
@@ -63,6 +63,17 @@ describe('MessageQueue', () => {
 
     expect(queue.deliverNext()?.text).toBe('second');
     expect(queue.size).toBe(0);
+  });
+
+  it('puts user prompts ahead of agent messages, keeping their own order', () => {
+    const { queue } = setup();
+    queue.enqueue({ fromId: 'a1', text: 'msgA' });
+    queue.enqueue({ fromId: 'b2', text: 'msgB' });
+    queue.enqueue({ fromId: null, text: 'user 1' });
+    queue.enqueue({ fromId: null, text: 'user 2' });
+    queue.enqueue({ fromId: 'c3', text: 'msgC' });
+    const order = Array.from({ length: 5 }, () => queue.deliverNext()?.text);
+    expect(order).toEqual(['user 1', 'user 2', 'msgA', 'msgB', 'msgC']);
   });
 
   it('returns null when empty', () => {

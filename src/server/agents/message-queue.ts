@@ -63,7 +63,12 @@ export class MessageQueue {
   enqueue(message: QueuedMessage): EnqueueResult {
     if (sanitizePrompt(message.text).trim() === '') return { ok: false, code: 'EMPTY_PROMPT' };
     if (this.isFull) return { ok: false, code: 'QUEUE_FULL' };
-    this.items.push(message);
+    if (message.fromId === null) {
+      const lastUser = this.items.findLastIndex((item) => item.fromId === null);
+      this.items.splice(lastUser + 1, 0, message);
+    } else {
+      this.items.push(message);
+    }
     return { ok: true, size: this.items.length };
   }
 
