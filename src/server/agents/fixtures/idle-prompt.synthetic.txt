@@ -1,0 +1,14 @@
+╭──────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                        │
+│                                                  │
+│   cwd: /home/dev/projects/demo-project           │
+╰──────────────────────────────────────────────────╯
+
+> Should I trust this folder? No, exit the loop when tests pass.
+
+● Yes, I trust this folder is set up correctly.
+
+╭──────────────────────────────────────────────────╮
+│ >                                                │
+╰──────────────────────────────────────────────────╯
+  ? for shortcuts
