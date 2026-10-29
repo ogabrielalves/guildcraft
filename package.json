@@ -53,7 +53,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepare": "husky",
-    "dev": "concurrently -k -n server,web \"tsx watch src/server/index.ts\" \"vite\"",
+    "dev": "tsup && concurrently -k -n server,web \"tsx watch src/bin/cli.ts --no-open\" \"vite\"",
     "build": "vite build && tsup",
     "start": "node dist/bin/cli.js",
     "lint": "eslint .",
