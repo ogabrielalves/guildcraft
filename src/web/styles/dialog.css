@@ -1,8 +1,5 @@
 .recruit-button {
-  position: absolute;
-  top: var(--gap);
-  left: var(--gap);
-  z-index: 10;
+  align-self: flex-start;
   padding: 6px 14px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -71,6 +68,20 @@
   color: var(--bg);
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.dialog__button--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.modal {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.modal__message {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .dialog__button:disabled {

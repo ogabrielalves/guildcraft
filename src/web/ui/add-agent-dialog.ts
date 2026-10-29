@@ -32,6 +32,7 @@ export interface AddAgentDialog {
   readonly element: HTMLDialogElement;
   open(): void;
   close(): void;
+  isAwaiting(): boolean;
   destroy(): void;
 }
 
@@ -336,6 +337,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     element,
     open,
     close,
+    isAwaiting: () => pending !== null,
     destroy() {
       close();
       unsubscribeMessage();

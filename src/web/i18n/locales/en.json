@@ -70,7 +70,13 @@
     "finished": "{name} finished",
     "needsApproval": "{name} needs your approval",
     "message": "{from} sent a message to {to}",
-    "delivered": "Message delivered to {name}"
+    "delivered": "Message delivered to {name}",
+    "prompted": "Prompt sent to {name}"
+  },
+  "modal": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss"
   },
   "notifications": {
     "approvalTitle": "{name} is waiting for you",

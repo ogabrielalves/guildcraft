@@ -3,6 +3,7 @@ import type { TranslationKey } from '../i18n/index.js';
 import { onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store, StoreState } from '../state/store.js';
+import { confirmModal } from './modal.js';
 import type { TerminalView } from './terminal-view.js';
 
 const STATUS_KEYS: Record<AgentStatus, TranslationKey> = {
@@ -42,8 +43,8 @@ export function skinChoices(skins: readonly string[], current: string): string[]
   return skins.includes(current) ? [...skins] : [current, ...skins];
 }
 
-function defaultConfirm(message: string): boolean {
-  return window.confirm(message);
+function defaultConfirm(message: string): Promise<boolean> {
+  return confirmModal(message, { danger: true });
 }
 
 export function createPanel(options: PanelOptions): Panel {
