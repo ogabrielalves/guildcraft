@@ -167,7 +167,7 @@ describe('feed', () => {
     store.apply({ type: 'agent:removed', agentId: 'a' });
     store.apply({ type: 'event', event: event('left') });
     store.apply({ type: 'event', event: event('messaged', 'a', 'ghost') });
-    const items = () => [...feed.element.children].map((n) => n.textContent);
+    const items = () => [...feed.element.querySelectorAll('li')].map((n) => n.textContent);
     expect(items()).toEqual(['Agent a left the workshop', 'Agent a sent a message to ?']);
     for (let i = 0; i < FEED_SIZE; i += 1) store.apply({ type: 'event', event: event('finished') });
     expect(items()).toHaveLength(FEED_SIZE);
@@ -179,18 +179,45 @@ describe('feed', () => {
   });
 });
 
+describe('feed toggle', () => {
+  it('shows only the latest event until the user opens the list', () => {
+    const store = storeWith([agent('a')]);
+    const feed = createFeed(store);
+    document.body.append(feed.element);
+    const toggle = feed.element.querySelector<HTMLButtonElement>('.feed__toggle');
+    const list = feed.element.querySelector<HTMLElement>('.feed__list');
+    if (!toggle || !list) throw new Error('missing feed parts');
+    store.apply({ type: 'event', event: event('joined') });
+    store.apply({ type: 'event', event: event('waiting') });
+    expect(toggle.textContent).toBe('Agent a needs your approval');
+    expect(toggle.classList.contains('feed__toggle--waiting')).toBe(true);
+    expect(toggle.title).toBe('Recent events');
+    expect(list.hidden).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    expect(list.hidden).toBe(false);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(feed.element.classList.contains('feed--expanded')).toBe(true);
+    expect(list.children).toHaveLength(2);
+    toggle.click();
+    expect(list.hidden).toBe(true);
+    expect(feed.element.classList.contains('feed--expanded')).toBe(false);
+    feed.destroy();
+  });
+});
+
 describe('feed names', () => {
   it('fills in the name when the agent arrives after its event', () => {
     const store = storeWith([]);
     const feed = createFeed(store);
-    const items = () => [...feed.element.children].map((n) => n.textContent);
+    const items = () => [...feed.element.querySelectorAll('li')].map((n) => n.textContent);
     store.apply({ type: 'event', event: event('joined', 'n') });
     expect(items()).toEqual(['? joined the workshop']);
     store.apply({ type: 'agent:updated', agent: agent('n') });
     expect(items()).toEqual(['Agent n joined the workshop']);
-    const before = feed.element.firstChild;
+    const before = feed.element.querySelector('li');
     store.apply({ type: 'agent:updated', agent: agent('n', 'thinking') });
-    expect(feed.element.firstChild).toBe(before);
+    expect(feed.element.querySelector('li')).toBe(before);
     feed.destroy();
   });
 });

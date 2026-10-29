@@ -1,12 +1,14 @@
 .hud {
   position: absolute;
-  top: var(--gap);
-  left: var(--gap);
+  top: 0;
+  left: 0;
   z-index: 10;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: min(320px, calc(100% - 2 * var(--gap)));
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: var(--hud-height);
+  padding: 0 var(--gap);
   pointer-events: none;
 }
 
@@ -16,7 +18,7 @@
 
 .stats {
   display: flex;
-  flex-wrap: wrap;
+  flex-shrink: 0;
   gap: 6px;
 }
 
@@ -39,18 +41,60 @@
 }
 
 .feed {
+  position: relative;
+  min-width: 0;
+  max-width: 360px;
+  font-size: 12px;
+}
+
+.feed[hidden] {
+  display: none;
+}
+
+.feed__toggle {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 3px 10px;
+  color: var(--text);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgb(23 17 13 / 70%);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.feed__toggle::after {
+  content: ' ▾';
+  color: var(--text-muted);
+}
+
+.feed--expanded .feed__toggle::after {
+  content: ' ▴';
+}
+
+.feed__toggle--waiting {
+  color: var(--warn);
+}
+
+.feed__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
   display: grid;
   gap: 2px;
+  width: 100%;
   margin: 0;
   padding: 6px 8px;
   list-style: none;
-  font-size: 12px;
-  background: rgb(23 17 13 / 80%);
+  background: rgb(23 17 13 / 85%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
-.feed[hidden] {
+.feed__list[hidden] {
   display: none;
 }
 
@@ -71,7 +115,7 @@
 
 .toasts {
   position: absolute;
-  top: var(--gap);
+  top: var(--hud-height);
   left: 50%;
   z-index: 20;
   display: grid;

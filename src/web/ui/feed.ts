@@ -34,9 +34,19 @@ export function eventText(event: VillageEvent, nameOf: NameOf): string {
 
 export function createFeed(store: Store): Feed {
   const names = new Map<string, string>();
-  const element = document.createElement('ol');
+  const element = document.createElement('div');
   element.className = 'feed';
-  element.setAttribute('aria-live', 'polite');
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'feed__toggle';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-live', 'polite');
+  const list = document.createElement('ol');
+  list.className = 'feed__list';
+  list.id = 'feed-list';
+  list.hidden = true;
+  toggle.setAttribute('aria-controls', list.id);
+  element.append(toggle, list);
 
   const nameOf: NameOf = (agentId) =>
     agentId === undefined ? UNKNOWN_NAME : (names.get(agentId) ?? UNKNOWN_NAME);
@@ -51,10 +61,20 @@ export function createFeed(store: Store): Feed {
     return learned;
   };
 
+  const setExpanded = (expanded: boolean) => {
+    list.hidden = !expanded;
+    toggle.setAttribute('aria-expanded', String(expanded));
+    element.classList.toggle('feed--expanded', expanded);
+  };
+
   const render = () => {
     const events = store.getState().events.slice(-FEED_SIZE);
-    element.hidden = events.length === 0;
-    element.replaceChildren(
+    const latest = events.at(-1);
+    element.hidden = latest === undefined;
+    toggle.title = t('feed.recent');
+    toggle.textContent = latest ? eventText(latest, nameOf) : '';
+    toggle.className = `feed__toggle feed__toggle--${latest?.kind ?? 'none'}`;
+    list.replaceChildren(
       ...events.map((event) => {
         const item = document.createElement('li');
         item.className = `feed__item feed__item--${event.kind}`;
@@ -63,6 +83,10 @@ export function createFeed(store: Store): Feed {
       }),
     );
   };
+
+  toggle.addEventListener('click', () => {
+    setExpanded(list.hidden);
+  });
 
   remember(store.getState());
   render();

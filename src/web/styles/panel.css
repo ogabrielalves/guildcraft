@@ -1,6 +1,6 @@
 .panel {
   position: absolute;
-  top: var(--gap);
+  top: var(--hud-height);
   right: var(--gap);
   bottom: var(--gap);
   z-index: 10;

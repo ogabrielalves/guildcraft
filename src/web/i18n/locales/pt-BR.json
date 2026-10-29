@@ -71,7 +71,8 @@
     "needsApproval": "{name} precisa da sua aprovação",
     "message": "{from} mandou uma mensagem para {to}",
     "delivered": "Mensagem entregue para {name}",
-    "prompted": "Prompt enviado para {name}"
+    "prompted": "Prompt enviado para {name}",
+    "recent": "Eventos recentes"
   },
   "modal": {
     "confirm": "Confirmar",
