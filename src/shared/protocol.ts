@@ -9,7 +9,7 @@ import {
   MAX_TERM_INPUT_LENGTH,
   MAX_TERM_ROWS,
 } from './constants.js';
-import type { ErrorCode } from './errors.js';
+import type { ErrorCode, ErrorParams } from './errors.js';
 
 export type ClientMessage =
   | { type: 'term:input'; agentId: string; data: string }
@@ -37,7 +37,12 @@ export type ServerMessage =
   | { type: 'agent:visit'; fromId: string; toId: string; preview: string }
   | { type: 'message:delivered'; fromId: string; toId: string }
   | { type: 'event'; event: VillageEvent }
-  | { type: 'error'; code: ErrorCode; params?: Record<string, string> };
+  | {
+      type: 'error';
+      code: ErrorCode;
+      source?: ClientMessage['type'];
+      params?: ErrorParams;
+    };
 
 const MAX_ID_LENGTH = 64;
 const MAX_SKIN_LENGTH = 64;

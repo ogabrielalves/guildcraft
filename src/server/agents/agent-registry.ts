@@ -1,9 +1,9 @@
 import { MAX_AGENTS, MAX_NAME_LENGTH } from '../../shared/constants.js';
-import type { ErrorCode } from '../../shared/errors.js';
+import type { Failure } from '../../shared/errors.js';
 import type { AgentInit } from './agent.js';
 import { Agent } from './agent.js';
 
-export type RegistryResult = { ok: true; agent: Agent } | { ok: false; code: ErrorCode };
+export type RegistryResult = { ok: true; agent: Agent } | ({ ok: false } & Failure);
 
 const NAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} _.-]*$/u;
 
@@ -32,7 +32,7 @@ export class AgentRegistry {
     if (init.id !== undefined && this.agents.has(init.id)) {
       return { ok: false, code: 'AGENT_ID_TAKEN' };
     }
-    if (this.findByName(name)) return { ok: false, code: 'AGENT_NAME_TAKEN' };
+    if (this.findByName(name)) return { ok: false, code: 'AGENT_NAME_TAKEN', params: { name } };
     const agent = new Agent({ ...init, name });
     this.agents.set(agent.id, agent);
     return { ok: true, agent };

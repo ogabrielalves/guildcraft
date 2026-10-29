@@ -3,6 +3,7 @@ import type { Duplex } from 'node:stream';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { RawData } from 'ws';
 import { UNAUTHORIZED_CLOSE_CODE } from '../../shared/constants.js';
+import type { Failure } from '../../shared/errors.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import { decodeClientMessage } from '../../shared/protocol.js';
 import type { AgentManager } from '../agents/agent-manager.js';
@@ -150,13 +151,13 @@ export class Gateway {
       this.log('ws: dropped invalid message');
       return;
     }
-    const code = await handleClientMessage(this.options.manager, message).catch(
-      (error: unknown) => {
+    const failure = await handleClientMessage(this.options.manager, message).catch(
+      (error: unknown): Failure => {
         this.log(`ws: ${message.type} failed: ${String(error)}`);
-        return 'INVALID_MESSAGE' as const;
+        return { code: 'INVALID_MESSAGE' };
       },
     );
-    if (code) this.send(socket, { type: 'error', code });
+    if (failure) this.send(socket, { type: 'error', source: message.type, ...failure });
   }
 
   private send(socket: WebSocket, message: ServerMessage): void {

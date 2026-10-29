@@ -11,15 +11,15 @@ describe('parseConfig', () => {
   it('uses defaults', () => {
     expect(parseConfig([], {}, DATA)).toEqual({
       kind: 'run',
-      config: { port: DEFAULT_PORT, keepAlive: false, open: true, claudeBin: null, dataDir: DATA },
+      config: { port: DEFAULT_PORT, open: true, claudeBin: null, dataDir: DATA },
     });
   });
 
   it('reads every flag', () => {
-    const argv = ['-p', '8080', '--keep-alive', '--no-open', '--claude-bin', '/bin/c'];
+    const argv = ['-p', '8080', '--no-open', '--claude-bin', '/bin/c'];
     expect(parseConfig([...argv, '--data-dir', '/d'], {}, DATA)).toEqual({
       kind: 'run',
-      config: { port: 8080, keepAlive: true, open: false, claudeBin: '/bin/c', dataDir: '/d' },
+      config: { port: 8080, open: false, claudeBin: '/bin/c', dataDir: '/d' },
     });
   });
 
@@ -59,14 +59,14 @@ describe('parseConfig', () => {
     expect(parseConfig([], { GUILDCRAFT_PORT: 'x' }, DATA)).toMatchObject({ kind: 'error' });
   });
 
-  it('rejects unknown options', () => {
-    expect(parseConfig(['--nope'], {}, DATA)).toMatchObject({ kind: 'error' });
+  it.each(['--nope', '--keep-alive'])('rejects the unknown option %s', (flag) => {
+    expect(parseConfig([flag], {}, DATA)).toMatchObject({ kind: 'error' });
   });
 });
 
 describe('help and data dir', () => {
   it('documents every option', () => {
-    for (const flag of ['--port', '--keep-alive', '--no-open', '--claude-bin', '--data-dir']) {
+    for (const flag of ['--port', '--no-open', '--claude-bin', '--data-dir']) {
       expect(HELP).toContain(flag);
     }
   });

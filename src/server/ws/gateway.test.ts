@@ -229,8 +229,21 @@ describe('gateway messages', () => {
     await a.next(2);
     await b.next(2);
     a.socket.send(JSON.stringify({ type: 'agent:interrupt', agentId: 'x' }));
-    expect(await a.next()).toEqual([{ type: 'error', code: 'AGENT_NOT_FOUND' }]);
+    expect(await a.next()).toEqual([
+      { type: 'error', code: 'AGENT_NOT_FOUND', source: 'agent:interrupt' },
+    ]);
     expect(b.messages).toHaveLength(2);
+  });
+
+  it('forwards the error params of a failed command', async () => {
+    await start();
+    manager.setSkin.mockResolvedValue({ ok: false, code: 'SKIN_NOT_FOUND', params: { skin: 'x' } });
+    const { socket, next } = connect();
+    await next(2);
+    socket.send(JSON.stringify({ type: 'agent:setSkin', agentId: 'a1', skin: 'x' }));
+    expect(await next()).toEqual([
+      { type: 'error', code: 'SKIN_NOT_FOUND', source: 'agent:setSkin', params: { skin: 'x' } },
+    ]);
   });
 
   it.each([['not json'], [JSON.stringify({ type: 'agent:remove' })]])(
@@ -297,7 +310,9 @@ describe('gateway messages', () => {
         permissionMode: 'default',
       }),
     );
-    expect(await next()).toEqual([{ type: 'error', code: 'INVALID_MESSAGE' }]);
+    expect(await next()).toEqual([
+      { type: 'error', code: 'INVALID_MESSAGE', source: 'agent:create' },
+    ]);
     expect(logs).toEqual(['ws: agent:create failed: Error: disk full']);
     expect(gateway.clientCount).toBe(1);
   });

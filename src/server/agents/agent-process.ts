@@ -44,9 +44,33 @@ export interface ProcessOptions {
 export interface ProcessDeps {
   spawn?: SpawnPty;
   kill?: (pid: number) => Promise<void>;
+  platform?: NodeJS.Platform;
+  exitTimeoutMs?: number;
 }
 
+export const EXIT_TIMEOUT_MS = 6_000;
+
 type Listener<T> = (value: T) => void;
+
+function closePty(pty: PtyLike): void {
+  try {
+    pty.kill();
+  } catch {
+    return;
+  }
+}
+
+function exitOf(pty: PtyLike, timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    const done = () => {
+      clearTimeout(timer);
+      subscription.dispose();
+      resolve();
+    };
+    const timer = setTimeout(done, timeoutMs);
+    const subscription = pty.onExit(done);
+  });
+}
 
 function notify<T>(listeners: Set<Listener<T>>, value: T): void {
   for (const listener of listeners) {
@@ -67,6 +91,8 @@ export class AgentProcess {
   private readonly exitListeners = new Set<Listener<number>>();
   private readonly spawnPty: SpawnPty;
   private readonly kill: (pid: number) => Promise<void>;
+  private readonly platform: NodeJS.Platform;
+  private readonly exitTimeoutMs: number;
   private cols: number;
   private rows: number;
 
@@ -76,6 +102,8 @@ export class AgentProcess {
   ) {
     this.spawnPty = deps.spawn ?? spawnNodePty;
     this.kill = deps.kill ?? killTree;
+    this.platform = deps.platform ?? process.platform;
+    this.exitTimeoutMs = deps.exitTimeoutMs ?? EXIT_TIMEOUT_MS;
     this.cols = options.cols ?? DEFAULT_TERM_COLS;
     this.rows = options.rows ?? DEFAULT_TERM_ROWS;
   }
@@ -154,14 +182,18 @@ export class AgentProcess {
   async stop(): Promise<void> {
     const pty = this.pty;
     if (!pty) return;
-    this.detach();
-    await this.kill(pty.pid);
-    try {
-      // releases conpty handles on windows
-      pty.kill();
-    } catch {
+    if (this.platform === 'win32') {
+      // conpty needs the shell alive to list and kill its console processes
+      const exited = exitOf(pty, this.exitTimeoutMs);
+      this.detach();
+      closePty(pty);
+      await exited;
+      await this.kill(pty.pid);
       return;
     }
+    this.detach();
+    await this.kill(pty.pid);
+    closePty(pty);
   }
 
   dispose(): void {

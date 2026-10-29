@@ -19,3 +19,10 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
 export function isErrorCode(value: unknown): value is ErrorCode {
   return ERROR_CODES.some((code) => code === value);
 }
+
+export type ErrorParams = Record<string, string>;
+
+export interface Failure {
+  code: ErrorCode;
+  params?: ErrorParams;
+}

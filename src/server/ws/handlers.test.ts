@@ -42,15 +42,36 @@ describe('handleClientMessage', () => {
     expect(manager[method]).toHaveBeenCalledWith(...args);
   });
 
-  it('returns the error code of a failed command', async () => {
+  it('returns the failure of a failed command', async () => {
     const manager = target();
     manager.restart.mockResolvedValue({ ok: false, code: 'SPAWN_FAILED' });
     manager.sendPrompt.mockReturnValue({ ok: false, code: 'QUEUE_FULL' });
     await expect(
       handleClientMessage(manager, { type: 'agent:restart', agentId: 'a' }),
-    ).resolves.toBe('SPAWN_FAILED');
+    ).resolves.toEqual({ code: 'SPAWN_FAILED' });
     await expect(
       handleClientMessage(manager, { type: 'prompt:send', agentIds: ['a'], text: 'x' }),
-    ).resolves.toBe('QUEUE_FULL');
+    ).resolves.toEqual({ code: 'QUEUE_FULL' });
+  });
+
+  it('keeps the params of a failure', async () => {
+    const manager = target();
+    manager.create.mockResolvedValue({
+      ok: false,
+      code: 'AGENT_NAME_TAKEN',
+      params: { name: 'Lyra' },
+    });
+    await expect(
+      handleClientMessage(manager, {
+        type: 'agent:create',
+        name: 'Lyra',
+        cwd: '/repo',
+        skin: 'lyra',
+        permissionMode: 'plan',
+      }),
+    ).resolves.toEqual({
+      code: 'AGENT_NAME_TAKEN',
+      params: { name: 'Lyra' },
+    });
   });
 });

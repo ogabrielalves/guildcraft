@@ -6,7 +6,6 @@ import { GRACE_MS, Lifecycle, SHUTDOWN_SIGNALS } from './lifecycle.js';
 function setup(overrides: Partial<LifecycleOptions> = {}) {
   const logs: string[] = [];
   const options = {
-    keepAlive: false,
     shutdown: vi.fn(() => Promise.resolve()),
     exit: vi.fn(),
     log: (message: string) => logs.push(message),
@@ -59,14 +58,6 @@ describe('grace period', () => {
 
   it('waits for a first client before counting down', async () => {
     const { lifecycle, options } = setup();
-    lifecycle.clientsChanged(0);
-    await vi.advanceTimersByTimeAsync(GRACE_MS * 2);
-    expect(options.shutdown).not.toHaveBeenCalled();
-  });
-
-  it('never shuts down on its own with keep-alive', async () => {
-    const { lifecycle, options } = setup({ keepAlive: true });
-    lifecycle.clientsChanged(1);
     lifecycle.clientsChanged(0);
     await vi.advanceTimersByTimeAsync(GRACE_MS * 2);
     expect(options.shutdown).not.toHaveBeenCalled();

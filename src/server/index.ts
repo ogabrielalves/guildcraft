@@ -15,7 +15,7 @@ import type { Config } from './config.js';
 import { createApp } from './http/app.js';
 import { defaultFsDeps, isDirectory } from './http/routes/fs.js';
 import type { SignalSource } from './lifecycle.js';
-import { Lifecycle } from './lifecycle.js';
+import { GRACE_MS, Lifecycle } from './lifecycle.js';
 import type { ClaudeCommand } from './platform/claude-binary.js';
 import { findClaudeBinary } from './platform/claude-binary.js';
 import { allowedOrigins, createToken, launchUrl } from './security.js';
@@ -58,6 +58,7 @@ export interface BootDeps {
   exit: (code: number) => void;
   log: (message: string) => void;
   shutdownTimeoutMs: number;
+  graceMs: number;
 }
 
 export interface RunningServer {
@@ -83,6 +84,7 @@ export function defaultBootDeps(): BootDeps {
       process.stderr.write(`${message}\n`);
     },
     shutdownTimeoutMs: SHUTDOWN_TIMEOUT_MS,
+    graceMs: GRACE_MS,
   };
 }
 
@@ -197,10 +199,10 @@ export async function startServer(
     await closeServer(server);
   };
   const lifecycle = new Lifecycle({
-    keepAlive: config.keepAlive,
     shutdown: () => withTimeout(stop(), deps.shutdownTimeoutMs),
     exit: deps.exit,
     log: deps.log,
+    graceMs: deps.graceMs,
   });
   gateway = new Gateway({
     server,

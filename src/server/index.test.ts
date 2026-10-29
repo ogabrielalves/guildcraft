@@ -77,7 +77,6 @@ beforeEach(async () => {
   await writeFile(join(root, 'dist', 'web', 'index.html'), '<p>workshop</p>');
   config = {
     port: 0,
-    keepAlive: false,
     open: false,
     claudeBin: null,
     dataDir: join(root, 'data'),

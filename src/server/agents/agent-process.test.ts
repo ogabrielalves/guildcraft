@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PtyLike, PtyOptions } from './agent-process.js';
+import type { ProcessDeps, PtyLike, PtyOptions } from './agent-process.js';
 import { DEFAULT_TERM_COLS, DEFAULT_TERM_ROWS } from '../../shared/constants.js';
 import { AgentProcess } from './agent-process.js';
 
@@ -8,7 +8,7 @@ class FakePty implements PtyLike {
   readonly written: string[] = [];
   size: [number, number] | null = null;
   private dataListener: ((data: string) => void) | null = null;
-  private exitListener: ((event: { exitCode: number }) => void) | null = null;
+  private readonly exitListeners = new Set<(event: { exitCode: number }) => void>();
 
   onData(listener: (data: string) => void) {
     this.dataListener = listener;
@@ -16,8 +16,8 @@ class FakePty implements PtyLike {
   }
 
   onExit(listener: (event: { exitCode: number }) => void) {
-    this.exitListener = listener;
-    return { dispose: () => (this.exitListener = null) };
+    this.exitListeners.add(listener);
+    return { dispose: () => this.exitListeners.delete(listener) };
   }
 
   write(data: string) {
@@ -35,13 +35,16 @@ class FakePty implements PtyLike {
   }
 
   exit(exitCode: number) {
-    this.exitListener?.({ exitCode });
+    for (const listener of [...this.exitListeners]) listener({ exitCode });
   }
 }
 
 const OPTIONS = { command: 'agent', args: ['--x'], cwd: '/repo', env: { A: '1' } };
 
-function setup(options: Partial<typeof OPTIONS> & { cols?: number; rows?: number } = {}) {
+function setup(
+  options: Partial<typeof OPTIONS> & { cols?: number; rows?: number } = {},
+  deps: ProcessDeps = { platform: 'linux' },
+) {
   const ptys: FakePty[] = [];
   const calls: [string, string[], PtyOptions][] = [];
   const kill = vi.fn(() => Promise.resolve());
@@ -55,6 +58,7 @@ function setup(options: Partial<typeof OPTIONS> & { cols?: number; rows?: number
         return pty;
       },
       kill,
+      ...deps,
     },
   );
   const pty = () => {
@@ -188,14 +192,53 @@ describe('AgentProcess', () => {
     expect(order).toEqual(['tree', 'pty']);
   });
 
-  it('stops even if the pty was already gone', async () => {
-    const { process, pty } = setup();
+  it('releases the pty first on windows and sweeps the tree after it exits', async () => {
+    const { process, pty, kill } = setup({}, { platform: 'win32' });
     process.start();
-    pty().kill.mockImplementation(() => {
-      throw new Error('already exited');
+    const started = pty();
+    const order: string[] = [];
+    kill.mockImplementation(() => {
+      order.push('tree');
+      return Promise.resolve();
     });
-    await expect(process.stop()).resolves.toBeUndefined();
+    started.kill.mockImplementation(() => {
+      order.push('pty');
+      queueMicrotask(() => {
+        started.exit(1);
+      });
+    });
+    await process.stop();
+    expect(order).toEqual(['pty', 'tree']);
+    expect(kill).toHaveBeenCalledWith(4242);
   });
+
+  it('sweeps the tree on windows when the pty never reports exit', async () => {
+    vi.useFakeTimers();
+    try {
+      const { process, kill } = setup({}, { platform: 'win32', exitTimeoutMs: 500 });
+      process.start();
+      const stopped = process.stop();
+      await vi.advanceTimersByTimeAsync(499);
+      expect(kill).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      await stopped;
+      expect(kill).toHaveBeenCalledWith(4242);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(['linux', 'win32'] as const)(
+    'stops on %s even if the pty was already gone',
+    async (platform) => {
+      const { process, pty } = setup({}, { platform, exitTimeoutMs: 1 });
+      process.start();
+      pty().kill.mockImplementation(() => {
+        throw new Error('already exited');
+      });
+      await expect(process.stop()).resolves.toBeUndefined();
+    },
+  );
 
   it('keeps notifying listeners after one throws', () => {
     const { process, pty } = setup();

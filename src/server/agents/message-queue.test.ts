@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_QUEUED } from '../../shared/constants.js';
-import { MessageQueue, SUBMIT_DELAY_MS, bracketedPaste, sanitizePrompt } from './message-queue.js';
+import {
+  MAX_SUBMIT_RETRIES,
+  MessageQueue,
+  SUBMIT_DELAY_MS,
+  SUBMIT_RETRY_MS,
+  bracketedPaste,
+  sanitizePrompt,
+} from './message-queue.js';
 
 function setup(limit?: number) {
   const written: string[] = [];
@@ -128,9 +135,40 @@ describe('MessageQueue', () => {
     });
     queue.enqueue({ fromId: null, text: 'x' });
     queue.deliverNext();
-    (submit as (() => void) | null)?.();
+    for (let i = 0; i <= MAX_SUBMIT_RETRIES; i++) (submit as (() => void) | null)?.();
     queue.clear();
     expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it('presses Enter again until the submit is confirmed', () => {
+    const { queue, written, timers, flushTimers } = setup();
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.deliverNext();
+    flushTimers();
+    expect([...timers.values()][0]?.ms).toBe(SUBMIT_RETRY_MS);
+    flushTimers();
+    expect(written.filter((data) => data === '\r')).toHaveLength(2);
+    queue.confirmSubmit();
+    expect(timers.size).toBe(0);
+  });
+
+  it(`stops after ${MAX_SUBMIT_RETRIES} extra Enters`, () => {
+    const { queue, written, timers, flushTimers } = setup();
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.deliverNext();
+    for (let i = 0; i < 5; i++) flushTimers();
+    expect(written.filter((data) => data === '\r')).toHaveLength(MAX_SUBMIT_RETRIES + 1);
+    expect(timers.size).toBe(0);
+  });
+
+  it('cancels the previous retry when delivering the next message', () => {
+    const { queue, timers, flushTimers } = setup();
+    queue.enqueue({ fromId: null, text: 'x' });
+    queue.enqueue({ fromId: null, text: 'y' });
+    queue.deliverNext();
+    flushTimers();
+    queue.deliverNext();
+    expect([...timers.values()].map((timer) => timer.ms)).toEqual([50]);
   });
 
   it('uses setTimeout with the default delay', () => {

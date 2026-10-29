@@ -5,7 +5,6 @@ import { DEFAULT_PORT, ENV_PREFIX } from '../shared/constants.js';
 
 export interface Config {
   port: number;
-  keepAlive: boolean;
   open: boolean;
   claudeBin: string | null;
   dataDir: string;
@@ -22,7 +21,6 @@ export type Env = Record<string, string | undefined>;
 export const HELP = `Usage: npx guildcraft [options]
 
   -p, --port <n>        port (default ${DEFAULT_PORT}, env ${ENV_PREFIX}PORT)
-      --keep-alive      keep agents running after the window closes
       --no-open         do not open the browser
       --claude-bin <p>  path to the Claude Code executable (env ${ENV_PREFIX}CLAUDE_BIN)
       --data-dir <p>    data directory (env ${ENV_PREFIX}DATA_DIR)
@@ -61,7 +59,6 @@ export function parseConfig(argv: string[], env: Env, fallbackDataDir: string): 
       allowNegative: true,
       options: {
         port: { type: 'string', short: 'p' },
-        'keep-alive': { type: 'boolean', default: false },
         open: { type: 'boolean', default: true },
         'claude-bin': { type: 'string' },
         'data-dir': { type: 'string' },
@@ -84,7 +81,6 @@ export function parseConfig(argv: string[], env: Env, fallbackDataDir: string): 
     kind: 'run',
     config: {
       port,
-      keepAlive: values['keep-alive'],
       open: values.open,
       claudeBin: values['claude-bin'] ?? env[`${ENV_PREFIX}CLAUDE_BIN`] ?? null,
       dataDir: values['data-dir'] ?? env[`${ENV_PREFIX}DATA_DIR`] ?? fallbackDataDir,

@@ -19,7 +19,7 @@ import {
   MAX_PROMPT_LENGTH,
   MAX_QUEUED,
 } from '../../shared/constants.js';
-import { SUBMIT_DELAY_MS } from './message-queue.js';
+import { SUBMIT_DELAY_MS, SUBMIT_RETRY_MS } from './message-queue.js';
 
 class FakeProcess implements ProcessHandle {
   running = false;
@@ -644,6 +644,18 @@ describe('prompts', () => {
     expect(b.process.written.at(-1)).toBe('\r');
   });
 
+  it('presses Enter again until the prompt submit hook arrives', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    ctx.manager.hook(a.id, 'SessionStart', {});
+    ctx.manager.sendPrompt([a.id], 'run tests');
+    vi.advanceTimersByTime(SUBMIT_DELAY_MS + SUBMIT_RETRY_MS);
+    expect(a.process.written.filter((data) => data === '\r')).toHaveLength(2);
+    ctx.manager.hook(a.id, 'UserPromptSubmit', {});
+    vi.advanceTimersByTime(SUBMIT_RETRY_MS * 5);
+    expect(a.process.written.filter((data) => data === '\r')).toHaveLength(2);
+  });
+
   it('enqueues once per agent when ids repeat', async () => {
     const ctx = setup();
     const a = await created(ctx);
@@ -892,6 +904,23 @@ describe('lifecycle', () => {
     expect(a.process.stopped && b.process.stopped).toBe(true);
     expect(ctx.manager.views().map((v) => v.status)).toEqual(['offline', 'offline']);
     expect(ctx.saved.at(-1)).toHaveLength(2);
+  });
+
+  it('stops every process at the same time on shutdown', async () => {
+    const ctx = setup();
+    const a = await created(ctx);
+    const b = await created(ctx, { name: 'Corvin', skin: 'corvin' });
+    const pending: (() => void)[] = [];
+    for (const { process } of [a, b]) {
+      vi.spyOn(process, 'stop').mockImplementation(
+        () => new Promise<void>((resolve) => pending.push(resolve)),
+      );
+    }
+    const done = ctx.manager.shutdown();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pending).toHaveLength(2);
+    for (const resolve of pending) resolve();
+    await done;
   });
 
   it.each(['remove', 'restart'] as const)('%s fails for unknown agents', async (action) => {

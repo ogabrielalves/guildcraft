@@ -2,6 +2,8 @@ import { MAX_QUEUED } from '../../shared/constants.js';
 import type { ErrorCode } from '../../shared/errors.js';
 
 export const SUBMIT_DELAY_MS = 120;
+export const SUBMIT_RETRY_MS = 2_000;
+export const MAX_SUBMIT_RETRIES = 2;
 
 export interface QueuedMessage {
   fromId: string | null;
@@ -12,6 +14,7 @@ export type EnqueueResult = { ok: true; size: number } | { ok: false; code: Erro
 
 export interface QueueOptions {
   submitDelayMs?: number;
+  submitRetryMs?: number;
   limit?: number;
   schedule?: (callback: () => void, ms: number) => unknown;
   cancel?: (handle: unknown) => void;
@@ -33,6 +36,7 @@ export function bracketedPaste(text: string): string {
 export class MessageQueue {
   private readonly items: QueuedMessage[] = [];
   private readonly submitDelayMs: number;
+  private readonly submitRetryMs: number;
   private readonly limit: number;
   private readonly schedule: (callback: () => void, ms: number) => unknown;
   private readonly cancel: (handle: unknown) => void;
@@ -43,6 +47,7 @@ export class MessageQueue {
     options: QueueOptions = {},
   ) {
     this.submitDelayMs = options.submitDelayMs ?? SUBMIT_DELAY_MS;
+    this.submitRetryMs = options.submitRetryMs ?? SUBMIT_RETRY_MS;
     this.limit = options.limit ?? MAX_QUEUED;
     this.schedule = options.schedule ?? setTimeout;
     this.cancel =
@@ -75,19 +80,28 @@ export class MessageQueue {
   deliverNext(): QueuedMessage | null {
     const next = this.items.shift();
     if (!next) return null;
+    this.confirmSubmit();
     this.write(bracketedPaste(next.text));
-    this.pendingSubmit = this.schedule(() => {
-      this.pendingSubmit = null;
-      this.write('\r');
-    }, this.submitDelayMs);
+    this.scheduleSubmit(this.submitDelayMs, MAX_SUBMIT_RETRIES);
     return next;
+  }
+
+  confirmSubmit(): void {
+    if (this.pendingSubmit === null) return;
+    this.cancel(this.pendingSubmit);
+    this.pendingSubmit = null;
   }
 
   clear(): void {
     this.items.length = 0;
-    if (this.pendingSubmit !== null) {
-      this.cancel(this.pendingSubmit);
+    this.confirmSubmit();
+  }
+
+  private scheduleSubmit(ms: number, retries: number): void {
+    this.pendingSubmit = this.schedule(() => {
       this.pendingSubmit = null;
-    }
+      this.write('\r');
+      if (retries > 0) this.scheduleSubmit(this.submitRetryMs, retries - 1);
+    }, ms);
   }
 }

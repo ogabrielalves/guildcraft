@@ -7,7 +7,6 @@ export interface SignalSource {
 }
 
 export interface LifecycleOptions {
-  keepAlive: boolean;
   shutdown: () => Promise<void>;
   exit: (code: number) => void;
   graceMs?: number;
@@ -36,7 +35,7 @@ export class Lifecycle {
       this.cancelGrace();
       return;
     }
-    if (!this.seenClient || this.options.keepAlive || this.stopping || this.timer) return;
+    if (!this.seenClient || this.stopping || this.timer) return;
     this.timer = setTimeout(() => {
       this.timer = null;
       void this.stop('the ui closed');

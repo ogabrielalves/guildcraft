@@ -10,7 +10,7 @@ import {
   MAX_NAME_LENGTH,
   MAX_PROMPT_LENGTH,
 } from '../../shared/constants.js';
-import type { ErrorCode } from '../../shared/errors.js';
+import type { ErrorCode, Failure } from '../../shared/errors.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import type { HookEvent } from '../hooks/hook-events.js';
 import { handleHook, parseHookPayload } from '../hooks/hook-handler.js';
@@ -69,7 +69,7 @@ export interface CreateInput {
   permissionMode: PermissionMode;
 }
 
-export type ManagerResult<T = undefined> = { ok: true; value: T } | { ok: false; code: ErrorCode };
+export type ManagerResult<T = undefined> = { ok: true; value: T } | ({ ok: false } & Failure);
 
 export interface SendResult {
   queued: number;
@@ -199,7 +199,7 @@ export class AgentManager {
   }
 
   async shutdown(): Promise<void> {
-    for (const id of [...this.runtimes.keys()]) await this.teardown(id);
+    await Promise.all([...this.runtimes.keys()].map((id) => this.teardown(id)));
   }
 
   interrupt(id: string): ManagerResult {
@@ -312,6 +312,7 @@ export class AgentManager {
       runtime.trustWindow = false;
       runtime.trustOpen = false;
       clearTrustRetry(runtime);
+      runtime.queue.confirmSubmit();
     }
     if (runtime) this.advanceHold(runtime, event);
     const outcome = handleHook(event, parseHookPayload(rawPayload), agent.status);

@@ -40,9 +40,10 @@ describe('AgentRegistry', () => {
   it('rejects duplicate names ignoring case', () => {
     const registry = new AgentRegistry();
     added(registry, 'Corvin');
-    expect(registry.add({ ...base, name: 'CORVIN' })).toEqual({
+    expect(registry.add({ ...base, name: ' CORVIN ' })).toEqual({
       ok: false,
       code: 'AGENT_NAME_TAKEN',
+      params: { name: 'CORVIN' },
     });
   });
 
@@ -67,7 +68,7 @@ describe('AgentRegistry', () => {
   it('treats composed and decomposed names as the same', () => {
     const registry = new AgentRegistry();
     added(registry, 'Ação');
-    expect(registry.add({ ...base, name: 'Ação' })).toEqual({
+    expect(registry.add({ ...base, name: 'Ação' })).toMatchObject({
       ok: false,
       code: 'AGENT_NAME_TAKEN',
     });

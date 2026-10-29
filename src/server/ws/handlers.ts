@@ -1,4 +1,4 @@
-import type { ErrorCode } from '../../shared/errors.js';
+import type { Failure } from '../../shared/errors.js';
 import type { ClientMessage } from '../../shared/protocol.js';
 import type { AgentManager, ManagerResult } from '../agents/agent-manager.js';
 
@@ -15,14 +15,15 @@ export type CommandTarget = Pick<
   | 'sendPrompt'
 >;
 
-function codeOf(result: ManagerResult<unknown>): ErrorCode | null {
-  return result.ok ? null : result.code;
+function codeOf(result: ManagerResult<unknown>): Failure | null {
+  if (result.ok) return null;
+  return result.params ? { code: result.code, params: result.params } : { code: result.code };
 }
 
 export async function handleClientMessage(
   manager: CommandTarget,
   message: ClientMessage,
-): Promise<ErrorCode | null> {
+): Promise<Failure | null> {
   switch (message.type) {
     case 'term:input':
       return codeOf(manager.input(message.agentId, message.data));
