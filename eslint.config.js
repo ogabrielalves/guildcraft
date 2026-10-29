@@ -11,7 +11,10 @@ export default tseslint.config(
   {
     languageOptions: {
       globals: { ...globals.node },
-      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+      parserOptions: {
+        project: ['./tsconfig.json', './tsconfig.server.json', './tsconfig.web.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       'no-restricted-syntax': [
