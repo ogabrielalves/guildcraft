@@ -1,0 +1,64 @@
+:root {
+  --bg: #17110d;
+  --surface: #241a13;
+  --surface-raised: #2f2219;
+  --border: #4a3626;
+  --text: #f1e4cf;
+  --text-muted: #b39a7c;
+  --accent: #f0a63a;
+  --ok: #7fbf6a;
+  --warn: #f2c94c;
+  --danger: #e2604f;
+  --radius: 4px;
+  --gap: 12px;
+  --topbar-height: 48px;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: var(--topbar-height) 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
