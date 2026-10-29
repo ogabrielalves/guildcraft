@@ -197,8 +197,16 @@ describe('createTerminalView', () => {
     const { host, terminal } = terminalOf('a');
     expect(host.hidden).toBe(false);
     expect(view.element.dataset.empty).toBe('false');
-    expect(terminal.focused).toBe(1);
+    expect(terminal.focused).toBe(0);
     expect(sent).toEqual([{ type: 'term:resize', agentId: 'a', cols: 80, rows: 24 }]);
+  });
+
+  it('focuses the visible terminal only on request', () => {
+    const { store, view, terminalOf } = setup();
+    view.focus();
+    store.focus('a');
+    view.focus();
+    expect(terminalOf('a').terminal.focused).toBe(1);
   });
 
   it('swaps the visible terminal when focus changes', () => {

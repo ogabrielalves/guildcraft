@@ -1,0 +1,120 @@
+.panel {
+  position: absolute;
+  top: var(--gap);
+  right: var(--gap);
+  bottom: var(--gap);
+  z-index: 10;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  width: min(640px, calc(100% - 2 * var(--gap)));
+  padding: var(--gap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel__header {
+  min-width: 0;
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.panel__name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 16px;
+  color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel__status,
+.panel__queue {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-radius: 999px;
+}
+
+.panel__status[data-status='idle'] {
+  color: var(--ok);
+}
+
+.panel__status[data-status='waiting'] {
+  color: var(--warn);
+}
+
+.panel__status[data-status='offline'] {
+  color: var(--danger);
+}
+
+.panel__queue[hidden] {
+  display: none;
+}
+
+.panel__cwd {
+  margin: 4px 0 0;
+  overflow: hidden;
+  font: 12px var(--font-mono);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel__skin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.panel__skin select,
+.panel__action {
+  padding: 4px 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.panel__action:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.panel__action:disabled,
+.panel__skin select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.panel__action--remove,
+.panel__action--remove-all {
+  color: var(--danger);
+}
+
+.panel__action--remove:hover:not(:disabled),
+.panel__action--remove-all:hover:not(:disabled) {
+  border-color: var(--danger);
+}

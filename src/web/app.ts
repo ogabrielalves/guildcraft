@@ -39,10 +39,15 @@ export function applyDocumentLocale(doc: Document, locale: Locale): void {
   doc.title = t('app.title');
 }
 
-export function mountShell(root: HTMLElement, store: Store): () => void {
+export function mountShell(
+  root: HTMLElement,
+  store: Store,
+  overlays: readonly HTMLElement[] = [],
+): () => void {
   const topbar = createTopbar(store);
   const stage = document.createElement('main');
   stage.className = 'stage';
+  stage.append(...overlays);
   root.replaceChildren(topbar.element, stage);
   applyDocumentLocale(document, getLocale());
   const unsubscribeLocale = onLocaleChange((locale) => {

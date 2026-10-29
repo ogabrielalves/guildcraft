@@ -116,4 +116,13 @@ describe('mountShell', () => {
     setLocale('en');
     expect(document.documentElement.lang).toBe('pt-BR');
   });
+
+  it('places overlays inside the stage', () => {
+    const root = document.createElement('div');
+    const overlay = document.createElement('aside');
+    const unmount = mountShell(root, new Store(), [overlay]);
+    expect(overlay.parentElement?.className).toBe('stage');
+    unmount();
+    expect(overlay.isConnected).toBe(false);
+  });
 });

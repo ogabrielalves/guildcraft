@@ -39,6 +39,7 @@ export interface TerminalViewOptions {
 export interface TerminalView {
   readonly element: HTMLElement;
   fit(): void;
+  focus(): void;
   copy(): Promise<boolean>;
   paste(): Promise<boolean>;
   destroy(): void;
@@ -151,7 +152,6 @@ export function createTerminalView(options: TerminalViewOptions): TerminalView {
     for (const [id, session] of sessions) session.host.hidden = id !== agentId;
     element.dataset.empty = String(agentId === null);
     fit();
-    if (agentId !== null) sessions.get(agentId)?.terminal.focus();
   };
 
   const handleMessage = (message: ServerMessage) => {
@@ -200,6 +200,9 @@ export function createTerminalView(options: TerminalViewOptions): TerminalView {
   return {
     element,
     fit,
+    focus() {
+      focusedTerminal()?.focus();
+    },
     async copy() {
       const terminal = focusedTerminal();
       if (!terminal || !clipboard || !terminal.hasSelection()) return false;
