@@ -1,0 +1,19 @@
+.terminal-view {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  background: #120d0a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.terminal-view__host {
+  position: absolute;
+  inset: 0;
+  padding: 6px;
+}
+
+.terminal-view__host[hidden] {
+  display: none;
+}

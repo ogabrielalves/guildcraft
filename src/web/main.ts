@@ -1,5 +1,7 @@
 import './styles/base.css';
 import './styles/topbar.css';
+import '@xterm/xterm/css/xterm.css';
+import './styles/terminal.css';
 import { bindSocket, launchSocketUrl, mountShell } from './app.js';
 import { DemoSocket, parseDemoOptions } from './demo/demo.js';
 import { initI18n } from './i18n/index.js';
