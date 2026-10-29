@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PtyLike, PtyOptions } from './agent-process.js';
-import { AgentProcess, DEFAULT_COLS, DEFAULT_ROWS } from './agent-process.js';
+import { DEFAULT_TERM_COLS, DEFAULT_TERM_ROWS } from '../../shared/constants.js';
+import { AgentProcess } from './agent-process.js';
 
 class FakePty implements PtyLike {
   readonly pid = 4242;
@@ -76,8 +77,8 @@ describe('AgentProcess', () => {
           name: 'xterm-256color',
           cwd: '/repo',
           env: { A: '1' },
-          cols: DEFAULT_COLS,
-          rows: DEFAULT_ROWS,
+          cols: DEFAULT_TERM_COLS,
+          rows: DEFAULT_TERM_ROWS,
         },
       ],
     ]);

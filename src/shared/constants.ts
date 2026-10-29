@@ -14,6 +14,8 @@ export const MAX_PROMPT_LENGTH = 100_000;
 export const MAX_QUEUED = 50;
 export const MAX_EVENTS = 50;
 export const MAX_TERM_INPUT_LENGTH = 65_536;
+export const DEFAULT_TERM_COLS = 120;
+export const DEFAULT_TERM_ROWS = 32;
 export const MAX_TERM_COLS = 1000;
 export const MAX_TERM_ROWS = 500;
 

@@ -1,13 +1,12 @@
 import { spawn as spawnNodePty } from '@lydell/node-pty';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import headless from '@xterm/headless';
+import { DEFAULT_TERM_COLS, DEFAULT_TERM_ROWS } from '../../shared/constants.js';
 import { killTree } from '../platform/kill-tree.js';
 
 const { Terminal } = headless;
 type HeadlessTerminal = InstanceType<typeof Terminal>;
 
-export const DEFAULT_COLS = 120;
-export const DEFAULT_ROWS = 32;
 export const SCROLLBACK = 2000;
 
 interface Disposable {
@@ -77,8 +76,8 @@ export class AgentProcess {
   ) {
     this.spawnPty = deps.spawn ?? spawnNodePty;
     this.kill = deps.kill ?? killTree;
-    this.cols = options.cols ?? DEFAULT_COLS;
-    this.rows = options.rows ?? DEFAULT_ROWS;
+    this.cols = options.cols ?? DEFAULT_TERM_COLS;
+    this.rows = options.rows ?? DEFAULT_TERM_ROWS;
   }
 
   get running(): boolean {
