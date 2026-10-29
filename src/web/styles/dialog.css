@@ -1,0 +1,155 @@
+.recruit-button {
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  z-index: 10;
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--bg);
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.recruit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 16px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 60%);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.dialog[aria-busy='true'] {
+  cursor: progress;
+}
+
+.dialog__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dialog__button {
+  padding: 6px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.dialog__button--secondary {
+  margin-right: auto;
+}
+
+.dialog__button--secondary + .dialog__button--secondary {
+  margin-right: 0;
+}
+
+.dialog__button--primary {
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.dialog__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dialog [hidden] {
+  display: none;
+}
+
+.recruit__step {
+  display: grid;
+  gap: 8px;
+}
+
+.recruit__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.recruit__field {
+  display: grid;
+  gap: 4px;
+}
+
+.recruit__name,
+.recruit__mode {
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.recruit__name:focus,
+.recruit__mode:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.recruit__catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+}
+
+.recruit__character {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.recruit__character[aria-checked='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.recruit__character-name {
+  font-weight: 600;
+}
+
+.recruit__in-use {
+  font-size: 11px;
+  color: var(--warn);
+}
+
+.recruit__full,
+.recruit__error {
+  margin: 0 0 8px;
+  color: var(--danger);
+}
+
+.recruit__warning {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

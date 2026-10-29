@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ServerMessage } from '../shared/protocol.js';
 import type { SocketPort } from './app.js';
-import { applyDocumentLocale, bindSocket, launchSocketUrl, mountShell } from './app.js';
+import { applyDocumentLocale, bindSocket, launchToken, mountShell } from './app.js';
 import { initI18n, setLocale } from './i18n/index.js';
 import type { MessageListener, SocketStatus, StatusListener } from './net/socket.js';
 import { TOKEN_STORAGE_KEY } from './net/socket.js';
@@ -70,16 +70,16 @@ describe('bindSocket', () => {
   });
 });
 
-describe('launchSocketUrl', () => {
+describe('launchToken', () => {
   it('stores the url token and strips it from the address bar', () => {
     const storage = memoryStorage();
     const replaceUrl = vi.fn();
-    const url = launchSocketUrl({
+    const token = launchToken({
       page: new URL('http://127.0.0.1:7777/?token=abc&demo'),
       storage,
       replaceUrl,
     });
-    expect(url).toBe('ws://127.0.0.1:7777/ws?token=abc');
+    expect(token).toBe('abc');
     expect(storage.getItem(TOKEN_STORAGE_KEY)).toBe('abc');
     expect(String(replaceUrl.mock.calls[0]?.[0])).toBe('http://127.0.0.1:7777/?demo=');
   });
@@ -88,8 +88,8 @@ describe('launchSocketUrl', () => {
     const storage = memoryStorage();
     storage.setItem(TOKEN_STORAGE_KEY, 'saved');
     const replaceUrl = vi.fn();
-    const url = launchSocketUrl({ page: new URL('http://127.0.0.1:7777/'), storage, replaceUrl });
-    expect(url).toBe('ws://127.0.0.1:7777/ws?token=saved');
+    const token = launchToken({ page: new URL('http://127.0.0.1:7777/'), storage, replaceUrl });
+    expect(token).toBe('saved');
     expect(replaceUrl).not.toHaveBeenCalled();
   });
 });

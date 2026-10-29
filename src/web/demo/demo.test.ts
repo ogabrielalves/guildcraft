@@ -9,6 +9,7 @@ import {
   DemoSocket,
   MAX_WARP,
   createDemoAgents,
+  demoListFolders,
   nextStatus,
   parseDemoOptions,
   pick,
@@ -293,5 +294,31 @@ describe('DemoSocket', () => {
     socket.connect();
     expect(onMessage).not.toHaveBeenCalled();
     expect(onStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('demoListFolders', () => {
+  it('lists the roots without a path', async () => {
+    const listing = await demoListFolders(null);
+    expect(listing.path).toBeNull();
+    expect(listing.roots.map((root) => root.name)).toEqual(['~', '/']);
+  });
+
+  it('lists fake project folders', async () => {
+    const listing = await demoListFolders('/home/demo/projects');
+    expect(listing.parent).toBe('/home/demo');
+    expect(listing.entries.map((entry) => entry.name)).toContain('web');
+    expect(listing.entries[0]?.path).toBe('/home/demo/projects/api');
+  });
+
+  it('walks up to the filesystem root', async () => {
+    expect((await demoListFolders('/home')).parent).toBe('/');
+    const root = await demoListFolders('/');
+    expect(root.parent).toBeNull();
+    expect(root.entries).toEqual([{ name: 'home', path: '/home' }]);
+  });
+
+  it('rejects unknown folders', async () => {
+    await expect(demoListFolders('/nope')).rejects.toThrow('unknown demo folder');
   });
 });

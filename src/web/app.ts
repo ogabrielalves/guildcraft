@@ -2,7 +2,7 @@ import { TOKEN_QUERY } from '../shared/constants.js';
 import type { Locale } from './i18n/index.js';
 import { getLocale, onLocaleChange, t } from './i18n/index.js';
 import type { GameSocket } from './net/socket.js';
-import { resolveToken, socketUrl, stripToken } from './net/socket.js';
+import { resolveToken, stripToken } from './net/socket.js';
 import type { Store } from './state/store.js';
 import { createTopbar } from './ui/topbar.js';
 
@@ -28,10 +28,10 @@ export function bindSocket(socket: SocketPort, store: Store): () => void {
   };
 }
 
-export function launchSocketUrl({ page, storage, replaceUrl }: LaunchEnvironment): string {
+export function launchToken({ page, storage, replaceUrl }: LaunchEnvironment): string | null {
   const token = resolveToken(page, storage);
   if (page.searchParams.has(TOKEN_QUERY)) replaceUrl(stripToken(page));
-  return socketUrl(page, token);
+  return token;
 }
 
 export function applyDocumentLocale(doc: Document, locale: Locale): void {
