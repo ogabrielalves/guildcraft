@@ -58,6 +58,9 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.server.json && tsc -p tsconfig.web.json"
   },
   "dependencies": {
+    "@lydell/node-pty": "^1.1.0",
+    "@xterm/addon-serialize": "^0.14.0",
+    "@xterm/headless": "^6.0.0",
     "open": "^10.2.0",
     "tree-kill": "^1.2.2"
   }
