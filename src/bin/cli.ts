@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { createRequire } from 'node:module';
 import { runCli } from '../server/cli.js';
 import { defaultDataDir } from '../server/config.js';

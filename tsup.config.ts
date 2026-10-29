@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs';
 import { defineConfig } from 'tsup';
 
 const ENTRIES = {
-  'server/index': 'src/server/index.ts',
   'bin/cli': 'src/bin/cli.ts',
   'bin/hook': 'src/bin/hook.ts',
   'bin/mcp': 'src/bin/mcp.ts',
@@ -20,7 +19,7 @@ export default defineConfig(
           platform: 'node',
           target: 'node20',
           outDir: 'dist',
-          clean: false,
+          clean: true,
           sourcemap: true,
           splitting: false,
         },

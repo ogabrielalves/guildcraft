@@ -21,8 +21,12 @@
   "engines": {
     "node": ">=20"
   },
+  "bin": {
+    "guildcraft": "dist/bin/cli.js"
+  },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "assets"
   ],
   "devDependencies": {
@@ -54,7 +58,8 @@
     "test:coverage": "vitest run --coverage",
     "prepare": "husky",
     "dev": "tsup && concurrently -k -n server,web \"tsx watch src/bin/cli.ts --no-open\" \"vite\"",
-    "build": "vite build && tsup",
+    "build": "tsup && vite build",
+    "prepack": "npm run build",
     "start": "node dist/bin/cli.js",
     "lint": "eslint .",
     "format": "prettier --write .",
