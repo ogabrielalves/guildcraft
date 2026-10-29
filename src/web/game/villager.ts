@@ -16,7 +16,12 @@ interface Target {
   point: Point;
 }
 
-type Visit = { phase: 'going' | 'lingering'; bay: number; timer: number } | null;
+type Visit = {
+  phase: 'going' | 'lingering';
+  bay: number;
+  timer: number;
+  note: string | null;
+} | null;
 
 function anchorOf(activity: Activity): BayPoint | null {
   if (isWorkingActivity(activity) || activity === 'think') return 'work';
@@ -62,6 +67,10 @@ export class Villager {
     return this.visit !== null;
   }
 
+  get note(): string | null {
+    return this.visit?.note ?? null;
+  }
+
   get atStation(): boolean {
     return isWorkingActivity(this.activityNow) && !this.moving && this.visit === null;
   }
@@ -82,10 +91,10 @@ export class Villager {
     if (this.visit === null) this.walkTo(this.homeTarget());
   }
 
-  startVisit(bay: number): void {
+  startVisit(bay: number, note: string | null = null): void {
     if (bay === this.bay || this.map.bays[bay] === undefined) return;
     this.cheer = 0;
-    this.visit = { phase: 'going', bay, timer: 0 };
+    this.visit = { phase: 'going', bay, timer: 0, note };
     this.walkTo({ bay, point: bayAt(this.map, bay).guest });
   }
 

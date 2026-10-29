@@ -80,8 +80,10 @@ describe('Villager', () => {
 
   it('visits another bay, lingers and walks home', () => {
     const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(7);
+    expect(villager.note).toBeNull();
+    villager.startVisit(7, 'hello');
     expect(villager.visiting).toBe(true);
+    expect(villager.note).toBe('hello');
     settle(villager);
     expect(villager.position).toEqual(bayAt(map, 7).guest);
     expect(villager.pose).toBe('idle');
@@ -90,6 +92,7 @@ describe('Villager', () => {
     expect(villager.moving).toBe(false);
     villager.update(VISIT_LINGER);
     expect(villager.visiting).toBe(false);
+    expect(villager.note).toBeNull();
     expect(villager.moving).toBe(true);
     settle(villager);
     expect(villager.position).toEqual(bayAt(map, 0).work);

@@ -122,6 +122,15 @@ describe('drawScene', () => {
     expect(texts(scene([agent('a', 'waiting')]))).toEqual(['A', '❗']);
   });
 
+  it('shows the note while visiting, or the letter icon without one', () => {
+    const target = scene([agent('a', 'thinking'), agent('b', 'idle')]);
+    target.world.visit('a', 'b', 'please run the tests');
+    expect(texts(target)).toContain('✉️ please run the tests');
+    const silent = scene([agent('a', 'thinking'), agent('b', 'idle')]);
+    silent.world.visit('a', 'b', '');
+    expect(texts(silent)).toContain('✉️');
+  });
+
   it('shows the queue on the nameplate', () => {
     const queued = { ...agent('a', 'idle'), queued: 3 };
     expect(texts(scene([queued]))).toEqual(['A', '3']);

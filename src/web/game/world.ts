@@ -48,14 +48,13 @@ export class World {
   }
 
   handle(event: VillageEvent, now: number): void {
-    if (now - event.at > EVENT_FRESHNESS_MS) return;
-    const villager = this.villagers.get(event.agentId);
-    if (!villager) return;
-    if (event.kind === 'finished') villager.celebrate();
-    if (event.kind === 'messaged' && event.targetId !== undefined) {
-      const target = this.villagers.get(event.targetId);
-      if (target) villager.startVisit(target.bay);
-    }
+    if (event.kind !== 'finished' || now - event.at > EVENT_FRESHNESS_MS) return;
+    this.villagers.get(event.agentId)?.celebrate();
+  }
+
+  visit(fromId: string, toId: string, note: string | null = null): void {
+    const target = this.villagers.get(toId);
+    if (target) this.villagers.get(fromId)?.startVisit(target.bay, note);
   }
 
   update(dt: number): void {

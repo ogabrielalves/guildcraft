@@ -298,11 +298,16 @@ describe('createAddAgentDialog', () => {
     const ctx = setup();
     await openAt(ctx, 'web');
     ctx.buttonByText('Next').click();
-    ctx.emit({ type: 'error', code: 'SPAWN_FAILED' });
+    ctx.emit({ type: 'error', code: 'SPAWN_FAILED', source: 'agent:create' });
     expect(ctx.one('.recruit__error').hidden).toBe(true);
     ctx.buttonByText('Recruit').click();
     ctx.emit({ type: 'event', event: { kind: 'joined', agentId: 'x', at: 0 } });
-    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN', params: { name: 'Web' } });
+    ctx.emit({
+      type: 'error',
+      code: 'AGENT_NAME_TAKEN',
+      source: 'agent:create',
+      params: { name: 'Web' },
+    });
     expect(ctx.one('.recruit__error').hidden).toBe(false);
     expect(ctx.one('.recruit__error').textContent).toBe('There is already an adventurer named Web');
     expect(ctx.buttonByText('Recruit').disabled).toBe(false);
@@ -317,7 +322,7 @@ describe('createAddAgentDialog', () => {
     ctx.typeName('  Smith ');
     ctx.buttonByText('Next').click();
     ctx.buttonByText('Recruit').click();
-    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN' });
+    ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN', source: 'agent:create' });
     expect(ctx.one('.recruit__error').textContent).toBe(
       'There is already an adventurer named Smith',
     );
@@ -325,6 +330,24 @@ describe('createAddAgentDialog', () => {
     expect(ctx.one('.recruit__error').textContent).toBe(
       'There is already an adventurer named Smith',
     );
+  });
+
+  it('ignores errors from other requests while waiting', async () => {
+    const ctx = setup();
+    await openAt(ctx, 'web');
+    ctx.buttonByText('Next').click();
+    ctx.buttonByText('Recruit').click();
+    const other = { type: 'error', code: 'AGENT_NOT_FOUND', source: 'agent:remove' } as const;
+    const untagged = { type: 'error', code: 'SPAWN_FAILED' } as const;
+    ctx.emit(other);
+    ctx.emit(untagged);
+    expect(ctx.one('.recruit__error').hidden).toBe(true);
+    expect(ctx.dialog.handles(other)).toBe(false);
+    expect(ctx.dialog.handles(untagged)).toBe(false);
+    expect(
+      ctx.dialog.handles({ type: 'error', code: 'SPAWN_FAILED', source: 'agent:create' }),
+    ).toBe(true);
+    expect(ctx.dialog.handles({ type: 'agent:removed', agentId: 'x' })).toBe(false);
   });
 
   it('reports a lost connection when the message cannot be sent', async () => {

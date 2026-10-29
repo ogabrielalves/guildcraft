@@ -71,9 +71,10 @@ describe('World', () => {
   it('sends the sender to visit the recipient', () => {
     const world = new World(map);
     world.sync([agent('a', 'thinking'), agent('b')]);
-    world.handle(event('messaged', 'a', 'b'), 1000);
+    world.visit('a', 'b', 'please review');
     const sender = world.villager('a');
     expect(sender?.visiting).toBe(true);
+    expect(sender?.note).toBe('please review');
     for (let i = 0; i < 400 && sender?.moving; i += 1) world.update(0.05);
     expect(sender?.position).toEqual(bayAt(map, 1).guest);
   });
@@ -88,11 +89,14 @@ describe('World', () => {
   it('ignores stale events and unknown agents', () => {
     const world = new World(map);
     world.sync([agent('a', 'thinking'), agent('b')]);
-    world.handle(event('messaged', 'a', 'b'), 1000 + EVENT_FRESHNESS_MS + 1);
-    world.handle(event('messaged', 'ghost', 'b'), 1000);
-    world.handle(event('messaged', 'a', 'ghost'), 1000);
-    world.handle(event('messaged', 'a'), 1000);
+    world.handle(event('finished', 'a'), 1000 + EVENT_FRESHNESS_MS + 1);
+    world.handle(event('finished', 'ghost'), 1000);
+    world.handle(event('messaged', 'a', 'b'), 1000);
     world.handle(event('joined', 'a'), 1000);
+    expect(world.villager('a')?.pose).not.toBe('cheer');
+    expect(world.villager('a')?.visiting).toBe(false);
+    world.visit('ghost', 'b');
+    world.visit('a', 'ghost');
     expect(world.villager('a')?.visiting).toBe(false);
   });
 });

@@ -77,6 +77,7 @@ if (root) {
   const tooltip = createTooltip();
   const game = createGame({
     store,
+    socket,
     map: parseWorkshopMap(provisionalWorkshop()),
     sprites: new SpriteLibrary(loadImage),
     onRecruit: () => {
@@ -104,7 +105,7 @@ if (root) {
     tooltip.element,
   ]);
   game.start();
-  createNotifications({ store, socket, toasts, isHandled: () => dialog.isAwaiting() });
+  createNotifications({ store, socket, toasts, isHandled: (message) => dialog.handles(message) });
   createShortcuts({
     store,
     focusCompose: () => {

@@ -1,4 +1,5 @@
 import type { AgentView } from '../../shared/agent.js';
+import type { GameSocket } from '../net/socket.js';
 import type { Store } from '../state/store.js';
 import { Particles } from './draw/effects.js';
 import type { LayerFactory } from './draw/lighting.js';
@@ -16,6 +17,7 @@ export const STAGE_BACKGROUND = '#17110d';
 
 export interface GameOptions {
   store: Store;
+  socket: Pick<GameSocket, 'onMessage'>;
   map: WorkshopMap;
   sprites: { get(skin: string): SpriteSheet | null };
   onRecruit(bay: number): void;
@@ -83,6 +85,10 @@ export function createGame(options: GameOptions): Game {
     }
   });
 
+  const unsubscribeSocket = options.socket.onMessage((message) => {
+    if (message.type === 'agent:visit') world.visit(message.fromId, message.toId, message.preview);
+  });
+
   const unbindInput = bindInput({
     canvas,
     toWorld: (x, y) => engine.toWorld(x, y),
@@ -119,6 +125,7 @@ export function createGame(options: GameOptions): Game {
       engine.stop();
       unbindInput();
       unsubscribe();
+      unsubscribeSocket();
       canvas.remove();
     },
   };

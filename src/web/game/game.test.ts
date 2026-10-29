@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
+import type { ServerMessage } from '../../shared/protocol.js';
 import { Store } from '../state/store.js';
 import { createGame } from './game.js';
 import { bayAt, parseWorkshopMap } from './map.js';
@@ -27,8 +28,19 @@ function setup(agents: AgentView[] = []) {
   const callbacks: FrameRequestCallback[] = [];
   const onRecruit = vi.fn();
   const onHover = vi.fn();
+  const listeners = new Set<(message: ServerMessage) => void>();
+  const socket = {
+    onMessage: (listener: (message: ServerMessage) => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+  const emit = (message: ServerMessage) => {
+    for (const listener of listeners) listener(message);
+  };
   const game = createGame({
     store,
+    socket,
     map,
     sprites: { get: () => null },
     onRecruit,
@@ -44,7 +56,7 @@ function setup(agents: AgentView[] = []) {
   Object.defineProperty(game.element, 'clientWidth', { value: map.width });
   Object.defineProperty(game.element, 'clientHeight', { value: map.height });
   document.body.append(game.element);
-  return { store, game, callbacks, onRecruit, onHover };
+  return { store, game, callbacks, onRecruit, onHover, emit, listeners };
 }
 
 function at(x: number, y: number) {
@@ -72,12 +84,21 @@ describe('createGame', () => {
   });
 
   it('reacts only to new events', () => {
-    const { store, game } = setup([agent('a'), agent('b')]);
-    const messaged: VillageEvent = { kind: 'messaged', agentId: 'a', targetId: 'b', at: 4000 };
-    store.apply({ type: 'event', event: messaged });
-    expect(game.world.villager('a')?.visiting).toBe(true);
+    const { store, game } = setup([agent('a', 'tool')]);
+    const finished: VillageEvent = { kind: 'finished', agentId: 'a', at: 4000 };
+    store.apply({ type: 'event', event: finished });
+    expect(game.world.villager('a')?.pose).toBe('cheer');
+    game.world.update(5);
     store.focus('a');
-    expect(game.world.villager('a')?.visiting).toBe(true);
+    expect(game.world.villager('a')?.pose).toBe('work');
+  });
+
+  it('sends the sender to the recipient with the note', () => {
+    const { game, emit } = setup([agent('a'), agent('b')]);
+    emit({ type: 'agent:visit', fromId: 'a', toId: 'b', preview: 'run the tests' });
+    expect(game.world.villager('a')?.note).toBe('run the tests');
+    emit({ type: 'agent:removed', agentId: 'b' });
+    expect(game.world.villager('b')).toBeDefined();
   });
 
   it('runs the loop and draws the scene', () => {
@@ -118,9 +139,10 @@ describe('createGame', () => {
   });
 
   it('stops everything on destroy', () => {
-    const { store, game, onRecruit } = setup([agent('a')]);
+    const { store, game, onRecruit, listeners } = setup([agent('a')]);
     game.start();
     game.destroy();
+    expect(listeners.size).toBe(0);
     expect(game.engine.running).toBe(false);
     expect(game.element.isConnected).toBe(false);
     store.apply({ type: 'agent:updated', agent: agent('b') });

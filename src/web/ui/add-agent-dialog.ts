@@ -2,6 +2,7 @@ import type { AgentView, PermissionMode } from '../../shared/agent.js';
 import { PERMISSION_MODES } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_NAME_LENGTH } from '../../shared/constants.js';
 import type { ErrorCode } from '../../shared/errors.js';
+import type { ServerMessage } from '../../shared/protocol.js';
 import type { TranslationKey } from '../i18n/index.js';
 import { onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
@@ -9,6 +10,8 @@ import type { Store } from '../state/store.js';
 import type { FolderBrowser, ListFolders } from './folder-browser.js';
 import { createFolderBrowser } from './folder-browser.js';
 import { skinLabel } from './panel.js';
+
+type ErrorMessage = Extract<ServerMessage, { type: 'error' }>;
 
 const PERMISSION_KEYS: Record<PermissionMode, TranslationKey> = {
   default: 'recruit.permission.default',
@@ -32,7 +35,7 @@ export interface AddAgentDialog {
   readonly element: HTMLDialogElement;
   open(): void;
   close(): void;
-  isAwaiting(): boolean;
+  handles(message: ServerMessage): boolean;
   destroy(): void;
 }
 
@@ -312,8 +315,10 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     close();
   });
 
+  const handles = (message: ServerMessage): message is ErrorMessage =>
+    pending !== null && message.type === 'error' && message.source === 'agent:create';
   const unsubscribeMessage = socket.onMessage((message) => {
-    if (pending !== null && message.type === 'error') showError(message.code, message.params);
+    if (handles(message)) showError(message.code, message.params);
   });
   const unsubscribeStore = store.subscribe((state, previous) => {
     if (!element.open) return;
@@ -337,7 +342,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     element,
     open,
     close,
-    isAwaiting: () => pending !== null,
+    handles,
     destroy() {
       close();
       unsubscribeMessage();

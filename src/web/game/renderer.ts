@@ -1,5 +1,5 @@
 import type { AgentView } from '../../shared/agent.js';
-import { bubbleFor, drawBubble } from './draw/bubble.js';
+import { bubbleFor, drawBubble, drawNote } from './draw/bubble.js';
 import type { Emitter, Particles } from './draw/effects.js';
 import type { Light, Lighting } from './draw/lighting.js';
 import { drawNameplate } from './draw/nameplate.js';
@@ -263,8 +263,14 @@ function drawLabels(ctx: Paint, villager: Villager, scene: Scene): void {
   const bounds = villagerBounds(villager, manifestOf(sheet));
   const plateBottom = Math.round(bounds.y + 4);
   drawNameplate(ctx, agent.name, agent.queued, villager.position.x, plateBottom);
+  const bubbleBottom = plateBottom - 10;
+  const { note } = villager;
+  if (note !== null && note !== '') {
+    drawNote(ctx, note, villager.position.x, bubbleBottom, scene.time);
+    return;
+  }
   const bubble = bubbleFor(villager.activity, villager.visiting);
-  if (bubble !== null) drawBubble(ctx, bubble, villager.position.x, plateBottom - 10, scene.time);
+  if (bubble !== null) drawBubble(ctx, bubble, villager.position.x, bubbleBottom, scene.time);
 }
 
 export function drawScene(ctx: Paint, scene: Scene): void {

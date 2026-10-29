@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUBBLE_COLORS, bubbleFor, drawBubble } from './bubble.js';
+import { BUBBLE_COLORS, NOTE_FONT, bubbleFor, drawBubble, drawNote, shortNote } from './bubble.js';
 import { NAMEPLATE_COLORS, badgeText, drawNameplate } from './nameplate.js';
 import { recordingPaint } from './recording-paint.js';
 import { RING_COLORS, drawRing, drawShadow, ringAlpha } from './rings.js';
@@ -109,5 +109,32 @@ describe('bubble', () => {
     const ctx = recordingPaint();
     drawBubble(ctx, '💤', 30, 20, Math.PI / 6);
     expect(ctx.named('fillRect')[1]?.args[1]).toBe(7);
+  });
+
+  it.each([
+    ['short', 'short'],
+    ['  many   spaces\nhere ', 'many spaces here'],
+    ['exactly twenty-eight chars!!', 'exactly twenty-eight chars!!'],
+    ['this message is a bit too long to fit', 'this message is a bit too l…'],
+    ['ends with space right here then more', 'ends with space right here…'],
+  ])('shortens %j', (text, expected) => {
+    expect(shortNote(text)).toBe(expected);
+  });
+
+  it('keeps emoji whole when shortening', () => {
+    expect(shortNote('😀😀😀😀', 3)).toBe('😀😀…');
+  });
+
+  it('draws a note sized to its text', () => {
+    const ctx = recordingPaint();
+    drawNote(ctx, 'hi', 30, 20, 0);
+    const text = '✉️ hi';
+    expect(ctx.named('fillText')[0]?.args[0]).toBe(text);
+    expect(ctx.font).toBe(NOTE_FONT);
+    expect(ctx.named('fillRect')[1]?.args[2]).toBe(text.length * 4 + 6);
+    drawNote(ctx, 'a much longer note', 30, 20, 0);
+    expect(ctx.named('fillRect')[3]?.args[2]).toBe(
+      Math.ceil('✉️ a much longer note'.length * 4) + 6,
+    );
   });
 });
