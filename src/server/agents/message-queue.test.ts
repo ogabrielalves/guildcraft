@@ -80,7 +80,9 @@ describe('MessageQueue', () => {
   it('rejects messages beyond the limit', () => {
     const { queue } = setup(2);
     queue.enqueue({ fromId: null, text: 'a' });
+    expect(queue.isFull).toBe(false);
     queue.enqueue({ fromId: null, text: 'b' });
+    expect(queue.isFull).toBe(true);
     expect(queue.enqueue({ fromId: null, text: 'c' })).toEqual({ ok: false, code: 'QUEUE_FULL' });
     expect(queue.size).toBe(2);
   });

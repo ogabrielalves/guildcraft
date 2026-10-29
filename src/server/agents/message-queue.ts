@@ -56,9 +56,13 @@ export class MessageQueue {
     return this.items.length;
   }
 
+  get isFull(): boolean {
+    return this.items.length >= this.limit;
+  }
+
   enqueue(message: QueuedMessage): EnqueueResult {
     if (sanitizePrompt(message.text).trim() === '') return { ok: false, code: 'EMPTY_PROMPT' };
-    if (this.items.length >= this.limit) return { ok: false, code: 'QUEUE_FULL' };
+    if (this.isFull) return { ok: false, code: 'QUEUE_FULL' };
     this.items.push(message);
     return { ok: true, size: this.items.length };
   }
