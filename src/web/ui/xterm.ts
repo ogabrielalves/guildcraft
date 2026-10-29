@@ -4,9 +4,13 @@ import type { TerminalLike } from './terminal-view.js';
 
 const TERMINAL_FONT = "ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace";
 const SCROLLBACK_LINES = 5_000;
+const PTY_COLS = 120;
+const PTY_ROWS = 32;
 
 export function createXterm(): TerminalLike {
   const terminal = new Terminal({
+    cols: PTY_COLS,
+    rows: PTY_ROWS,
     cursorBlink: true,
     fontFamily: TERMINAL_FONT,
     fontSize: 13,
