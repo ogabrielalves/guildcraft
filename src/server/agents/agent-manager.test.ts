@@ -392,6 +392,38 @@ describe('trust prompt', () => {
     expect(process.written.at(-1)).toBe('\x1b[200~go\x1b[201~');
   });
 
+  it('returns to idle after the user answers an unclear prompt that came after SessionStart', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    ctx.manager.hook(id, 'SessionStart', {});
+    process.screen = 'Do you trust the files in this folder?\n  maybe\n';
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.statusOf(id)).toBe('waiting');
+    ctx.manager.sendPrompt([id], 'go');
+    ctx.manager.input(id, '\r');
+    expect(ctx.statusOf(id)).toBe('thinking');
+
+    process.screen = 'Welcome';
+    process.emit('y');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(process.written.at(-1)).toBe('\x1b[200~go\x1b[201~');
+    expect(ctx.statusOf(id)).toBe('thinking');
+  });
+
+  it('keeps a starting agent starting when an unclear prompt closes', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = 'Do you trust the files in this folder?\n  maybe\n';
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    ctx.deps.registry.get(id)?.setStatus('starting');
+    process.screen = 'Welcome';
+    process.emit('y');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.statusOf(id)).toBe('starting');
+  });
+
   it('only looks at the visible part of the screen', async () => {
     const ctx = setup();
     const { process } = await created(ctx);

@@ -361,7 +361,9 @@ export class AgentManager {
       const wasOpen = runtime.trustOpen;
       runtime.trustOpen = detectTrustPrompt(screen);
       if (!runtime.trustOpen) {
-        if (wasOpen) this.tryDeliver(agent);
+        if (!wasOpen) return;
+        if (agent.status === 'starting') this.tryDeliver(agent);
+        else this.update(agent, 'idle');
         return;
       }
       const answer = trustAnswer(screen);
