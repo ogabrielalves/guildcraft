@@ -52,10 +52,15 @@ describe('upsertAgent', () => {
 });
 
 describe('removeAgent', () => {
-  it('drops the agent from selection and focus', () => {
+  it('drops the agent from selection and moves focus to the last selected', () => {
     const state = removeAgent({ ...withAgents('a', 'b'), selected: ['a', 'b'], focused: 'a' }, 'a');
     expect(state.agents.map((a) => a.id)).toEqual(['b']);
     expect(state.selected).toEqual(['b']);
+    expect(state.focused).toBe('b');
+  });
+
+  it('clears focus when nothing else is selected', () => {
+    const state = removeAgent({ ...withAgents('a', 'b'), selected: ['a'], focused: 'a' }, 'a');
     expect(state.focused).toBeNull();
   });
 
@@ -102,6 +107,17 @@ describe('selectAgent', () => {
     const state = selectAgent({ ...base, selected: ['b'] }, 'a', 'replace');
     expect(state.selected).toEqual(['a']);
     expect(state.focused).toBe('a');
+  });
+
+  it('returns the same state when replacing with the only focused agent', () => {
+    const state = { ...base, selected: ['a'], focused: 'a' };
+    expect(selectAgent(state, 'a', 'replace')).toBe(state);
+  });
+
+  it('focuses a toggled agent when nothing is focused', () => {
+    const state = selectAgent(base, 'b', 'toggle');
+    expect(state.selected).toEqual(['b']);
+    expect(state.focused).toBe('b');
   });
 
   it('adds without duplicating', () => {
@@ -223,6 +239,18 @@ describe('Store', () => {
     store.setConnection('connecting');
     store.clearSelection();
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('keeps notifying when a listener throws', () => {
+    const store = new Store();
+    const listener = vi.fn();
+    store.subscribe(() => {
+      throw new Error('boom');
+    });
+    store.subscribe(listener);
+    store.setConnection('open');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getState().connection).toBe('open');
   });
 
   it('stops notifying after unsubscribe', () => {

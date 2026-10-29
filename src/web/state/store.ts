@@ -34,11 +34,12 @@ export function upsertAgent(state: StoreState, agent: AgentView): StoreState {
 }
 
 export function removeAgent(state: StoreState, agentId: string): StoreState {
+  const selected = state.selected.filter((id) => id !== agentId);
   return {
     ...state,
     agents: state.agents.filter((agent) => agent.id !== agentId),
-    selected: state.selected.filter((id) => id !== agentId),
-    focused: state.focused === agentId ? null : state.focused,
+    selected,
+    focused: state.focused === agentId ? (selected.at(-1) ?? null) : state.focused,
   };
 }
 
@@ -66,11 +67,14 @@ export function initSession(
 export function selectAgent(state: StoreState, agentId: string, mode: SelectMode): StoreState {
   if (!state.agents.some((agent) => agent.id === agentId)) return state;
   const has = state.selected.includes(agentId);
-  if (mode === 'replace') return { ...state, selected: [agentId], focused: agentId };
-  if (mode === 'add') {
-    return has ? state : { ...state, selected: [...state.selected, agentId] };
+  if (mode === 'replace') {
+    const unchanged = state.focused === agentId && state.selected.length === 1 && has;
+    return unchanged ? state : { ...state, selected: [agentId], focused: agentId };
   }
-  if (!has) return { ...state, selected: [...state.selected, agentId] };
+  if (!has) {
+    return { ...state, selected: [...state.selected, agentId], focused: state.focused ?? agentId };
+  }
+  if (mode === 'add') return state;
   const selected = state.selected.filter((id) => id !== agentId);
   const focused = state.focused === agentId ? (selected.at(-1) ?? null) : state.focused;
   return { ...state, selected, focused };
@@ -133,7 +137,13 @@ export class Store {
     const next = reducer(previous);
     if (next === previous) return;
     this.state = next;
-    for (const listener of this.listeners) listener(next, previous);
+    for (const listener of this.listeners) {
+      try {
+        listener(next, previous);
+      } catch {
+        continue;
+      }
+    }
   }
 
   apply(message: ServerMessage): void {
