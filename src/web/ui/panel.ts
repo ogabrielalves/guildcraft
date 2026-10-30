@@ -1,3 +1,4 @@
+import type { ActionState, AgentAction, AgentActivity, TaskStatus } from '../../shared/activity.js';
 import type { AgentStatus, AgentView, WaitingReason } from '../../shared/agent.js';
 import type { IdlePlan } from '../game/activity.js';
 import type { Assets } from '../game/assets.js';
@@ -33,6 +34,28 @@ const IDLE_KEYS: Record<IdlePlan, TranslationKey> = {
   table: 'idle.table',
   chat: 'idle.chat',
   nap: 'idle.nap',
+};
+
+const ACTION_KEYS: Record<ActionState, TranslationKey> = {
+  running: 'action.running',
+  done: 'action.done',
+  error: 'action.error',
+  rejected: 'action.rejected',
+  interrupted: 'action.interrupted',
+};
+
+export const ACTION_ICONS: Record<ActionState, string> = {
+  running: '»',
+  done: '✓',
+  error: '✗',
+  rejected: '⊘',
+  interrupted: '■',
+};
+
+const TASK_KEYS: Record<TaskStatus, TranslationKey> = {
+  pending: 'task.pending',
+  in_progress: 'task.inProgress',
+  completed: 'task.completed',
 };
 
 export const REFRESH_MS = 500;
@@ -82,6 +105,7 @@ export interface PanelOptions {
   every?: Every;
   frames?: Frames;
   keys?: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
+  now?: () => number;
 }
 
 export interface Panel {
@@ -117,6 +141,21 @@ export function effortLabel(effort: string): string {
   return key === undefined ? effort : t(key);
 }
 
+export function timeAgo(ms: number): string {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  if (seconds < 5) return t('history.justNow');
+  if (seconds < 60) return t('history.seconds', { count: seconds });
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return t('history.minutes', { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t('history.hours', { count: hours });
+  return t('history.days', { count: Math.floor(hours / 24) });
+}
+
+export function newestFirst(actions: readonly AgentAction[]): AgentAction[] {
+  return [...actions].sort((a, b) => b.startedAt - a.startedAt);
+}
+
 export function nowText(agent: AgentView, doing: IdlePlan | null): string {
   if (agent.status === 'tool' && agent.tool !== null) {
     return agent.tool.detail === '' ? agent.tool.name : agent.tool.detail;
@@ -149,10 +188,13 @@ export function createPanel(options: PanelOptions): Panel {
   const doing = options.doing ?? (() => null);
   const every = options.every ?? defaultEvery;
   const frames = options.frames ?? ANIMATION_FRAMES;
+  const now = options.now ?? Date.now;
   let animation: number | null = null;
   const labels = new Map<HTMLElement, TranslationKey>();
   let shown: AgentView | null = null;
   let shownAgents: readonly AgentView[] | null = null;
+  let shownActivity: AgentActivity | undefined;
+  const times = new Map<HTMLElement, number>();
   let consoleOpen = false;
   let stopRefresh: (() => void) | null = null;
 
@@ -200,6 +242,20 @@ export function createPanel(options: PanelOptions): Panel {
     details.append(wrapper);
     return { row, wrapper, value };
   });
+
+  const history = make('section', 'panel__history');
+  const historyTitle = label(make('h3', 'panel__heading'), 'history.title');
+  const sessionRow = make('p', 'panel__session');
+  const sessionLabel = label(make('span', 'panel__session-label'), 'history.session');
+  const sessionTitle = make('span', 'panel__session-title');
+  sessionRow.append(sessionLabel, sessionTitle);
+  const tasksTitle = label(make('h4', 'panel__subheading'), 'history.tasks');
+  const tasks = make('ul', 'panel__tasks');
+  const tasksBlock = make('div', 'panel__tasks-block');
+  tasksBlock.append(tasksTitle, tasks);
+  const log = make('ol', 'panel__log');
+  const empty = label(make('p', 'panel__empty'), 'history.empty');
+  history.append(historyTitle, sessionRow, tasksBlock, log, empty);
 
   const focused = () => {
     const id = store.getState().focused;
@@ -257,7 +313,7 @@ export function createPanel(options: PanelOptions): Panel {
   actions.append(toggle, interrupt, restart);
   const manage = make('div', 'panel__manage');
   manage.append(remove);
-  element.append(header, details, actions, manage);
+  element.append(header, details, history, actions, manage);
 
   const consoleTitle = make('h2', 'console-window__title');
   const consoleClose = make('button', 'console-window__close');
@@ -307,6 +363,67 @@ export function createPanel(options: PanelOptions): Panel {
     }
   };
 
+  const renderTimes = () => {
+    const current = now();
+    for (const [target, startedAt] of times) {
+      const text = timeAgo(current - startedAt);
+      if (target.textContent !== text) target.textContent = text;
+    }
+  };
+
+  const renderAction = (action: AgentAction): HTMLElement => {
+    const item = make('li', 'panel__entry');
+    item.dataset.state = action.state;
+    const icon = make('span', 'panel__entry-icon');
+    icon.textContent = ACTION_ICONS[action.state];
+    icon.title = t(ACTION_KEYS[action.state]);
+    icon.setAttribute('aria-label', icon.title);
+    const tool = make('span', 'panel__entry-tool');
+    tool.textContent = action.tool;
+    const time = make('time', 'panel__entry-time');
+    time.dateTime = new Date(action.startedAt).toISOString();
+    times.set(time, action.startedAt);
+    const head = make('div', 'panel__entry-head');
+    head.append(icon, tool, time);
+    item.append(head);
+    if (action.detail !== '') {
+      const detail = make('p', 'panel__entry-detail');
+      detail.textContent = action.detail;
+      detail.title = action.detail;
+      item.append(detail);
+    }
+    if (action.result !== null && action.result !== '') {
+      const result = make('p', 'panel__entry-result');
+      result.textContent = action.result;
+      result.title = action.result;
+      item.append(result);
+    }
+    return item;
+  };
+
+  const renderHistory = (activity: AgentActivity | undefined) => {
+    const title = activity?.title ?? null;
+    sessionRow.hidden = title === null || title === '';
+    sessionTitle.textContent = title ?? '';
+    sessionTitle.title = title ?? '';
+    const taskList = activity?.tasks ?? [];
+    tasksBlock.hidden = taskList.length === 0;
+    tasks.replaceChildren(
+      ...taskList.map((task) => {
+        const item = make('li', 'panel__task');
+        item.dataset.status = task.status;
+        item.textContent = task.title;
+        item.title = t(TASK_KEYS[task.status]);
+        return item;
+      }),
+    );
+    times.clear();
+    const actionList = newestFirst(activity?.actions ?? []);
+    log.replaceChildren(...actionList.map(renderAction));
+    empty.hidden = actionList.length > 0;
+    renderTimes();
+  };
+
   const renderPortrait = (agent: AgentView, time = 0) => {
     const ctx = assets ? portrait.getContext('2d') : null;
     if (ctx && assets) drawPortrait(ctx, assets, agent.skin, time);
@@ -342,11 +459,21 @@ export function createPanel(options: PanelOptions): Panel {
   };
 
   const refresh = () => {
-    if (shown) renderDetails(shown);
+    if (!shown) return;
+    renderDetails(shown);
+    renderTimes();
   };
 
   const render = (state: StoreState) => {
     const agent = focused() ?? null;
+    const activity = agent ? store.activity(agent.id) : undefined;
+    if (agent?.id !== shown?.id || activity !== shownActivity) {
+      shownActivity = activity;
+      if (agent) {
+        renderHistory(activity);
+        if (agent.id !== shown?.id) history.scrollTop = 0;
+      }
+    }
     if (agent === shown && state.agents === shownAgents) return;
     const wasHidden = element.hidden;
     element.hidden = agent === null;
@@ -366,7 +493,10 @@ export function createPanel(options: PanelOptions): Panel {
 
   const renderTexts = () => {
     for (const [target, key] of labels) target.textContent = t(key);
-    if (shown) renderAgent(shown);
+    if (shown) {
+      renderAgent(shown);
+      renderHistory(shownActivity);
+    }
   };
 
   renderTexts();

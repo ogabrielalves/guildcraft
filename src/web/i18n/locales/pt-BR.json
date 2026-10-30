@@ -39,6 +39,29 @@
     "model": "Modelo",
     "effort": "Esforço"
   },
+  "history": {
+    "title": "Histórico",
+    "empty": "Nenhuma ação ainda",
+    "session": "Sessão",
+    "tasks": "Tarefas",
+    "justNow": "agora mesmo",
+    "seconds": "há {count}s",
+    "minutes": "há {count}min",
+    "hours": "há {count}h",
+    "days": "há {count}d"
+  },
+  "action": {
+    "running": "Em andamento",
+    "done": "Concluída",
+    "error": "Falhou",
+    "rejected": "Recusada",
+    "interrupted": "Interrompida"
+  },
+  "task": {
+    "pending": "A fazer",
+    "inProgress": "Em andamento",
+    "completed": "Concluída"
+  },
   "console": {
     "title": "{name} · Console",
     "close": "Fechar console"

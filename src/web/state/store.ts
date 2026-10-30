@@ -1,3 +1,4 @@
+import type { AgentActivity } from '../../shared/activity.js';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_EVENTS } from '../../shared/constants.js';
 import type { ServerMessage } from '../../shared/protocol.js';
@@ -9,6 +10,7 @@ export interface StoreState {
   readonly agents: readonly AgentView[];
   readonly events: readonly VillageEvent[];
   readonly skins: readonly string[];
+  readonly activities: Readonly<Record<string, AgentActivity>>;
   readonly selected: readonly string[];
   readonly focused: string | null;
   readonly connection: ConnectionState;
@@ -20,6 +22,7 @@ export const INITIAL_STATE: StoreState = {
   agents: [],
   events: [],
   skins: [],
+  activities: {},
   selected: [],
   focused: null,
   connection: 'connecting',
@@ -47,9 +50,13 @@ export function upsertAgent(state: StoreState, update: AgentView): StoreState {
 
 export function removeAgent(state: StoreState, agentId: string): StoreState {
   const selected = state.selected.filter((id) => id !== agentId);
+  const activities = Object.fromEntries(
+    Object.entries(state.activities).filter(([id]) => id !== agentId),
+  );
   return {
     ...state,
     agents: state.agents.filter((agent) => agent.id !== agentId),
+    activities,
     selected,
     focused: state.focused === agentId ? (selected.at(-1) ?? null) : state.focused,
   };
@@ -64,6 +71,7 @@ export function initSession(
   agents: readonly AgentView[],
   events: readonly VillageEvent[],
   skins: readonly string[],
+  activities: readonly AgentActivity[] = [],
 ): StoreState {
   const ids = new Set(agents.map((agent) => agent.id));
   return {
@@ -71,9 +79,17 @@ export function initSession(
     agents: agents.map(withDefaults),
     events: events.slice(-MAX_EVENTS),
     skins: [...skins],
+    activities: Object.fromEntries(
+      activities.filter((activity) => ids.has(activity.agentId)).map((a) => [a.agentId, a]),
+    ),
     selected: state.selected.filter((id) => ids.has(id)),
     focused: state.focused !== null && ids.has(state.focused) ? state.focused : null,
   };
+}
+
+export function setActivity(state: StoreState, activity: AgentActivity): StoreState {
+  if (!state.agents.some((agent) => agent.id === activity.agentId)) return state;
+  return { ...state, activities: { ...state.activities, [activity.agentId]: activity } };
 }
 
 export function selectAgent(state: StoreState, agentId: string, mode: SelectMode): StoreState {
@@ -111,13 +127,15 @@ export function setConnection(state: StoreState, connection: ConnectionState): S
 export function applyServerMessage(state: StoreState, message: ServerMessage): StoreState {
   switch (message.type) {
     case 'session:init':
-      return initSession(state, message.agents, message.events, message.skins);
+      return initSession(state, message.agents, message.events, message.skins, message.activities);
     case 'agent:updated':
       return upsertAgent(state, message.agent);
     case 'agent:removed':
       return removeAgent(state, message.agentId);
     case 'event':
       return addEvent(state, message.event);
+    case 'agent:activity':
+      return setActivity(state, message.activity);
     default:
       return state;
   }
@@ -137,6 +155,10 @@ export class Store {
 
   agent(agentId: string): AgentView | undefined {
     return this.state.agents.find((agent) => agent.id === agentId);
+  }
+
+  activity(agentId: string): AgentActivity | undefined {
+    return this.state.activities[agentId];
   }
 
   subscribe(listener: StoreListener): () => void {

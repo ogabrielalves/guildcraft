@@ -176,6 +176,26 @@ describe('DemoSocket', () => {
     expect(of('event').map((message) => message.event.kind)).toContain('finished');
   });
 
+  it('records tool actions as activity and drops them on remove', () => {
+    const { socket, of } = harness({}, sequence(0, 0.1, 0, 0.1, 0, 0, 0.9));
+    socket.connect();
+    socket.tick();
+    socket.tick();
+    const running = of('agent:activity').at(-1)?.activity;
+    expect(running?.agentId).toBe('demo-1');
+    expect(running?.actions).toMatchObject([{ tool: 'Edit', state: 'running', result: null }]);
+    socket.tick();
+    const done = of('agent:activity').at(-1)?.activity;
+    expect(done?.actions).toMatchObject([{ state: 'done', result: 'ok' }]);
+    socket.close();
+    socket.connect();
+    expect(of('session:init').at(-1)?.activities).toEqual([done]);
+    socket.send({ type: 'agent:remove', agentId: 'demo-1' });
+    socket.close();
+    socket.connect();
+    expect(of('session:init').at(-1)?.activities).toEqual([]);
+  });
+
   it('records waiting transitions', () => {
     const { socket, of } = harness({}, sequence(0, 0.1, 0, 0.8));
     socket.connect();

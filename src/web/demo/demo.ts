@@ -1,3 +1,5 @@
+import type { AgentActivity } from '../../shared/activity.js';
+import { MAX_ACTIONS, emptyActivity } from '../../shared/activity.js';
 import type { AgentStatus, AgentTool, AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_EVENTS } from '../../shared/constants.js';
 import type { FsEntry, FsListing } from '../../shared/fs.js';
@@ -170,6 +172,8 @@ export class DemoSocket {
   private timer: unknown = null;
   private agents: AgentView[] = createDemoAgents();
   private events: VillageEvent[] = [];
+  private activities = new Map<string, AgentActivity>();
+  private actionCount = 0;
   private nextId = DEMO_CREW.length + 1;
   private readonly messageListeners = new Set<MessageListener>();
   private readonly statusListeners = new Set<StatusListener>();
@@ -206,7 +210,7 @@ export class DemoSocket {
       events: this.events,
       skins: [...DEMO_SKINS],
       permissions: [],
-      activities: [],
+      activities: [...this.activities.values()],
     });
     for (const agent of this.agents) {
       this.emit({ type: 'term:snapshot', agentId: agent.id, data: banner(agent) });
@@ -242,6 +246,7 @@ export class DemoSocket {
     const status = nextStatus(agent.status, this.random);
     const tool = status === 'tool' ? pick(DEMO_TOOLS, this.random) : null;
     this.update(agent.id, { status, tool });
+    this.track(agent.id, agent.status === 'tool', tool);
     if (status === 'tool' && tool) {
       this.emit({
         type: 'term:output',
@@ -319,8 +324,35 @@ export class DemoSocket {
     this.record('joined', agent.id);
   }
 
+  private track(agentId: string, finish: boolean, tool: AgentTool | null): void {
+    if (!finish && !tool) return;
+    const at = this.now();
+    const current = this.activities.get(agentId) ?? emptyActivity(agentId);
+    const actions = current.actions.map((action) =>
+      finish && action.state === 'running'
+        ? { ...action, state: 'done' as const, result: 'ok', endedAt: at }
+        : action,
+    );
+    if (tool) {
+      this.actionCount += 1;
+      actions.push({
+        id: `demo-${String(this.actionCount)}`,
+        tool: tool.name,
+        detail: tool.detail,
+        state: 'running',
+        result: null,
+        startedAt: at,
+        endedAt: null,
+      });
+    }
+    const activity = { ...current, actions: actions.slice(-MAX_ACTIONS) };
+    this.activities.set(agentId, activity);
+    this.emit({ type: 'agent:activity', activity });
+  }
+
   private remove(agentId: string): void {
     if (!this.find(agentId)) return;
+    this.activities.delete(agentId);
     this.agents = this.agents.filter((agent) => agent.id !== agentId);
     this.emit({ type: 'agent:removed', agentId });
     this.record('left', agentId);

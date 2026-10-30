@@ -39,6 +39,29 @@
     "model": "Model",
     "effort": "Effort"
   },
+  "history": {
+    "title": "History",
+    "empty": "No actions yet",
+    "session": "Session",
+    "tasks": "Tasks",
+    "justNow": "just now",
+    "seconds": "{count}s ago",
+    "minutes": "{count}m ago",
+    "hours": "{count}h ago",
+    "days": "{count}d ago"
+  },
+  "action": {
+    "running": "Running",
+    "done": "Done",
+    "error": "Failed",
+    "rejected": "Rejected",
+    "interrupted": "Interrupted"
+  },
+  "task": {
+    "pending": "To do",
+    "inProgress": "In progress",
+    "completed": "Done"
+  },
   "console": {
     "title": "{name} · Console",
     "close": "Close console"

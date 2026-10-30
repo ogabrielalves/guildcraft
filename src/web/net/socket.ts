@@ -13,6 +13,7 @@ const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessage['type']>
   'term:reset',
   'agent:updated',
   'agent:removed',
+  'agent:activity',
   'agent:visit',
   'message:delivered',
   'event',

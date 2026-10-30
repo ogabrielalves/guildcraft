@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { AgentActivity } from '../../shared/activity.js';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_EVENTS } from '../../shared/constants.js';
 import {
@@ -11,6 +12,7 @@ import {
   initSession,
   removeAgent,
   selectAgent,
+  setActivity,
   setConnection,
   upsertAgent,
   withDefaults,
@@ -307,5 +309,49 @@ describe('Store', () => {
     expect(store.getState().selected).toEqual([]);
     store.setConnection('closed');
     expect(store.getState().connection).toBe('closed');
+  });
+});
+
+describe('activities', () => {
+  const activity = (agentId: string, title: string | null = null): AgentActivity => ({
+    agentId,
+    title,
+    actions: [],
+    tasks: [],
+  });
+
+  it('keeps activities of known agents from session init', () => {
+    const state = applyServerMessage(INITIAL_STATE, {
+      type: 'session:init',
+      agents: [agent('a')],
+      events: [],
+      skins: [],
+      permissions: [],
+      activities: [activity('a', 'one'), activity('ghost')],
+    });
+    expect(Object.keys(state.activities)).toEqual(['a']);
+    expect(new Store(state).activity('a')?.title).toBe('one');
+  });
+
+  it('replaces an agent activity on agent:activity', () => {
+    const base = upsertAgent(INITIAL_STATE, agent('a'));
+    const first = applyServerMessage(base, {
+      type: 'agent:activity',
+      activity: activity('a', 'x'),
+    });
+    const second = applyServerMessage(first, {
+      type: 'agent:activity',
+      activity: activity('a', 'y'),
+    });
+    expect(second.activities.a?.title).toBe('y');
+  });
+
+  it('ignores activity for unknown agents', () => {
+    expect(setActivity(INITIAL_STATE, activity('ghost'))).toBe(INITIAL_STATE);
+  });
+
+  it('drops the activity when the agent is removed', () => {
+    const state = setActivity(upsertAgent(INITIAL_STATE, agent('a')), activity('a'));
+    expect(removeAgent(state, 'a').activities).toEqual({});
   });
 });

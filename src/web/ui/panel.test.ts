@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { AgentAction, AgentActivity } from '../../shared/activity.js';
+import { ACTION_STATES } from '../../shared/activity.js';
 import type { AgentView } from '../../shared/agent.js';
 import { AGENT_STATUSES, WAITING_REASONS } from '../../shared/agent.js';
 import type { ClientMessage } from '../../shared/protocol.js';
@@ -11,14 +13,17 @@ import { DICTIONARIES, initI18n, setLocale } from '../i18n/index.js';
 import { Store } from '../state/store.js';
 import type { Confirm, PanelTerminal } from './panel.js';
 import {
+  ACTION_ICONS,
   DETAIL_ROWS,
   REFRESH_MS,
   createPanel,
   effortLabel,
   modelLabel,
+  newestFirst,
   nowText,
   skinLabel,
   statusKey,
+  timeAgo,
 } from './panel.js';
 
 afterEach(() => {
@@ -49,6 +54,8 @@ interface SetupOptions {
   doing?: IdlePlan | null;
   assets?: Assets;
   keys?: EventTarget;
+  activities?: AgentActivity[];
+  now?: () => number;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -59,7 +66,7 @@ function setup(options: SetupOptions = {}) {
     events: [],
     skins: options.skins ?? ['mortis', 'corvin', 'lyra'],
     permissions: [],
-    activities: [],
+    activities: options.activities ?? [],
   });
   const sent: ClientMessage[] = [];
   const terminal = {
@@ -87,6 +94,7 @@ function setup(options: SetupOptions = {}) {
     confirm,
     ...(options.assets ? { assets: options.assets } : {}),
     ...(options.keys ? { keys: options.keys } : {}),
+    ...(options.now ? { now: options.now } : {}),
     doing: () => doing,
     every: (callback, ms) => {
       expect(ms).toBe(REFRESH_MS);
@@ -533,5 +541,163 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(false);
     setLocale('pt-BR');
     expect(query('.panel__action--restart').textContent).toBe('Restart');
+  });
+});
+
+function action(id: string, overrides: Partial<AgentAction> = {}): AgentAction {
+  return {
+    id,
+    tool: 'Bash',
+    detail: `run ${id}`,
+    state: 'done',
+    result: null,
+    startedAt: 1_000,
+    endedAt: null,
+    ...overrides,
+  };
+}
+
+function activity(agentId: string, overrides: Partial<AgentActivity> = {}): AgentActivity {
+  return { agentId, title: null, actions: [], tasks: [], ...overrides };
+}
+
+describe('history helpers', () => {
+  it.each([
+    [0, 'just now'],
+    [4_999, 'just now'],
+    [12_000, '12s ago'],
+    [125_000, '2m ago'],
+    [2 * 3_600_000, '2h ago'],
+    [3 * 86_400_000, '3d ago'],
+    [-5_000, 'just now'],
+  ])('formats %d ms as %s', (ms, text) => {
+    expect(timeAgo(ms)).toBe(text);
+  });
+
+  it('sorts actions newest first without mutating', () => {
+    const actions = [
+      action('1', { startedAt: 1 }),
+      action('2', { startedAt: 3 }),
+      action('3', { startedAt: 2 }),
+    ];
+    expect(newestFirst(actions).map((a) => a.id)).toEqual(['2', '3', '1']);
+    expect(actions.map((a) => a.id)).toEqual(['1', '2', '3']);
+  });
+
+  it.each([
+    ...ACTION_STATES.map((state) => `action.${state}`),
+    ...['pending', 'inProgress', 'completed'].map((status) => `task.${status}`),
+    ...['title', 'empty', 'session', 'tasks', 'justNow', 'seconds', 'minutes', 'hours', 'days'].map(
+      (key) => `history.${key}`,
+    ),
+  ])('has the %s translation in every locale', (key) => {
+    expect(DICTIONARIES.en.has(key)).toBe(true);
+    expect(DICTIONARIES['pt-BR'].has(key)).toBe(true);
+  });
+});
+
+describe('history', () => {
+  const entries = (panel: { element: HTMLElement }) => [
+    ...panel.element.querySelectorAll<HTMLElement>('.panel__entry'),
+  ];
+
+  it('shows an empty state without activity', () => {
+    const { store, panel, query } = setup();
+    store.focus('a');
+    expect(entries(panel)).toHaveLength(0);
+    expect(query('.panel__empty').hidden).toBe(false);
+    expect(query('.panel__empty').textContent).toBe('No actions yet');
+    expect(query('.panel__session').hidden).toBe(true);
+    expect(query('.panel__tasks-block').hidden).toBe(true);
+    expect(query('.panel__heading').textContent).toBe('History');
+  });
+
+  it('lists actions newest first with state, detail, result and time', () => {
+    const { store, panel, query } = setup({
+      now: () => 61_000,
+      activities: [
+        activity('a', {
+          title: 'Fix the login',
+          actions: [
+            action('1', { state: 'error', result: 'exit 1', startedAt: 1_000 }),
+            action('2', { tool: 'Read', detail: '', state: 'running', startedAt: 50_000 }),
+          ],
+        }),
+      ],
+    });
+    store.focus('a');
+    const [first, second] = entries(panel);
+    expect(first?.dataset.state).toBe('running');
+    expect(first?.querySelector('.panel__entry-tool')?.textContent).toBe('Read');
+    expect(first?.querySelector('.panel__entry-detail')).toBeNull();
+    expect(first?.querySelector('.panel__entry-result')).toBeNull();
+    expect(first?.querySelector('.panel__entry-time')?.textContent).toBe('11s ago');
+    expect(first?.querySelector('.panel__entry-icon')?.getAttribute('aria-label')).toBe('Running');
+    expect(second?.dataset.state).toBe('error');
+    expect(second?.querySelector('.panel__entry-icon')?.textContent).toBe(ACTION_ICONS.error);
+    expect(second?.querySelector('.panel__entry-detail')?.textContent).toBe('run 1');
+    expect(second?.querySelector('.panel__entry-result')?.textContent).toBe('exit 1');
+    expect(second?.querySelector('.panel__entry-time')?.textContent).toBe('1m ago');
+    expect(query('.panel__empty').hidden).toBe(true);
+    expect(query('.panel__session').hidden).toBe(false);
+    expect(query('.panel__session-title').textContent).toBe('Fix the login');
+  });
+
+  it('shows tasks when present', () => {
+    const { store, panel, query } = setup({
+      activities: [
+        activity('a', {
+          tasks: [
+            { id: '1', title: 'Write tests', status: 'completed' },
+            { id: '2', title: 'Ship it', status: 'in_progress' },
+          ],
+        }),
+      ],
+    });
+    store.focus('a');
+    expect(query('.panel__tasks-block').hidden).toBe(false);
+    const tasks = [...panel.element.querySelectorAll<HTMLElement>('.panel__task')];
+    expect(tasks.map((task) => task.textContent)).toEqual(['Write tests', 'Ship it']);
+    expect(tasks.map((task) => task.dataset.status)).toEqual(['completed', 'in_progress']);
+    expect(tasks[1]?.title).toBe('In progress');
+  });
+
+  it('updates live and only for the focused agent', () => {
+    const { store, panel } = setup();
+    store.focus('a');
+    store.apply({ type: 'agent:activity', activity: activity('b', { actions: [action('x')] }) });
+    expect(entries(panel)).toHaveLength(0);
+    store.apply({ type: 'agent:activity', activity: activity('a', { actions: [action('1')] }) });
+    expect(entries(panel)).toHaveLength(1);
+    store.apply({
+      type: 'agent:activity',
+      activity: activity('a', { actions: [action('1'), action('2', { startedAt: 2_000 })] }),
+    });
+    expect(entries(panel)).toHaveLength(2);
+    store.focus('b');
+    expect(entries(panel)).toHaveLength(1);
+    expect(entries(panel)[0]?.querySelector('.panel__entry-detail')?.textContent).toBe('run x');
+  });
+
+  it('refreshes relative times on each tick', () => {
+    let clock = 1_000;
+    const { store, panel, ticks } = setup({
+      now: () => clock,
+      activities: [activity('a', { actions: [action('1')] })],
+    });
+    store.focus('a');
+    const time = () => panel.element.querySelector('.panel__entry-time')?.textContent;
+    expect(time()).toBe('just now');
+    clock = 31_000;
+    ticks.at(-1)?.();
+    expect(time()).toBe('30s ago');
+  });
+
+  it('translates the history when the locale changes', () => {
+    const { store, query } = setup({ activities: [activity('a', { actions: [action('1')] })] });
+    store.focus('a');
+    setLocale('pt-BR');
+    expect(query('.panel__heading').textContent).toBe(DICTIONARIES['pt-BR'].get('history.title'));
+    expect(query('.panel__entry-icon').title).toBe(DICTIONARIES['pt-BR'].get('action.done'));
   });
 });
