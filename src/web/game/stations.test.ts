@@ -13,7 +13,6 @@ function anvil(overrides: Record<string, unknown> = {}) {
     anchor: { x: 32, y: 78 },
     emit: { x: 28, y: 46 },
     effect: 'sparks',
-    light: '#ffd76a',
     ...overrides,
   };
 }
@@ -41,7 +40,6 @@ describe('parseStationManifest', () => {
       anchor: { x: 32, y: 78 },
       emit: { x: 28, y: 46 },
       effect: 'sparks',
-      light: '#ffd76a',
     });
   });
 
@@ -64,7 +62,6 @@ describe('parseStationManifest', () => {
 
   it.each<[string, Record<string, unknown>, string]>([
     ['an unknown effect', { effect: 'rainbows' }, '$.effect'],
-    ['a bad light', { light: 'yellow' }, '$.light'],
     ['an unsafe image', { image: '/etc/passwd.png' }, '$.image'],
     ['zero frames', { frames: 0 }, '$.frames'],
     ['zero columns', { columns: 0 }, '$.columns'],

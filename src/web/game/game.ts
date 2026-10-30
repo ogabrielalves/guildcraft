@@ -3,8 +3,6 @@ import type { GameSocket } from '../net/socket.js';
 import type { Store } from '../state/store.js';
 import type { Assets } from './assets.js';
 import { Particles } from './draw/effects.js';
-import type { LayerFactory } from './draw/lighting.js';
-import { Lighting } from './draw/lighting.js';
 import type { EngineOptions } from './engine.js';
 import { Engine } from './engine.js';
 import { bindInput, hitTest } from './input.js';
@@ -25,7 +23,6 @@ export interface GameOptions {
   now?: () => number;
   random?: () => number;
   frames?: Pick<EngineOptions, 'requestFrame' | 'cancelFrame' | 'pixelRatio'>;
-  lightLayer?: LayerFactory;
 }
 
 export interface Game {
@@ -45,7 +42,6 @@ export function createGame(options: GameOptions): Game {
   let agents = new Map<string, AgentView>();
   let hovered: Hover = null;
   const particles = new Particles(options.random);
-  const lighting = new Lighting(map.width, map.height, options.lightLayer);
 
   const syncAgents = (list: readonly AgentView[]) => {
     agents = new Map(list.map((agent) => [agent.id, agent]));
@@ -71,7 +67,6 @@ export function createGame(options: GameOptions): Game {
         hovered,
         time,
         particles,
-        lighting,
       });
     },
   });

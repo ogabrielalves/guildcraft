@@ -90,19 +90,18 @@ describe('parseWorkshopMap', () => {
   });
 });
 
-describe('parseWorkshopMap scenery, lights and embers', () => {
+describe('parseWorkshopMap scenery and embers', () => {
   const base = provisionalWorkshop();
 
   it('defaults to a plain floor with nothing else', () => {
     expect(parseWorkshopMap(base)).toMatchObject({
       floor: DEFAULT_FLOOR,
       scenery: [],
-      lights: [],
       embers: [],
     });
   });
 
-  it('reads fills, images, lights and embers', () => {
+  it('reads fills, images and embers', () => {
     const map = parseWorkshopMap({
       ...base,
       floor: '#112233',
@@ -116,10 +115,6 @@ describe('parseWorkshopMap scenery, lights and embers', () => {
           flip: true,
         },
         { image: 'tiles/b.png', source: { x: 0, y: 0, width: 8, height: 8 }, at: { x: 0, y: 0 } },
-      ],
-      lights: [
-        { at: { x: 1, y: 2 }, radius: 3, color: '#fff' },
-        { at: { x: 4, y: 5 }, radius: 6, color: '#000', flicker: 0.1 },
       ],
       embers: [{ x: 7, y: 8 }],
     });
@@ -142,10 +137,6 @@ describe('parseWorkshopMap scenery, lights and embers', () => {
         repeat: null,
         flip: false,
       },
-    ]);
-    expect(map.lights).toEqual([
-      { at: { x: 1, y: 2 }, radius: 3, color: '#fff' },
-      { at: { x: 4, y: 5 }, radius: 6, color: '#000', flicker: 0.1 },
     ]);
     expect(map.embers).toEqual([{ x: 7, y: 8 }]);
   });
@@ -170,11 +161,6 @@ describe('parseWorkshopMap scenery, lights and embers', () => {
         ],
       },
       '$.scenery[0].flip',
-    ],
-    [{ lights: [{ at: { x: 0, y: 0 }, radius: 0, color: '#fff' }] }, '$.lights[0].radius'],
-    [
-      { lights: [{ at: { x: 0, y: 0 }, radius: 1, color: '#fff', flicker: -1 }] },
-      '$.lights[0].flicker',
     ],
     [{ embers: [{ x: 'a', y: 0 }] }, '$.embers[0].x'],
   ])('rejects %j', (overrides, path) => {

@@ -1,3 +1,4 @@
+import '@fontsource/pixelify-sans/400.css';
 import './styles/base.css';
 import './styles/topbar.css';
 import '@xterm/xterm/css/xterm.css';
@@ -55,10 +56,19 @@ if (root) {
   });
   const socket = demo ? new DemoSocket(demo) : new GameSocket({ url: socketUrl(page, token) });
   const api = createApi({ token });
+  const request = (input: string, init?: RequestInit) => globalThis.fetch(input, init);
+  const assets = new AssetLibrary({
+    loadImage,
+    request,
+    onError: (url, error) => {
+      console.warn(`guildcraft: could not load ${url}`, error);
+    },
+  });
   const dialog = createAddAgentDialog({
     store,
     socket,
     listFolders: demo ? demoListFolders : (path) => api.listFolders(path),
+    assets,
   });
   const recruit = createRecruitButton(store, () => {
     dialog.open();
@@ -78,14 +88,6 @@ if (root) {
   hud.append(recruit.element, createStats(store).element, createFeed(store).element);
   const tooltip = createTooltip();
   mountShell(root, store, [hud, panel.element, compose.element, toasts.element, tooltip.element]);
-  const request = (input: string, init?: RequestInit) => globalThis.fetch(input, init);
-  const assets = new AssetLibrary({
-    loadImage,
-    request,
-    onError: (url, error) => {
-      console.warn(`guildcraft: could not load ${url}`, error);
-    },
-  });
   const startGame = (map: WorkshopMap) => {
     const game = createGame({
       store,

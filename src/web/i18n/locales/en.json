@@ -40,7 +40,7 @@
   "recruit": {
     "title": "Recruit an adventurer",
     "folder": "Project folder",
-    "name": "Name",
+    "chooseFolder": "Choose a folder…",
     "character": "Character",
     "inUse": "In use",
     "next": "Next",
@@ -48,7 +48,7 @@
     "cancel": "Cancel",
     "confirm": "Recruit",
     "trustTitle": "Trust this folder?",
-    "trustWarning": "The agent will read, edit and run commands in {path}.",
+    "trustWarning": "{name} will read, edit and run commands in {path}.",
     "permissionMode": "Permission mode",
     "permission": {
       "default": "Ask before every action",
@@ -57,6 +57,7 @@
     }
   },
   "folders": {
+    "title": "Select folder",
     "home": "Home",
     "drives": "Drives",
     "up": "Up",

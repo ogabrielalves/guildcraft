@@ -4,6 +4,7 @@ import type { AgentView } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_NAME_LENGTH } from '../../shared/constants.js';
 import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
 import { demoListFolders } from '../demo/demo.js';
+import { SIDE_CHARACTER, fakeAssets } from '../game/fake-assets.js';
 import { DICTIONARIES, initI18n, setLocale } from '../i18n/index.js';
 import type { MessageListener } from '../net/socket.js';
 import { Store } from '../state/store.js';
@@ -61,6 +62,7 @@ function setup(agents: AgentView[] = [], connected = true) {
       },
     },
     listFolders: demoListFolders,
+    assets: fakeAssets({ mortis: SIDE_CHARACTER }),
   });
   const emit = (message: ServerMessage) => {
     for (const listener of listeners) listener(message);
@@ -82,13 +84,9 @@ function setup(agents: AgentView[] = [], connected = true) {
     if (!found) throw new Error(`missing button ${text}`);
     return found;
   };
-  const name = () => typed('.recruit__name', HTMLInputElement);
   const mode = () => typed('.recruit__mode', HTMLSelectElement);
+  const picker = () => typed('.folder-picker', HTMLDialogElement);
   const characters = () => [...dialog.element.querySelectorAll<HTMLElement>('.recruit__character')];
-  const typeName = (value: string) => {
-    name().value = value;
-    name().dispatchEvent(new Event('input'));
-  };
   return {
     store,
     dialog,
@@ -96,16 +94,16 @@ function setup(agents: AgentView[] = [], connected = true) {
     link,
     emit,
     one,
-    name,
     mode,
+    picker,
     characters,
-    typeName,
     buttonByText,
   };
 }
 
 async function openAt(ctx: ReturnType<typeof setup>, folder: string) {
   ctx.dialog.open();
+  ctx.one('.recruit__folder').click();
   await flush();
   const entry = [...ctx.dialog.element.querySelectorAll<HTMLElement>('.folder-browser__entry')];
   entry.find((node) => node.textContent === 'projects')?.click();
@@ -114,6 +112,7 @@ async function openAt(ctx: ReturnType<typeof setup>, folder: string) {
     .find((node) => node.textContent === folder)
     ?.click();
   await flush();
+  ctx.one('.folder-browser__select').click();
 }
 
 describe('helpers', () => {
@@ -128,26 +127,24 @@ describe('helpers', () => {
     expect(sameName('web', 'api')).toBe(false);
   });
 
-  it('suggests a valid name from the folder', () => {
-    expect(suggestName('/home/me/my-app', [])).toBe('my-app');
-    expect(suggestName('/home/me/.config', [])).toBe('config');
-    expect(suggestName('/home/me/a+b (old)', [])).toBe('a-b -old-');
-    expect(suggestName('/', [])).toBe('');
-    expect(suggestName(`/x/${'n'.repeat(50)}`, [])).toHaveLength(MAX_NAME_LENGTH);
+  it('suggests a valid name from a label', () => {
+    expect(suggestName('Mortis', [])).toBe('Mortis');
+    expect(suggestName('.config', [])).toBe('config');
+    expect(suggestName('a+b (old)', [])).toBe('a-b -old-');
+    expect(suggestName('', [])).toBe('');
+    expect(suggestName('n'.repeat(50), [])).toHaveLength(MAX_NAME_LENGTH);
   });
 
-  it('suggests a free name when the folder name is taken', () => {
-    expect(suggestName('/p/web', [{ name: 'Web' }])).toBe('web 2');
-    expect(suggestName('/p/web', [{ name: 'web' }, { name: 'web 2' }])).toBe('web 3');
+  it('suggests a free name when the label is taken', () => {
+    expect(suggestName('Lyra', [{ name: 'lyra' }])).toBe('Lyra 2');
+    expect(suggestName('Lyra', [{ name: 'Lyra' }, { name: 'Lyra 2' }])).toBe('Lyra 3');
     const long = 'n'.repeat(MAX_NAME_LENGTH);
-    expect(suggestName(`/p/${long}`, [{ name: long }])).toBe(
-      `${'n'.repeat(MAX_NAME_LENGTH - 2)} 2`,
-    );
+    expect(suggestName(long, [{ name: long }])).toBe(`${'n'.repeat(MAX_NAME_LENGTH - 2)} 2`);
   });
 
   it('gives up on suffixes when every candidate is taken', () => {
     const taken = [{ name: 'web' }, ...crew(MAX_AGENTS).map((_, i) => ({ name: `web ${i + 2}` }))];
-    expect(suggestName('/p/web', taken)).toBe('web');
+    expect(suggestName('web', taken)).toBe('web');
   });
 
   it('prefers a skin nobody is using', () => {
@@ -182,29 +179,75 @@ describe('createRecruitButton', () => {
 });
 
 describe('createAddAgentDialog', () => {
-  it('opens at home with a fresh form', async () => {
+  it('opens with a fresh form and the folder picker closed', () => {
     const ctx = setup();
     ctx.dialog.open();
     expect(ctx.dialog.element.open).toBe(true);
     expect(ctx.dialog.element.isConnected).toBe(true);
-    await flush();
-    expect(ctx.one('.folder-browser__path').textContent).toBe('/home/demo');
-    expect(ctx.name().value).toBe('demo');
+    expect(ctx.picker().open).toBe(false);
+    expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+    expect(ctx.one('.recruit__folder-path').hidden).toBe(true);
     expect(ctx.one('.dialog__title').textContent).toBe('Recruit an adventurer');
     expect(ctx.buttonByText('Next').hidden).toBe(false);
+    expect(ctx.buttonByText('Next').disabled).toBe(true);
     expect(ctx.buttonByText('Recruit').hidden).toBe(true);
-    ctx.dialog.open();
-    expect(ctx.dialog.element.querySelectorAll('.folder-browser')).toHaveLength(1);
   });
 
-  it('suggests the name from the folder until the user edits it', async () => {
-    const ctx = setup([agent('x', { name: 'web' })]);
-    await openAt(ctx, 'web');
-    expect(ctx.name().value).toBe('web 2');
-    ctx.typeName('Builder');
-    ctx.one('.folder-browser__up').click();
+  it('picks the folder in its own window, starting at home', async () => {
+    const ctx = setup();
+    ctx.dialog.open();
+    ctx.one('.recruit__folder').click();
+    ctx.one('.recruit__folder').click();
+    expect(ctx.picker().open).toBe(true);
+    expect(ctx.dialog.element.querySelectorAll('.folder-browser')).toHaveLength(1);
     await flush();
-    expect(ctx.name().value).toBe('Builder');
+    expect(ctx.one('.folder-browser__path').textContent).toBe('/home/demo');
+    ctx.one('.folder-browser__select').click();
+    expect(ctx.picker().open).toBe(false);
+    expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
+    expect(document.activeElement).toBe(ctx.one('.recruit__folder'));
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('demo');
+    expect(ctx.one('.recruit__folder-path').textContent).toBe('/home/demo');
+    expect(ctx.buttonByText('Next').disabled).toBe(false);
+  });
+
+  it('closes only the picker on its close button or Escape', async () => {
+    const ctx = setup();
+    ctx.dialog.open();
+    ctx.one('.recruit__folder').click();
+    await flush();
+    ctx.one('.dialog__close').click();
+    expect(ctx.picker().open).toBe(false);
+    expect(ctx.dialog.element.open).toBe(true);
+    ctx.one('.recruit__folder').click();
+    const event = new Event('cancel', { cancelable: true });
+    ctx.picker().dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(ctx.picker().open).toBe(false);
+    expect(ctx.dialog.element.open).toBe(true);
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+  });
+
+  it('names the agent after the character, with a suffix when taken', async () => {
+    const ctx = setup([agent('x', { name: 'Mortis', skin: 'mortis' })]);
+    await openAt(ctx, 'web');
+    ctx.characters()[0]?.click();
+    ctx.buttonByText('Next').click();
+    expect(ctx.one('.recruit__warning').textContent).toBe(
+      'Mortis 2 will read, edit and run commands in /home/demo/projects/web.',
+    );
+    ctx.buttonByText('Recruit').click();
+    expect(ctx.sent).toMatchObject([{ type: 'agent:create', name: 'Mortis 2', skin: 'mortis' }]);
+  });
+
+  it('shows each character with a portrait and the name from its manifest', () => {
+    const ctx = setup();
+    ctx.dialog.open();
+    const [mortis, corvin] = ctx.characters();
+    expect(mortis?.querySelector('canvas.recruit__portrait')).not.toBeNull();
+    expect(mortis?.querySelector('.recruit__character-name')?.textContent).toBe('Mortis');
+    expect(corvin?.querySelector('.recruit__character-name')?.textContent).toBe('Corvin');
   });
 
   it('marks characters in use and preselects a free one', async () => {
@@ -220,23 +263,19 @@ describe('createAddAgentDialog', () => {
     expect(ctx.characters()[0]?.textContent).toBe('MortisIn use');
   });
 
-  it('requires a folder, a name and a character to continue', async () => {
+  it('requires a folder and a character to continue', async () => {
     const ctx = setup();
     ctx.dialog.open();
-    expect(ctx.buttonByText('Next').disabled).toBe(true);
-    await flush();
-    expect(ctx.buttonByText('Next').disabled).toBe(false);
-    ctx.typeName('   ');
-    expect(ctx.buttonByText('Next').disabled).toBe(true);
     ctx.buttonByText('Next').click();
     expect(ctx.buttonByText('Next').hidden).toBe(false);
+    await openAt(ctx, 'web');
+    expect(ctx.buttonByText('Next').disabled).toBe(false);
   });
 
   it('cannot continue without characters', async () => {
     const ctx = setup();
     ctx.store.apply({ type: 'session:init', agents: [], events: [], skins: [] });
-    ctx.dialog.open();
-    await flush();
+    await openAt(ctx, 'web');
     expect(ctx.characters()).toHaveLength(0);
     expect(ctx.buttonByText('Next').disabled).toBe(true);
   });
@@ -258,7 +297,7 @@ describe('createAddAgentDialog', () => {
     ctx.buttonByText('Next').click();
     expect(ctx.one('.dialog__title').textContent).toBe('Trust this folder?');
     expect(ctx.one('.recruit__warning').textContent).toBe(
-      'The agent will read, edit and run commands in /home/demo/projects/api.',
+      'Mortis will read, edit and run commands in /home/demo/projects/api.',
     );
     expect([...ctx.mode().options].map((option) => option.textContent)).toEqual([
       'Ask before every action',
@@ -270,7 +309,7 @@ describe('createAddAgentDialog', () => {
     expect(ctx.sent).toEqual([
       {
         type: 'agent:create',
-        name: 'api',
+        name: 'Mortis',
         cwd: '/home/demo/projects/api',
         skin: 'mortis',
         permissionMode: 'acceptEdits',
@@ -288,7 +327,7 @@ describe('createAddAgentDialog', () => {
     ctx.buttonByText('Recruit').click();
     ctx.store.apply({ type: 'agent:updated', agent: agent('other', { name: 'other' }) });
     expect(ctx.dialog.element.open).toBe(true);
-    ctx.store.apply({ type: 'agent:updated', agent: agent('new', { name: 'web' }) });
+    ctx.store.apply({ type: 'agent:updated', agent: agent('new', { name: 'mortis' }) });
     expect(ctx.dialog.element.open).toBe(false);
     expect(ctx.store.getState().focused).toBe('new');
     expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
@@ -319,16 +358,11 @@ describe('createAddAgentDialog', () => {
   it('fills the name the dialog sent when the server omits params', async () => {
     const ctx = setup();
     await openAt(ctx, 'web');
-    ctx.typeName('  Smith ');
     ctx.buttonByText('Next').click();
     ctx.buttonByText('Recruit').click();
     ctx.emit({ type: 'error', code: 'AGENT_NAME_TAKEN', source: 'agent:create' });
     expect(ctx.one('.recruit__error').textContent).toBe(
-      'There is already an adventurer named Smith',
-    );
-    ctx.typeName('Other');
-    expect(ctx.one('.recruit__error').textContent).toBe(
-      'There is already an adventurer named Smith',
+      'There is already an adventurer named Mortis',
     );
   });
 
@@ -359,36 +393,30 @@ describe('createAddAgentDialog', () => {
     expect(ctx.buttonByText('Recruit').disabled).toBe(false);
   });
 
-  it('reopens at the last folder with a clean form', async () => {
+  it('reopens with a clean form and the picker at the last folder', async () => {
     const ctx = setup();
     await openAt(ctx, 'docs');
-    ctx.typeName('Scribe');
     ctx.buttonByText('Next').click();
     ctx.buttonByText('Cancel').click();
     expect(ctx.dialog.element.open).toBe(false);
     ctx.dialog.open();
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+    expect(ctx.buttonByText('Next').hidden).toBe(false);
+    ctx.one('.recruit__folder').click();
     await flush();
     expect(ctx.one('.folder-browser__path').textContent).toBe('/home/demo/projects/docs');
-    expect(ctx.name().value).toBe('docs');
-    expect(ctx.buttonByText('Next').hidden).toBe(false);
   });
 
-  it('closes on Escape', async () => {
+  it('closes on Escape, picker included', async () => {
     const ctx = setup();
     ctx.dialog.open();
+    ctx.one('.recruit__folder').click();
     await flush();
     const event = new Event('cancel', { cancelable: true });
     ctx.dialog.element.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
     expect(ctx.dialog.element.open).toBe(false);
-  });
-
-  it('moves focus to the name after selecting a folder', async () => {
-    const ctx = setup();
-    ctx.dialog.open();
-    await flush();
-    ctx.one('.folder-browser__select').click();
-    expect(document.activeElement).toBe(ctx.name());
+    expect(ctx.picker().open).toBe(false);
   });
 
   it('follows store changes while open', async () => {

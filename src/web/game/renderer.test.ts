@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentStatus, AgentView } from '../../shared/agent.js';
 import { Particles } from './draw/effects.js';
-import { Lighting } from './draw/lighting.js';
 import { recordingPaint } from './draw/recording-paint.js';
 import type { FakeImage } from './fake-assets.js';
 import { SIDE_CHARACTER, STOVE, fakeAssets } from './fake-assets.js';
@@ -12,15 +11,13 @@ import {
   BODY,
   HEARTH_RATE,
   PALETTE,
-  STATION_LIGHT,
   STATION_RATE,
   drawScene,
   emittersFor,
-  lightsFor,
   stationFor,
   villagerBounds,
 } from './renderer.js';
-import { DEFAULT_EFFECT, DEFAULT_LIGHT } from './stations.js';
+import { DEFAULT_EFFECT } from './stations.js';
 import { World } from './world.js';
 
 const map = parseWorkshopMap({
@@ -41,7 +38,6 @@ const map = parseWorkshopMap({
       flip: true,
     },
   ],
-  lights: [{ at: { x: 240, y: 74 }, radius: 96, color: '#ff9a3c', flicker: 0.08 }],
   embers: [{ x: 240, y: 72 }],
 });
 
@@ -206,7 +202,7 @@ describe('drawScene villagers and stations', () => {
       false,
     );
     expect(ctx.named('fill').some((c) => String(c.fillStyle).startsWith('hsl('))).toBe(true);
-    expect(ctx.named('fillRect').some((c) => c.fillStyle === DEFAULT_LIGHT)).toBe(true);
+    expect(ctx.named('fillRect').some((c) => c.fillStyle === PALETTE.stationActive)).toBe(true);
     const idle = render(scene([agent('a', 'thinking', 'stranger')]));
     expect(idle.named('fillRect').some((c) => c.fillStyle === PALETTE.stationTop)).toBe(true);
   });
@@ -272,18 +268,14 @@ describe('drawScene labels', () => {
     expect(texts(scene([{ ...agent('a', 'idle'), queued: 3 }]))).toEqual(['A', '3']);
   });
 
-  it('draws particles and light between bodies and labels', () => {
+  it('draws particles between bodies and labels', () => {
     const particles = new Particles(() => 0.5);
     particles.update(1, [{ key: 'k', kind: 'sparks', at: { x: 10, y: 10 }, rate: 1 }]);
-    const layer = recordingPaint();
-    const lighting = new Lighting(map.width, map.height, () => ({
-      canvas: { width: map.width, height: map.height } as HTMLCanvasElement,
-      ctx: layer,
-    }));
-    const draw = vi.spyOn(lighting, 'draw');
-    const ctx = render(scene([agent('a', 'tool')], { particles, lighting }));
-    expect(draw).toHaveBeenCalledTimes(1);
-    const lit = ctx.calls.findIndex((c) => c.composite === 'lighter');
+    vi.spyOn(particles, 'draw').mockImplementation((paint) => {
+      paint.fillRect(-1, -1, 1, 1);
+    });
+    const ctx = render(scene([agent('a', 'tool')], { particles }));
+    const lit = ctx.calls.findIndex((c) => c.name === 'fillRect' && c.args[0] === -1);
     const lastBody = ctx.calls.findIndex(
       (c) => c.name === 'drawImage' && imageUrl(c.args[0]).includes('mortis'),
     );
@@ -312,20 +304,6 @@ describe('emittersFor', () => {
         rate: STATION_RATE,
       },
     ]);
-  });
-});
-
-describe('lightsFor', () => {
-  it('adds a light per station, stronger while working', () => {
-    const lights = lightsFor(scene([agent('a', 'tool'), agent('b', 'idle', 'x')]));
-    expect(lights[0]).toEqual(map.lights[0]);
-    expect(lights[1]).toMatchObject({
-      color: STOVE.light,
-      radius: STATION_LIGHT.active,
-      flicker: 0.05,
-    });
-    expect(lights[2]).toMatchObject({ color: DEFAULT_LIGHT, radius: STATION_LIGHT.idle });
-    expect(lights[2]).not.toHaveProperty('flicker');
   });
 });
 

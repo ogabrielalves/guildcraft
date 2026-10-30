@@ -1,13 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Engine, MAX_FRAME_TIME, fitView, screenToWorld } from './engine.js';
+import { Engine, MAX_FRAME_TIME, MAX_ZOOM, fitView, screenToWorld } from './engine.js';
 
 describe('fitView', () => {
-  it('scales by whole steps and centers the world', () => {
-    expect(fitView({ width: 1000, height: 600 }, { width: 480, height: 272 })).toEqual({
+  it('fills the screen and centers the world', () => {
+    expect(fitView({ width: 960, height: 480 }, { width: 480, height: 272 })).toEqual({
       scale: 2,
-      x: 20,
-      y: 28,
+      x: 0,
+      y: -32,
     });
+  });
+
+  it('crops at most a little and letterboxes the rest', () => {
+    const view = fitView({ width: 2400, height: 544 }, { width: 480, height: 272 });
+    expect(view.scale).toBeCloseTo(2 * MAX_ZOOM);
+    expect(view.x).toBeGreaterThan(0);
+    expect(view.y).toBeLessThan(0);
   });
 
   it('never scales below one', () => {
@@ -49,7 +56,7 @@ function setup(context: Partial<CanvasRenderingContext2D> | null = {}) {
   const cancelFrame = vi.fn();
   const engine = new Engine({
     canvas,
-    world: { width: 480, height: 272 },
+    world: { width: 500, height: 300 },
     background: '#000',
     draw,
     requestFrame: (callback) => callbacks.push(callback),
@@ -70,7 +77,7 @@ describe('Engine', () => {
     engine.start();
     expect(canvas.width).toBe(1000);
     expect(canvas.height).toBe(600);
-    expect(engine.view).toEqual({ scale: 2, x: 20, y: 28 });
+    expect(engine.view).toEqual({ scale: 2, x: 0, y: 0 });
     expect(engine.running).toBe(true);
   });
 
@@ -83,7 +90,7 @@ describe('Engine', () => {
     expect(draw.mock.lastCall?.[1]).toBeCloseTo(0.05);
     frame(5000);
     expect(draw.mock.lastCall?.[1]).toBe(MAX_FRAME_TIME);
-    expect(ctx.setTransform).toHaveBeenLastCalledWith(2, 0, 0, 2, 20, 28);
+    expect(ctx.setTransform).toHaveBeenLastCalledWith(2, 0, 0, 2, 0, 0);
     expect(ctx.imageSmoothingEnabled).toBe(false);
     expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, 1000, 600);
   });
@@ -110,6 +117,6 @@ describe('Engine', () => {
   it('maps client coordinates to the world', () => {
     const { engine } = setup();
     engine.start();
-    expect(engine.toWorld(70, 54)).toEqual({ x: 50, y: 20 });
+    expect(engine.toWorld(70, 54)).toEqual({ x: 60, y: 34 });
   });
 });

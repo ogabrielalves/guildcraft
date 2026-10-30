@@ -1,15 +1,5 @@
 import type { Point, Size } from './parse.js';
-import {
-  AssetError,
-  color,
-  count,
-  fields,
-  imagePath,
-  optional,
-  point,
-  positive,
-  size,
-} from './parse.js';
+import { AssetError, count, fields, imagePath, optional, point, positive, size } from './parse.js';
 
 export const EFFECTS = [
   'bubbles',
@@ -34,7 +24,6 @@ export interface StationManifest {
   anchor: Point;
   emit: Point;
   effect: Effect;
-  light: string;
 }
 
 export interface StationFrame {
@@ -45,7 +34,6 @@ export interface StationFrame {
 }
 
 export const DEFAULT_EFFECT: Effect = 'dust';
-export const DEFAULT_LIGHT = '#ffd76a';
 
 function effectOf(value: unknown, path: string): Effect {
   const found = EFFECTS.find((effect) => effect === value);
@@ -68,7 +56,6 @@ export function parseStationManifest(value: unknown): StationManifest {
     anchor: point(raw.anchor, '$.anchor'),
     emit: optional(raw.emit, point, '$.emit', { x: frame.width / 2, y: 0 }),
     effect: effectOf(raw.effect, '$.effect'),
-    light: color(raw.light, '$.light'),
   };
 }
 

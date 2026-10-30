@@ -40,7 +40,7 @@
   "recruit": {
     "title": "Recrutar aventureiro",
     "folder": "Pasta do projeto",
-    "name": "Nome",
+    "chooseFolder": "Escolher pasta…",
     "character": "Personagem",
     "inUse": "Em uso",
     "next": "Próximo",
@@ -48,7 +48,7 @@
     "cancel": "Cancelar",
     "confirm": "Recrutar",
     "trustTitle": "Confiar nesta pasta?",
-    "trustWarning": "O agente vai ler, editar e executar comandos em {path}.",
+    "trustWarning": "{name} vai ler, editar e executar comandos em {path}.",
     "permissionMode": "Modo de permissão",
     "permission": {
       "default": "Perguntar antes de cada ação",
@@ -57,6 +57,7 @@
     }
   },
   "folders": {
+    "title": "Selecionar pasta",
     "home": "Início",
     "drives": "Unidades",
     "up": "Subir",

@@ -26,6 +26,5 @@
     "x": 31,
     "y": 8
   },
-  "effect": "smoke",
-  "light": "#ffd76a"
+  "effect": "smoke"
 }

@@ -2,14 +2,13 @@ import type { AgentView } from '../../shared/agent.js';
 import type { Assets, Station } from './assets.js';
 import { bubbleFor, drawBubble, drawNote } from './draw/bubble.js';
 import type { Emitter, Particles } from './draw/effects.js';
-import type { Light, Lighting } from './draw/lighting.js';
 import { drawNameplate } from './draw/nameplate.js';
 import type { Paint } from './draw/paint.js';
 import { TAU } from './draw/paint.js';
 import { drawRing, drawShadow } from './draw/rings.js';
 import type { Bay, Point, Rect, Scenery, WorkshopMap } from './map.js';
 import { frameAt } from './sprite-sheet.js';
-import { DEFAULT_EFFECT, DEFAULT_LIGHT, stationFrame } from './stations.js';
+import { DEFAULT_EFFECT, stationFrame } from './stations.js';
 import type { Villager } from './villager.js';
 import type { World } from './world.js';
 
@@ -24,19 +23,18 @@ export interface Scene {
   hovered: Hover;
   time: number;
   particles?: Particles;
-  lighting?: Lighting;
 }
 
 export const PALETTE = {
   station: '#8a6a45',
   stationTop: '#a88456',
+  stationActive: '#ffd76a',
   empty: '#f1e4cf',
 };
 
 export const STATION_RATE = 8;
 export const HEARTH_RATE = 5;
 export const BODY = { width: 16, height: 30 };
-export const STATION_LIGHT = { active: 56, idle: 24 };
 const PLACEHOLDER = { width: 20, height: 16 };
 
 interface Image {
@@ -107,25 +105,6 @@ export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): 
     });
   }
   return emitters;
-}
-
-export function lightsFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): Light[] {
-  const { map } = scene.world;
-  const lights = [...map.lights];
-  for (const villager of scene.world.all()) {
-    const bay = map.bays[villager.bay];
-    if (bay === undefined) continue;
-    const station = stationFor(scene, villager);
-    const box = stationBox(bay, station);
-    const active = villager.atStation;
-    lights.push({
-      at: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
-      radius: active ? STATION_LIGHT.active : STATION_LIGHT.idle,
-      color: station?.manifest.light ?? DEFAULT_LIGHT,
-      ...(active ? { flicker: 0.05 } : {}),
-    });
-  }
-  return lights;
 }
 
 function blit(ctx: Paint, { image, source, at, flip }: Image): void {
@@ -206,7 +185,7 @@ function drawStation(ctx: Paint, bay: Bay, villager: Villager, scene: Scene): vo
   }
   ctx.fillStyle = PALETTE.station;
   ctx.fillRect(box.x, box.y, box.width, box.height);
-  ctx.fillStyle = villager.atStation ? DEFAULT_LIGHT : PALETTE.stationTop;
+  ctx.fillStyle = villager.atStation ? PALETTE.stationActive : PALETTE.stationTop;
   ctx.fillRect(box.x, box.y, box.width, 4);
 }
 
@@ -299,7 +278,6 @@ export function drawScene(ctx: Paint, scene: Scene): void {
   ].sort((a, b) => a.depth - b.depth);
   for (const layer of layers) layer.draw();
   scene.particles?.draw(ctx);
-  scene.lighting?.draw(ctx, lightsFor(scene), scene.time);
   for (const villager of scene.world.byDepth()) drawLabels(ctx, villager, scene);
   ctx.restore();
 }

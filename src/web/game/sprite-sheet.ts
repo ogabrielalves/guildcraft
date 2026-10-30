@@ -32,6 +32,7 @@ export interface Animation {
 }
 
 export interface CharacterManifest {
+  name: Partial<Record<string, string>>;
   station: string | null;
   facing: Facing;
   animations: Record<Pose, Animation>;
@@ -52,6 +53,15 @@ function facingOf(value: unknown, path: string): Facing {
   const found = FACINGS.find((facing) => facing === value);
   if (found === undefined) throw new AssetError(path);
   return found;
+}
+
+function names(value: unknown, path: string): Partial<Record<string, string>> {
+  return Object.fromEntries(
+    Object.entries(fields(value, path)).map(([locale, name]) => [
+      locale,
+      text(name, `${path}.${locale}`),
+    ]),
+  );
 }
 
 function parseAnimation(value: unknown, path: string, defaults: Partial<Animation>): Animation {
@@ -83,6 +93,7 @@ export function parseCharacterManifest(value: unknown): CharacterManifest {
     parsed[pose] = parseAnimation(animations[pose], `$.animations.${pose}`, defaults);
   }
   return {
+    name: optional(raw.name, names, '$.name', {}),
     station: optional<string | null>(raw.station, text, '$.station', null),
     facing: facingOf(raw.facing, '$.facing'),
     animations: parsed,

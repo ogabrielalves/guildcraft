@@ -164,9 +164,8 @@ describe('shipped workshop map', () => {
     }
   });
 
-  it('keeps lights and embers inside the world', () => {
+  it('keeps embers inside the world', () => {
     const world = { x: 0, y: 0, width: map.width, height: map.height };
-    for (const light of map.lights) expect(contains(world, light.at)).toBe(true);
     for (const ember of map.embers) expect(contains(world, ember)).toBe(true);
   });
 });

@@ -41,6 +41,7 @@ function failsAt(raw: unknown): string | undefined {
 describe('parseCharacterManifest', () => {
   it('fills animations from the sheet defaults', () => {
     const manifest = parseCharacterManifest(lpc());
+    expect(manifest.name).toEqual({ en: 'Brom' });
     expect(manifest.station).toBe('anvil');
     expect(manifest.facing).toBe('four');
     expect(manifest.animations.walk).toEqual({
@@ -57,7 +58,13 @@ describe('parseCharacterManifest', () => {
   });
 
   it('lets each animation bring its own sheet, frame and anchor', () => {
-    const raw = lpc({ image: undefined, frame: undefined, anchor: undefined, station: undefined });
+    const raw = lpc({
+      name: undefined,
+      image: undefined,
+      frame: undefined,
+      anchor: undefined,
+      station: undefined,
+    });
     const animations = Object.fromEntries(
       Object.keys(raw.animations).map((pose) => [
         pose,
@@ -72,11 +79,14 @@ describe('parseCharacterManifest', () => {
     );
     const manifest = parseCharacterManifest({ ...raw, facing: 'side', animations });
     expect(manifest.station).toBeNull();
+    expect(manifest.name).toEqual({});
     expect(manifest.animations.sit).toMatchObject({ image: 'sit.png', row: 0, start: 0 });
   });
 
   it.each<[string, Record<string, unknown>, string]>([
     ['a bad facing', { facing: 'up' }, '$.facing'],
+    ['a list of names', { name: ['Brom'] }, '$.name'],
+    ['an empty name', { name: { en: '' } }, '$.name.en'],
     ['missing animations', { animations: null }, '$.animations'],
     ['a missing pose', { animations: { ...lpc().animations, sit: undefined } }, '$.animations.sit'],
     ['an unsafe sheet', { image: '../secret.png' }, '$.image'],

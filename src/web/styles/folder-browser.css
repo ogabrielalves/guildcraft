@@ -3,7 +3,7 @@
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: 8px;
   min-height: 0;
-  height: 320px;
+  height: 360px;
 }
 
 .folder-browser[aria-busy='true'] {
@@ -39,7 +39,7 @@
   overflow-y: auto;
   list-style: none;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
 }
 
@@ -89,8 +89,9 @@
 
 .folder-browser__select {
   justify-self: end;
-  color: var(--bg);
-  font-weight: 600;
+  padding: 6px 16px 8px;
+  font: 400 16px/1 var(--font-pixel);
+  color: var(--text);
   background: var(--accent);
   border-color: var(--accent);
 }

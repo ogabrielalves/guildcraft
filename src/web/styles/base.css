@@ -6,6 +6,7 @@
   --text: #f1e4cf;
   --text-muted: #b39a7c;
   --accent: #f0a63a;
+  --ink: #2b1a0e;
   --ok: #7fbf6a;
   --warn: #f2c94c;
   --danger: #e2604f;
@@ -14,6 +15,7 @@
   --topbar-height: 48px;
   --hud-height: 44px;
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-pixel: 'Pixelify Sans', var(--font-ui);
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
   color-scheme: dark;
 }

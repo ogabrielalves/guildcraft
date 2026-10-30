@@ -32,6 +32,7 @@ export function fakeAssets(
 }
 
 export const SIDE_CHARACTER: CharacterManifest = {
+  name: { en: 'Mortis' },
   station: 'stove',
   facing: 'side',
   animations: {
@@ -99,5 +100,4 @@ export const STOVE: StationManifest = {
   anchor: { x: 24, y: 31 },
   emit: { x: 24, y: 8 },
   effect: 'magic',
-  light: '#b07cff',
 };

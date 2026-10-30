@@ -26,6 +26,5 @@
     "x": 23,
     "y": 2
   },
-  "effect": "magic",
-  "light": "#b07cff"
+  "effect": "magic"
 }

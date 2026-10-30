@@ -1,6 +1,7 @@
 import type { Point } from './map.js';
 
 export const MAX_FRAME_TIME = 0.1;
+export const MAX_ZOOM = 1.15;
 
 export interface View {
   scale: number;
@@ -24,10 +25,10 @@ export interface EngineOptions {
 }
 
 export function fitView(screen: Size, world: Size): View {
-  const scale = Math.max(
-    1,
-    Math.floor(Math.min(screen.width / world.width, screen.height / world.height)),
-  );
+  const ratios = [screen.width / world.width, screen.height / world.height];
+  const contain = Math.min(...ratios);
+  const cover = Math.max(...ratios);
+  const scale = Math.max(1, Math.min(cover, contain * MAX_ZOOM));
   return {
     scale,
     x: Math.floor((screen.width - world.width * scale) / 2),

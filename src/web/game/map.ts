@@ -1,6 +1,5 @@
 import { MAX_AGENTS } from '../../shared/constants.js';
 import type { FetchLike } from '../net/api.js';
-import type { Light } from './draw/lighting.js';
 import type { Point, Rect, Size } from './parse.js';
 import {
   AssetError,
@@ -36,7 +35,6 @@ export interface WorkshopMap {
   floor: string;
   bays: Bay[];
   scenery: Scenery[];
-  lights: Light[];
   embers: Point[];
 }
 
@@ -87,17 +85,6 @@ function parseScenery(value: unknown, path: string): Scenery {
   };
 }
 
-function parseLight(value: unknown, path: string): Light {
-  const raw = fields(value, path);
-  const light: Light = {
-    at: point(raw.at, `${path}.at`),
-    radius: positive(raw.radius, `${path}.radius`),
-    color: color(raw.color, `${path}.color`),
-  };
-  if (raw.flicker !== undefined) light.flicker = positive(raw.flicker, `${path}.flicker`);
-  return light;
-}
-
 function each<T>(value: unknown, path: string, parse: (item: unknown, path: string) => T): T[] {
   return list(value ?? [], path).map((item, index) => parse(item, `${path}[${String(index)}]`));
 }
@@ -124,7 +111,6 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
     floor: optional(raw.floor, color, '$.floor', DEFAULT_FLOOR),
     bays,
     scenery: each(raw.scenery, '$.scenery', parseScenery),
-    lights: each(raw.lights, '$.lights', parseLight),
     embers: each(raw.embers, '$.embers', point),
   };
 }

@@ -23,7 +23,6 @@ const station = {
   frame: { width: 48, height: 32 },
   anchor: { x: 24, y: 31 },
   effect: 'magic',
-  light: '#b07cff',
 };
 
 function setup(files: Record<string, unknown>) {

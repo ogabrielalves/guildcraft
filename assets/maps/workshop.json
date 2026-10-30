@@ -845,33 +845,6 @@
       }
     }
   ],
-  "lights": [
-    {
-      "at": {
-        "x": 240,
-        "y": 74
-      },
-      "radius": 96,
-      "color": "#ff9a3c",
-      "flicker": 0.08
-    },
-    {
-      "at": {
-        "x": 42,
-        "y": 52
-      },
-      "radius": 48,
-      "color": "#9fc3ff"
-    },
-    {
-      "at": {
-        "x": 438,
-        "y": 52
-      },
-      "radius": 48,
-      "color": "#9fc3ff"
-    }
-  ],
   "embers": [
     {
       "x": 240,

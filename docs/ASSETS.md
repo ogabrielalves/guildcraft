@@ -97,7 +97,6 @@ Frames of different animations can have different sizes. The anchor keeps the fe
   "anchor": { "x": 32, "y": 78 }, // pixel placed on the bay's station point
   "emit": { "x": 28, "y": 46 }, // where the particles come out
   "effect": "sparks",
-  "light": "#ffd76a",
 }
 ```
 
@@ -108,15 +107,14 @@ Frames of different animations can have different sizes. The anchor keeps the fe
 | `frames`, `fps` | `1`                  | a static station has one frame                                                |
 | `emit`          | top center           | particle origin inside the frame                                              |
 | `effect`        | required             | `bubbles`, `sparks`, `magic`, `smoke`, `dust`, `embers`, `sawdust` or `paper` |
-| `light`         | required             | color of the light the station casts, `#rgb`, `#rrggbb` or `#rrggbbaa`        |
 
 Crop stations tightly: the `frame` box is what has to fit inside a bay. For example, the anvil sheet has 64 × 80 cells, but the anvil itself only uses rows 17 to 78, so its manifest says `"origin": { "x": 0, "y": 17 }`, `"frame": { "width": 64, "height": 62 }` and `"cell": { "width": 64, "height": 80 }`.
 
-The station shows frame 0 while its owner is away. It animates, emits particles and lights up only while the owner works at it.
+The station shows frame 0 while its owner is away. It animates and emits particles only while the owner works at it.
 
 ## Workshop map
 
-`assets/maps/workshop.json` holds the geometry, the scenery and the lights. All coordinates are world pixels.
+`assets/maps/workshop.json` holds the geometry and the scenery. All coordinates are world pixels.
 
 ```jsonc
 {
@@ -127,7 +125,6 @@ The station shows frame 0 while its owner is away. It animates, emits particles 
   "floor": "#6b4a2f", // fallback color under the scenery
   "bays": [/* exactly 8 */],
   "scenery": [/* drawn in order, behind everyone */],
-  "lights": [{ "at": { "x": 240, "y": 74 }, "radius": 96, "color": "#ff9a3c", "flicker": 0.08 }],
   "embers": [{ "x": 240, "y": 72 }], // points that always emit embers (the fireplace)
 }
 ```

@@ -26,6 +26,5 @@
     "x": 16,
     "y": 4
   },
-  "effect": "bubbles",
-  "light": "#b07cff"
+  "effect": "bubbles"
 }
