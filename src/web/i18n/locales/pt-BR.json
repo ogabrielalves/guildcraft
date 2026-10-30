@@ -36,7 +36,9 @@
     "waitingFor": "Precisa de",
     "console": "Abrir console",
     "hideConsole": "Esconder console",
-    "close": "Fechar"
+    "close": "Fechar",
+    "model": "Modelo",
+    "effort": "Esforço"
   },
   "waitingFor": {
     "permission": "Sua aprovação para uma ferramenta",
@@ -52,6 +54,12 @@
     "table": "Descansando à mesa",
     "chat": "Conversando com um amigo",
     "nap": "Tirando um cochilo"
+  },
+  "effort": {
+    "low": "Baixo",
+    "medium": "Médio",
+    "high": "Alto",
+    "max": "Máximo"
   },
   "compose": {
     "placeholder": "Enviar prompt para {count} selecionados",

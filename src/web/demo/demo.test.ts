@@ -132,6 +132,8 @@ describe('createDemoAgents', () => {
     expect(new Set(agents.map((agent) => agent.id)).size).toBe(agents.length);
     expect(agents.every((agent) => agent.status === 'idle')).toBe(true);
     expect(agents.every((agent) => DEMO_SKINS.some((skin) => skin === agent.skin))).toBe(true);
+    expect(agents[0]).toMatchObject({ model: 'claude-opus-5-5', effort: 'high' });
+    expect(agents.at(-1)).toMatchObject({ model: null, effort: null });
   });
 });
 

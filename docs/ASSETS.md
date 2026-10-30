@@ -132,6 +132,7 @@ When the map's background already shows a station, a manifest is only needed to 
   "spots": [/* where agents read, nap and spend idle time */],
   "wander": [/* points idle agents stroll to */],
   "routes": [/* paths idle agents walk along */],
+  "zones": [/* named areas each villager stays in */],
   "scenery": [/* drawn in order */],
   "embers": [{ "x": 630, "y": 192 }], // points that always emit embers (the fireplaces)
 }
@@ -173,6 +174,16 @@ Agents walk on a grid of 8 px cells. A cell is blocked when any obstacle touches
 Keep `work` points on open cells. Spots, wander points and route points may sit on a bench, a stump or a bed: the agent walks to the nearest open cell and steps onto it.
 
 The Tavern Guild's grid came with the map and was checked against the image: the forest border, the top rows and the tiles behind the kitchen oven were closed by hand.
+
+### Zones
+
+```json
+{ "id": "kitchen", "areas": [{ "x": 112, "y": 112, "width": 224, "height": 208 }] }
+```
+
+A zone is a named union of rectangles. A station, spot, wander point or route belongs to the first zone that contains it (a station by its `work` point, a route by its first point). A villager lives in the zone of its station: it walks, idles, wanders, patrols, naps and chats only inside it, on a walking grid cut to the zone's areas. It may leave its zone only to walk in from the `entrance` the first time, and to visit another agent that sent it a message; then it walks straight back home.
+
+The Tavern Guild has eleven zones, one per area of the original NPC points: `kitchen`, `storage`, `hall`, `alchemy`, `guild`, `forge`, `sawmill`, `camp`, `garden`, `pier` and `yard` (the porch and the road). The kitchen and the storage room are separate zones because a shelf blocks the passage between them in the art. Without `zones`, villagers walk the whole map.
 
 ### Spots
 
@@ -241,6 +252,8 @@ The slices keep the wooden edges and corners; the flat middle stretches. Keep ne
 - every referenced sheet exists and every frame fits inside it;
 - the map has a station for every agent, each inside the world with an open `work` point; manifest stations stand on their own obstacle;
 - every `work` point, spot, wander point, route point and the entrance can be reached from every station;
+- every `work` point, spot, wander point and route lies in a zone, and each route stays in one zone;
+- every zone has a station and a spot or wander point, and everything in it can be reached without leaving it;
 - the background image has the map's size and the collision grid covers it;
 - every station manifest's frame 0 matches the background where it is placed;
 - the start view is inside the map;

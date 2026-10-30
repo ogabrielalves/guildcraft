@@ -148,7 +148,8 @@
   -webkit-box-orient: vertical;
 }
 
-.panel__row[data-row='tool'] .panel__value {
+.panel__row[data-row='tool'] .panel__value,
+.panel__row[data-row='model'] .panel__value {
   font: 13px/1.4 var(--font-mono);
 }
 

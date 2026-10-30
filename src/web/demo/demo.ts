@@ -22,12 +22,30 @@ export const DEMO_SKINS = [
   'amara',
 ] as const;
 
-const DEMO_CREW: readonly Pick<AgentView, 'name' | 'cwd' | 'skin'>[] = [
-  { name: 'Mortis', cwd: '~/projects/web', skin: 'mortis' },
-  { name: 'Corvin', cwd: '~/projects/api', skin: 'corvin' },
-  { name: 'Brom', cwd: '~/projects/infra', skin: 'brom' },
-  { name: 'Amara', cwd: '~/projects/docs', skin: 'amara' },
-  { name: 'Faelan', cwd: '~/projects/mobile', skin: 'faelan' },
+const DEMO_CREW: readonly Pick<AgentView, 'name' | 'cwd' | 'skin' | 'model' | 'effort'>[] = [
+  {
+    name: 'Mortis',
+    cwd: '~/projects/web',
+    skin: 'mortis',
+    model: 'claude-opus-5-5',
+    effort: 'high',
+  },
+  {
+    name: 'Corvin',
+    cwd: '~/projects/api',
+    skin: 'corvin',
+    model: 'claude-sonnet-5-5',
+    effort: 'medium',
+  },
+  { name: 'Brom', cwd: '~/projects/infra', skin: 'brom', model: 'claude-opus-5-5', effort: 'max' },
+  {
+    name: 'Amara',
+    cwd: '~/projects/docs',
+    skin: 'amara',
+    model: 'claude-haiku-5-5',
+    effort: 'low',
+  },
+  { name: 'Faelan', cwd: '~/projects/mobile', skin: 'faelan', model: null, effort: null },
 ];
 
 const DEMO_TOOLS: readonly AgentTool[] = [
@@ -127,8 +145,6 @@ export function createDemoAgents(): AgentView[] {
     permissionMode: 'default',
     tool: null,
     waitingFor: null,
-    model: null,
-    effort: null,
     queued: 0,
   }));
 }

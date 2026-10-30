@@ -44,6 +44,11 @@ export type Scenery = (
   | { kind: 'fill'; color: string; area: Rect }
 ) & { depth: number | null };
 
+export interface Zone {
+  id: string;
+  areas: Rect[];
+}
+
 export interface WorkshopMap {
   width: number;
   height: number;
@@ -56,6 +61,7 @@ export interface WorkshopMap {
   routes: Point[][];
   entrance: Point | null;
   view: Rect;
+  zones: Zone[];
   scenery: Scenery[];
   embers: Point[];
 }
@@ -113,6 +119,13 @@ function parseStation(value: unknown, path: string): StationPlace {
   const effect = optional<Effect | null>(raw.effect, oneOf(EFFECTS), `${path}.effect`, null);
   if (id === null && effect === null) throw new AssetError(`${path}.id`);
   return { id, effect, at: point(raw.at, `${path}.at`), work: point(raw.work, `${path}.work`) };
+}
+
+function parseZone(value: unknown, path: string): Zone {
+  const raw = fields(value, path);
+  const areas = each(raw.areas, `${path}.areas`, rect);
+  if (areas.length === 0) throw new AssetError(`${path}.areas`);
+  return { id: text(raw.id, `${path}.id`), areas };
 }
 
 function parseRoute(value: unknown, path: string): Point[] {
@@ -184,6 +197,16 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
   const view = optional(raw.view, rect, '$.view', bounds);
   inside(view, '$.view');
   inside({ x: view.x + view.width, y: view.y + view.height }, '$.view');
+  const zones = each(raw.zones, '$.zones', parseZone);
+  zones.forEach(({ id, areas }, index) => {
+    const path = `$.zones[${String(index)}]`;
+    if (zones.findIndex((zone) => zone.id === id) !== index) throw new AssetError(`${path}.id`);
+    areas.forEach((area, step) => {
+      const at = `${path}.areas[${String(step)}]`;
+      inside(area, at);
+      inside({ x: area.x + area.width, y: area.y + area.height }, at);
+    });
+  });
   const tileSize = positive(raw.tileSize, '$.tileSize');
   const collision =
     raw.collision === undefined
@@ -206,6 +229,7 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
     routes,
     entrance,
     view,
+    zones,
     scenery: each(raw.scenery, '$.scenery', parseScenery),
     embers: each(raw.embers, '$.embers', point),
   };
@@ -213,6 +237,10 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
 
 export async function loadWorkshopMap(url: string, request: FetchLike): Promise<WorkshopMap> {
   return parseWorkshopMap(await fetchJson(url, request));
+}
+
+export function zoneAt(map: Pick<WorkshopMap, 'zones'>, target: Point): string | null {
+  return map.zones.find(({ areas }) => areas.some((area) => contains(area, target)))?.id ?? null;
 }
 
 export function stationAt(map: WorkshopMap, index: number): StationPlace {

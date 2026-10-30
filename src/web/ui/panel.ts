@@ -41,6 +41,10 @@ export type PanelSocket = Pick<GameSocket, 'send'>;
 export type PanelTerminal = Pick<TerminalView, 'element' | 'fit' | 'focus' | 'copy' | 'paste'>;
 export type Confirm = (message: string) => boolean | Promise<boolean>;
 export type Every = (callback: () => void, ms: number) => () => void;
+export interface Frames {
+  request(callback: (now: number) => void): number;
+  cancel(handle: number): void;
+}
 
 export interface DetailRow {
   id: string;
@@ -56,6 +60,16 @@ export const DETAIL_ROWS: readonly DetailRow[] = [
     label: 'panel.waitingFor',
     value: (agent) => (agent.waitingFor === null ? null : t(WAITING_KEYS[agent.waitingFor])),
   },
+  {
+    id: 'model',
+    label: 'panel.model',
+    value: (agent) => (agent.model === null ? null : modelLabel(agent.model)),
+  },
+  {
+    id: 'effort',
+    label: 'panel.effort',
+    value: (agent) => (agent.effort === null ? null : effortLabel(agent.effort)),
+  },
 ];
 
 export interface PanelOptions {
@@ -66,6 +80,7 @@ export interface PanelOptions {
   assets?: Assets;
   doing?: (agentId: string) => IdlePlan | null;
   every?: Every;
+  frames?: Frames;
 }
 
 export interface Panel {
@@ -83,6 +98,27 @@ export function skinChoices(skins: readonly string[], current: string): string[]
   return skins.includes(current) ? [...skins] : [current, ...skins];
 }
 
+const MODEL_ID = /^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?(?:\[[^\]]*\])?$/;
+const EFFORT_KEYS = new Map<string, TranslationKey>([
+  ['low', 'effort.low'],
+  ['medium', 'effort.medium'],
+  ['high', 'effort.high'],
+  ['max', 'effort.max'],
+]);
+
+export function modelLabel(model: string): string {
+  const match = MODEL_ID.exec(model);
+  if (!match) return model;
+  const [, family = '', major = '', minor] = match;
+  const version = minor === undefined ? major : `${major}.${minor}`;
+  return `${family.charAt(0).toUpperCase()}${family.slice(1)} ${version}`;
+}
+
+export function effortLabel(effort: string): string {
+  const key = EFFORT_KEYS.get(effort.toLowerCase());
+  return key === undefined ? effort : t(key);
+}
+
 export function nowText(agent: AgentView, doing: IdlePlan | null): string {
   if (agent.status === 'tool' && agent.tool !== null) {
     return agent.tool.detail === '' ? agent.tool.name : agent.tool.detail;
@@ -94,6 +130,13 @@ export function nowText(agent: AgentView, doing: IdlePlan | null): string {
 function defaultConfirm(message: string): Promise<boolean> {
   return confirmModal(message, { danger: true });
 }
+
+const ANIMATION_FRAMES: Frames = {
+  request: (callback) => requestAnimationFrame(callback),
+  cancel: (handle) => {
+    cancelAnimationFrame(handle);
+  },
+};
 
 function defaultEvery(callback: () => void, ms: number): () => void {
   const handle = setInterval(callback, ms);
@@ -107,6 +150,8 @@ export function createPanel(options: PanelOptions): Panel {
   const confirm = options.confirm ?? defaultConfirm;
   const doing = options.doing ?? (() => null);
   const every = options.every ?? defaultEvery;
+  const frames = options.frames ?? ANIMATION_FRAMES;
+  let animation: number | null = null;
   const labels = new Map<HTMLElement, TranslationKey>();
   let shown: AgentView | null = null;
   let shownSkins: readonly string[] | null = null;
@@ -275,9 +320,19 @@ export function createPanel(options: PanelOptions): Panel {
     }
   };
 
-  const renderPortrait = (agent: AgentView) => {
+  const renderPortrait = (agent: AgentView, time = 0) => {
     const ctx = assets ? portrait.getContext('2d') : null;
-    if (ctx && assets) drawPortrait(ctx, assets, agent.skin, 0);
+    if (ctx && assets) drawPortrait(ctx, assets, agent.skin, time);
+  };
+
+  const animate = (now: number) => {
+    if (shown) renderPortrait(shown, now / 1000);
+    animation = frames.request(animate);
+  };
+
+  const stopAnimation = () => {
+    if (animation !== null) frames.cancel(animation);
+    animation = null;
   };
 
   const renderAgent = (agent: AgentView) => {
@@ -296,10 +351,7 @@ export function createPanel(options: PanelOptions): Panel {
   };
 
   const refresh = () => {
-    if (shown) {
-      renderDetails(shown);
-      renderPortrait(shown);
-    }
+    if (shown) renderDetails(shown);
   };
 
   const render = (state: StoreState) => {
@@ -314,9 +366,11 @@ export function createPanel(options: PanelOptions): Panel {
     shown = agent;
     shownSkins = state.skins;
     if (agent && stopRefresh === null) stopRefresh = every(refresh, REFRESH_MS);
+    if (agent && assets && animation === null) animation = frames.request(animate);
     if (!agent) {
       stopRefresh?.();
       stopRefresh = null;
+      stopAnimation();
     }
     if (wasHidden && agent && consoleOpen) terminal.fit();
   };
@@ -336,6 +390,7 @@ export function createPanel(options: PanelOptions): Panel {
     destroy() {
       stopRefresh?.();
       stopRefresh = null;
+      stopAnimation();
       unsubscribeStore();
       unsubscribeLocale();
       element.remove();

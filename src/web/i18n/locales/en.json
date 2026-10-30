@@ -36,7 +36,9 @@
     "waitingFor": "Needs",
     "console": "Open console",
     "hideConsole": "Hide console",
-    "close": "Close"
+    "close": "Close",
+    "model": "Model",
+    "effort": "Effort"
   },
   "waitingFor": {
     "permission": "Your approval for a tool",
@@ -52,6 +54,12 @@
     "table": "Resting at a table",
     "chat": "Chatting with a friend",
     "nap": "Taking a nap"
+  },
+  "effort": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "max": "Max"
   },
   "compose": {
     "placeholder": "Send a prompt to {count} selected",

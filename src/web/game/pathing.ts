@@ -1,4 +1,5 @@
-import type { Point, WorkshopMap } from './map.js';
+import type { Point, Rect, WorkshopMap } from './map.js';
+import { contains } from './map.js';
 
 export const NAV_CELL = 8;
 const DIAGONAL = Math.SQRT2;
@@ -76,6 +77,7 @@ export class NavGrid {
   constructor(
     map: Pick<WorkshopMap, 'width' | 'height' | 'obstacles'>,
     readonly cell = NAV_CELL,
+    within: readonly Rect[] | null = null,
   ) {
     this.columns = Math.ceil(map.width / cell);
     this.rows = Math.ceil(map.height / cell);
@@ -88,6 +90,12 @@ export class NavGrid {
       for (let row = top; row < bottom; row++) {
         this.blocked.fill(1, row * this.columns + left, row * this.columns + right);
       }
+    }
+    if (within !== null) {
+      this.blocked.forEach((_, index) => {
+        const center = this.center(index % this.columns, Math.floor(index / this.columns));
+        if (!within.some((area) => contains(area, center))) this.blocked[index] = 1;
+      });
     }
     this.keepLargestArea();
   }

@@ -3,6 +3,7 @@ import { idleSpot, idleTime, isWorkingActivity, pickIdle } from './activity.js';
 import type { Layout } from './layout.js';
 import type { Point, SpotKind } from './map.js';
 import { stationAt } from './map.js';
+import type { NavGrid } from './pathing.js';
 import { pointAlong, routeLength } from './pathing.js';
 import type { Direction, Pose } from './sprite-sheet.js';
 import { directionTo } from './sprite-sheet.js';
@@ -16,6 +17,7 @@ interface Target {
   point: Point;
   facing: Direction | null;
   via?: readonly Point[];
+  free?: boolean;
 }
 
 type Visit = {
@@ -34,12 +36,13 @@ function anchorOf(activity: Activity): 'work' | SpotKind | null {
   return null;
 }
 
-function guestSpot(layout: Layout, from: Point, host: Point): Point {
+function guestSpot(nav: NavGrid, from: Point, host: Point): Point {
   const side = from.x <= host.x ? -1 : 1;
-  return layout.nav.nearest({ x: host.x + side * VISIT_GAP, y: host.y });
+  return nav.nearest({ x: host.x + side * VISIT_GAP, y: host.y });
 }
 
 export class Villager {
+  readonly zone: string | null;
   position: Point;
   facing: Direction = 'south';
   private sideNow: 'east' | 'west' = 'east';
@@ -62,6 +65,7 @@ export class Villager {
     private readonly peers: () => readonly Villager[] = () => [],
     spawn: Point | null = null,
   ) {
+    this.zone = layout.zoneOf(stationAt(layout.map, station).work);
     const start = this.homeTarget();
     this.position = { ...(spawn ?? start.point) };
     this.destination = start;
@@ -125,7 +129,7 @@ export class Villager {
 
   startVisit(host: Point, note: string | null = null): void {
     this.leaveChat();
-    const guest = guestSpot(this.layout, this.position, host);
+    const guest = guestSpot(this.layout.nav, this.position, host);
     this.layout.release(this.id);
     this.cheer = 0;
     this.visit = {
@@ -134,7 +138,7 @@ export class Villager {
       timer: 0,
       note,
     };
-    this.walkTo({ point: guest, facing: null });
+    this.walkTo({ point: guest, facing: null, free: true });
   }
 
   hostChat(guest: Villager): void {
@@ -177,12 +181,14 @@ export class Villager {
   }
 
   private nextPlan(): void {
-    const partners = this.peers().filter((peer) => peer !== this && peer.canChat);
+    const partners = this.peers().filter(
+      (peer) => peer !== this && peer.canChat && peer.zone === this.zone,
+    );
     const plan = pickIdle(
       (option) => {
         if (option === 'chat') return partners.length > 0;
         const kind = idleSpot(option);
-        return kind !== null && this.layout.hasFree(kind);
+        return kind !== null && this.layout.hasFree(kind, this.zone);
       },
       this.random,
       this.plan,
@@ -194,11 +200,11 @@ export class Villager {
       this.layout.release(this.id);
       partner.hostChat(this);
       this.chat = { partner, phase: 'going' };
-      this.walkTo({ point: guestSpot(this.layout, this.position, partner.position), facing: null });
+      this.walkTo({ point: guestSpot(this.nav, this.position, partner.position), facing: null });
       return;
     }
     const kind = idleSpot(plan);
-    const spot = kind === null ? null : this.layout.claim(kind, this.id, this.random);
+    const spot = kind === null ? null : this.layout.claim(kind, this.id, this.random, this.zone);
     if (spot !== null) {
       this.walkTo({ point: spot.at, facing: spot.facing });
       return;
@@ -222,7 +228,7 @@ export class Villager {
       return this.wanderTarget();
     }
     if (anchor !== 'work') {
-      const spot = this.layout.claim(anchor, this.id, this.random);
+      const spot = this.layout.claim(anchor, this.id, this.random, this.zone);
       if (spot !== null) return { point: spot.at, facing: spot.facing };
     } else {
       this.layout.release(this.id);
@@ -231,20 +237,27 @@ export class Villager {
     return { point: work, facing: directionTo(at.x - work.x, at.y - work.y, 'south') };
   }
 
+  private get nav(): NavGrid {
+    return this.layout.navFor(this.zone);
+  }
+
   private wanderTarget(): Target {
-    const { nav, map } = this.layout;
-    const choice = Math.floor(this.random() * (map.wander.length + map.routes.length));
-    const route = map.routes[choice - map.wander.length]?.map((point) => nav.nearest(point));
-    const point = map.wander[choice] ?? route?.at(-1);
+    const { nav } = this;
+    const { wander, routes } = this.layout.paths(this.zone);
+    const choice = Math.floor(this.random() * (wander.length + routes.length));
+    const route = routes[choice - wander.length]?.map((point) => nav.nearest(point));
+    const point = wander[choice] ?? route?.at(-1);
     if (point === undefined) return { point: nav.randomPoint(this.random), facing: null };
     return { point: nav.nearest(point), facing: null, via: route?.slice(0, -1) ?? [] };
   }
 
   private walkTo(target: Target): void {
+    const away = target.free === true || this.layout.zoneOf(this.position) !== this.zone;
+    const nav = away ? this.layout.nav : this.nav;
     let from = this.position;
     this.path = [from];
     for (const stop of [...(target.via ?? []), target.point]) {
-      this.path.push(...this.layout.nav.route(from, stop).slice(1));
+      this.path.push(...nav.route(from, stop).slice(1));
       from = stop;
     }
     this.travelled = 0;

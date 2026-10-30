@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AssetError } from './parse.js';
-import { DEFAULT_FLOOR, contains, loadWorkshopMap, parseWorkshopMap, stationAt } from './map.js';
+import {
+  DEFAULT_FLOOR,
+  contains,
+  loadWorkshopMap,
+  parseWorkshopMap,
+  stationAt,
+  zoneAt,
+} from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 
 function invalidAt(raw: unknown): string | undefined {
@@ -116,6 +123,46 @@ describe('parseWorkshopMap', () => {
     [[open, 4, ...grid().slice(2)], '$.collision[1]'],
   ])('rejects collision %#', (collision, path) => {
     expect(invalidAt({ ...provisionalWorkshop(), collision })).toBe(path);
+  });
+
+  it('reads zones and finds the zone of a point', () => {
+    const zones = [
+      { id: 'west', areas: [{ x: 0, y: 0, width: 240, height: 352 }] },
+      {
+        id: 'east',
+        areas: [
+          { x: 240, y: 0, width: 240, height: 100 },
+          { x: 300, y: 100, width: 180, height: 252 },
+        ],
+      },
+    ];
+    const map = parseWorkshopMap({ ...provisionalWorkshop(), zones });
+    expect(map.zones).toEqual(zones);
+    expect(zoneAt(map, { x: 10, y: 10 })).toBe('west');
+    expect(zoneAt(map, { x: 400, y: 300 })).toBe('east');
+    expect(zoneAt(map, { x: 260, y: 200 })).toBeNull();
+    expect(parseWorkshopMap(provisionalWorkshop()).zones).toEqual([]);
+  });
+
+  it.each([
+    [{ zones: {} }, '$.zones'],
+    [{ zones: [{ id: '', areas: [{ x: 0, y: 0, width: 1, height: 1 }] }] }, '$.zones[0].id'],
+    [{ zones: [{ id: 'a', areas: [] }] }, '$.zones[0].areas'],
+    [
+      { zones: [{ id: 'a', areas: [{ x: 400, y: 0, width: 100, height: 1 }] }] },
+      '$.zones[0].areas[0]',
+    ],
+    [
+      {
+        zones: [
+          { id: 'a', areas: [{ x: 0, y: 0, width: 1, height: 1 }] },
+          { id: 'a', areas: [{ x: 5, y: 5, width: 1, height: 1 }] },
+        ],
+      },
+      '$.zones[1].id',
+    ],
+  ])('rejects zones %j', (overrides, path) => {
+    expect(invalidAt({ ...provisionalWorkshop(), ...overrides })).toBe(path);
   });
 
   it('reads wander points, routes, the entrance and the start view', () => {

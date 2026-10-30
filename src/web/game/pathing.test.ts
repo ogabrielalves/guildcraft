@@ -78,6 +78,13 @@ describe('NavGrid', () => {
     expect(grid.nearest({ x: 76, y: 4 })).toEqual({ x: 44, y: 4 });
   });
 
+  it('keeps a zone grid inside its areas', () => {
+    const grid = new NavGrid(room, 8, [{ x: 0, y: 0, width: 32, height: 80 }]);
+    expect(grid.walkable({ x: 20, y: 20 })).toBe(true);
+    expect(grid.walkable({ x: 60, y: 70 })).toBe(false);
+    expect(grid.nearest({ x: 70, y: 20 })).toEqual({ x: 28, y: 20 });
+  });
+
   it('blocks partial cells and ignores obstacles outside the world', () => {
     const grid = new NavGrid({
       width: 80,

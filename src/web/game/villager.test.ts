@@ -376,3 +376,76 @@ describe('Villager idle life', () => {
     expect(villager.canChat).toBe(false);
   });
 });
+
+describe('Villager zones', () => {
+  const zoned = parseWorkshopMap({
+    ...provisionalWorkshop(),
+    zones: [
+      { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+      { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }] },
+    ],
+  });
+  const fixed = (value: number) => () => value;
+
+  function seeded(): () => number {
+    let seed = 0;
+    return () => (seed = (seed + 0.37) % 1);
+  }
+
+  it('takes the zone of its station', () => {
+    const shared = new Layout(zoned);
+    expect(new Villager('a', 0, shared, 'idle').zone).toBe('west');
+    expect(new Villager('b', 9, shared, 'idle').zone).toBe('east');
+    expect(new Villager('c', 0, layout(), 'idle').zone).toBeNull();
+  });
+
+  it('wanders, idles and naps only inside its zone', () => {
+    const villager = new Villager('a', 0, new Layout(zoned), 'idle', seeded());
+    let east = villager.position.x;
+    for (let i = 0; i < 6000; i += 1) {
+      villager.update(0.05);
+      east = Math.max(east, villager.position.x);
+    }
+    expect(east).toBeLessThanOrEqual(240);
+    villager.setActivity('sleep');
+    settle(villager);
+    expect(villager.position).toEqual(stationAt(zoned, 0).work);
+  });
+
+  it('chats only with idle villagers of the same zone', () => {
+    const shared = new Layout(zoned);
+    const crowd: Villager[] = [];
+    const guest = new Villager('a', 0, shared, 'idle', fixed(0.8), () => crowd);
+    const stranger = new Villager('b', 9, shared, 'idle', fixed(0.5), () => crowd);
+    crowd.push(guest, stranger);
+    guest.update(0.01);
+    settle(guest);
+    expect(guest.doing).not.toBe('chat');
+    expect(stranger.canChat).toBe(true);
+    const neighbour = new Villager('c', 1, shared, 'idle', fixed(0.5), () => crowd);
+    crowd.push(neighbour);
+    run(guest, 20);
+    settle(guest);
+    run(guest, 0.1);
+    expect([guest.doing, neighbour.doing]).toEqual(['chat', 'chat']);
+  });
+
+  it('crosses zones to visit and walks back home', () => {
+    const shared = new Layout(zoned);
+    const visitor = new Villager('a', 0, shared, 'write', first);
+    const host = stationAt(zoned, 9).work;
+    visitor.startVisit(host);
+    settle(visitor);
+    expect(visitor.position.x).toBeGreaterThan(240);
+    run(visitor, VISIT_LINGER + 0.1);
+    settle(visitor);
+    expect(visitor.position).toEqual(stationAt(zoned, 0).work);
+  });
+
+  it('walks in from an entrance outside its zone', () => {
+    const shared = new Layout(zoned);
+    const villager = new Villager('a', 9, shared, 'write', first, () => [], { x: 20, y: 340 });
+    settle(villager);
+    expect(villager.position).toEqual(stationAt(zoned, 9).work);
+  });
+});

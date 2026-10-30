@@ -14,6 +14,8 @@ import {
   DETAIL_ROWS,
   REFRESH_MS,
   createPanel,
+  effortLabel,
+  modelLabel,
   nowText,
   skinChoices,
   skinLabel,
@@ -68,6 +70,8 @@ function setup(options: SetupOptions = {}) {
   } satisfies PanelTerminal;
   const confirm = vi.fn(options.confirm ?? (() => true));
   const ticks: (() => void)[] = [];
+  const frames: ((now: number) => void)[] = [];
+  const cancelled: number[] = [];
   const stop = vi.fn();
   let doing = options.doing ?? null;
   const panel = createPanel({
@@ -87,7 +91,21 @@ function setup(options: SetupOptions = {}) {
       ticks.push(callback);
       return stop;
     },
+    frames: {
+      request: (callback) => {
+        frames.push(callback);
+        return frames.length;
+      },
+      cancel: (handle) => {
+        cancelled.push(handle);
+      },
+    },
   });
+  const nextFrame = (now: number) => {
+    const callback = frames.at(-1);
+    frames.length = 0;
+    callback?.(now);
+  };
   const setDoing = (plan: IdlePlan | null) => {
     doing = plan;
   };
@@ -126,6 +144,9 @@ function setup(options: SetupOptions = {}) {
     ticks,
     stop,
     setDoing,
+    frames,
+    cancelled,
+    nextFrame,
   };
 }
 
@@ -145,9 +166,35 @@ describe('helpers', () => {
     ...WAITING_REASONS.map((reason) => `waitingFor.${reason}`),
     ...IDLE_PLANS.map((plan) => `idle.${plan}`),
     ...DETAIL_ROWS.map((detail) => detail.label),
+    ...['low', 'medium', 'high', 'max'].map((level) => `effort.${level}`),
   ])('has the %s translation in every locale', (key) => {
     expect(DICTIONARIES.en.has(key)).toBe(true);
     expect(DICTIONARIES['pt-BR'].has(key)).toBe(true);
+  });
+
+  it.each([
+    ['claude-opus-5-5', 'Opus 5.5'],
+    ['claude-sonnet-5-5', 'Sonnet 5.5'],
+    ['claude-haiku-5-5', 'Haiku 5.5'],
+    ['claude-fable-5-1', 'Fable 5.1'],
+    ['claude-opus-5-5[1m]', 'Opus 5.5'],
+    ['claude-sonnet-4-5-20250929', 'Sonnet 4.5'],
+    ['claude-opus-4-20250514', 'Opus 4'],
+    ['gpt-oss', 'gpt-oss'],
+    ['claude-', 'claude-'],
+  ])('labels model %s as %s', (model, label) => {
+    expect(modelLabel(model)).toBe(label);
+  });
+
+  it('labels known effort levels and keeps unknown ones', () => {
+    expect(['low', 'medium', 'high', 'max', 'MAX'].map(effortLabel)).toEqual([
+      'Low',
+      'Medium',
+      'High',
+      'Max',
+      'Max',
+    ]);
+    expect(effortLabel('ultra')).toBe('ultra');
   });
 
   it('describes what the agent is doing right now', () => {
@@ -262,6 +309,46 @@ describe('createPanel', () => {
     vi.spyOn(canvas, 'getContext').mockReturnValue(context);
     store.focus('a');
     expect(drawImage).toHaveBeenCalledOnce();
+  });
+
+  it('draws the portrait once the manifest arrives after the menu opens', () => {
+    let loaded = false;
+    const ready = fakeAssets({ mortis: SIDE_CHARACTER });
+    const assets: Assets = {
+      ...ready,
+      character: (skin) => (loaded ? ready.character(skin) : null),
+    };
+    const { store, query, nextFrame, frames, cancelled } = setup({ assets });
+    const canvas = query('.panel__portrait');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('missing portrait');
+    const drawImage = vi.fn();
+    const context = { clearRect: vi.fn(), drawImage } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(canvas, 'getContext').mockReturnValue(context);
+    expect(frames).toHaveLength(0);
+    store.focus('a');
+    nextFrame(16);
+    expect(drawImage).not.toHaveBeenCalled();
+    loaded = true;
+    nextFrame(32);
+    expect(drawImage).toHaveBeenCalledOnce();
+    nextFrame(48);
+    expect(drawImage).toHaveBeenCalledTimes(2);
+    store.focus(null);
+    expect(cancelled).toHaveLength(1);
+  });
+
+  it('shows the model and effort once the agent reports them', () => {
+    const { store, row, value } = setup({
+      agents: [agent('a'), agent('b', { model: 'claude-opus-5-5', effort: 'high' })],
+    });
+    store.focus('a');
+    expect(row('model').hidden).toBe(true);
+    expect(row('effort').hidden).toBe(true);
+    store.focus('b');
+    expect(value('model')?.textContent).toBe('Opus 5.5');
+    expect(value('effort')?.textContent).toBe('High');
+    setLocale('pt-BR');
+    expect(value('effort')?.textContent).toBe(DICTIONARIES['pt-BR'].get('effort.high'));
   });
 
   it('renders the focused agent header', () => {

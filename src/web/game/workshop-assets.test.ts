@@ -4,10 +4,10 @@ import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { MAX_AGENTS } from '../../shared/constants.js';
 import type { Point } from './map.js';
-import { contains, parseWorkshopMap } from './map.js';
+import { contains, parseWorkshopMap, zoneAt } from './map.js';
 import type { Rect } from './parse.js';
 import { fields, list } from './parse.js';
-import { NavGrid } from './pathing.js';
+import { NAV_CELL, NavGrid } from './pathing.js';
 import { BODY, stationBox } from './renderer.js';
 import { POSES, parseCharacterManifest } from './sprite-sheet.js';
 import { parseStationManifest } from './stations.js';
@@ -249,6 +249,48 @@ describe('shipped workshop map', () => {
   it('keeps embers inside the world', () => {
     for (const ember of map.embers) expect(contains(world, ember)).toBe(true);
   });
+});
+
+describe('shipped workshop zones', () => {
+  const map = parseWorkshopMap(json('maps/workshop.json'));
+  const places = [
+    ...map.stations.map(({ work }) => work),
+    ...map.spots.map(({ at }) => at),
+    ...map.wander,
+    ...map.routes.flat(),
+  ];
+
+  function reachable(nav: NavGrid, start: Point, target: Point): boolean {
+    const end = nav.nearest(target);
+    if (Math.hypot(end.x - target.x, end.y - target.y) >= map.tileSize * 2) return false;
+    const path = nav.route(start, end);
+    return path.slice(1).every((point, index) => nav.clear(path[index] ?? point, point));
+  }
+
+  it('puts every work point, spot, wander point and route inside one zone', () => {
+    expect(map.zones.length).toBeGreaterThan(1);
+    for (const place of places) expect(zoneAt(map, place), JSON.stringify(place)).not.toBeNull();
+    for (const route of map.routes) {
+      expect(new Set(route.map((point) => zoneAt(map, point))).size, JSON.stringify(route)).toBe(1);
+    }
+  });
+
+  it.each(map.zones.map((zone) => [zone.id, zone] as const))(
+    '%s has a station and somewhere to idle, all reachable inside the zone',
+    (id, zone) => {
+      const inZone = (target: Point) => zoneAt(map, target) === id;
+      const stations = map.stations.filter(({ work }) => inZone(work));
+      const idle = [...map.spots.map(({ at }) => at), ...map.wander].filter(inZone);
+      expect(stations.length).toBeGreaterThan(0);
+      expect(idle.length).toBeGreaterThan(0);
+      const nav = new NavGrid(map, NAV_CELL, zone.areas);
+      const start = stations[0]?.work ?? { x: 0, y: 0 };
+      for (const station of stations) expect(nav.walkable(station.work)).toBe(true);
+      for (const target of places.filter(inZone)) {
+        expect(reachable(nav, start, target), JSON.stringify(target)).toBe(true);
+      }
+    },
+  );
 });
 
 describe('interface frames', () => {
