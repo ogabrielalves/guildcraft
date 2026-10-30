@@ -9,6 +9,8 @@ const EMPTY: HookPayload = {
   message: null,
   notificationType: null,
   source: null,
+  sessionId: null,
+  transcriptPath: null,
 };
 
 describe('parseHookPayload', () => {
@@ -28,6 +30,8 @@ describe('parseHookPayload', () => {
       message: 'hi',
       notificationType: 'permission_prompt',
       source: 'startup',
+      sessionId: 's',
+      transcriptPath: null,
     });
   });
 
@@ -48,7 +52,12 @@ describe('handleHook', () => {
     ['UserPromptSubmit', 'thinking'],
     ['PostToolUse', 'thinking'],
   ])('%s moves the agent to %s', (event, status) => {
-    expect(handleHook(event, EMPTY, 'starting')).toEqual({ status, tool: null, event: null });
+    expect(handleHook(event, EMPTY, 'starting')).toEqual({
+      status,
+      tool: null,
+      event: null,
+      waitingFor: null,
+    });
   });
 
   it.each(['startup', 'clear', 'resume'])('treats SessionStart from %s as idle', (source) => {
@@ -65,6 +74,7 @@ describe('handleHook', () => {
       status: 'tool',
       tool: { name: 'Bash', detail: 'npm test' },
       event: null,
+      waitingFor: null,
     });
   });
 
@@ -78,20 +88,22 @@ describe('handleHook', () => {
       status: 'waiting',
       tool: { name: 'AskUserQuestion', detail: 'AskUserQuestion' },
       event: 'waiting',
+      waitingFor: 'question',
     });
     expect(handleHook('PostToolUse', EMPTY, 'waiting')?.status).toBe('thinking');
   });
 
-  it.each(['permission_prompt', 'elicitation_dialog'])(
-    'waits for the user on %s notifications',
-    (notificationType) => {
-      expect(handleHook('Notification', { ...EMPTY, notificationType }, 'tool')).toEqual({
-        status: 'waiting',
-        tool: null,
-        event: 'waiting',
-      });
-    },
-  );
+  it.each([
+    ['permission_prompt', 'permission'],
+    ['elicitation_dialog', 'question'],
+  ] as const)('waits for the user on %s notifications', (notificationType, waitingFor) => {
+    expect(handleHook('Notification', { ...EMPTY, notificationType }, 'tool')).toEqual({
+      status: 'waiting',
+      tool: null,
+      event: 'waiting',
+      waitingFor,
+    });
+  });
 
   it.each(['idle_prompt', 'auth_success'])('ignores %s notifications', (notificationType) => {
     const payload = { ...EMPTY, notificationType, message: 'needs your permission' };
@@ -100,7 +112,7 @@ describe('handleHook', () => {
 
   it('falls back to the message when the notification type is missing', () => {
     const payload = { ...EMPTY, message: 'Claude needs your permission to use Bash' };
-    expect(handleHook('Notification', payload, 'tool')?.status).toBe('waiting');
+    expect(handleHook('Notification', payload, 'tool')?.waitingFor).toBe('permission');
     expect(
       handleHook('Notification', { ...EMPTY, message: 'waiting for your input' }, 'idle'),
     ).toBeNull();
@@ -112,6 +124,7 @@ describe('handleHook', () => {
       status: 'idle',
       tool: null,
       event: 'finished',
+      waitingFor: null,
     });
   });
 

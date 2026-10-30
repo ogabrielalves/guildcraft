@@ -1,10 +1,23 @@
-import { readStream, relayHook } from '../server/hooks/hook-relay.js';
+import { readStream, runHook } from '../server/hooks/hook-relay.js';
 
-void relayHook({
+function write(text: string | null): Promise<void> {
+  return new Promise((resolve) => {
+    if (text)
+      process.stdout.write(text, () => {
+        resolve();
+      });
+    else resolve();
+  });
+}
+
+void runHook({
   args: process.argv.slice(2),
   env: process.env,
   readStdin: () => readStream(process.stdin),
   fetch,
-}).finally(() => {
-  process.exit(0);
-});
+})
+  .catch(() => null)
+  .then(write)
+  .finally(() => {
+    process.exit(0);
+  });

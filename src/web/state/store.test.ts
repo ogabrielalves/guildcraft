@@ -25,6 +25,7 @@ function agent(id: string, overrides: Partial<AgentView> = {}): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
     ...overrides,
   };
@@ -194,6 +195,7 @@ describe('applyServerMessage', () => {
       agents: [agent('a')],
       events: [],
       skins: ['corvin'],
+      permissions: [],
     });
     expect(state.agents).toHaveLength(1);
     expect(state.skins).toEqual(['corvin']);

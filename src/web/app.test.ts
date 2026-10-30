@@ -56,7 +56,13 @@ describe('bindSocket', () => {
     expect(store.getState().connection).toBe('closed');
     emitStatus('unauthorized');
     expect(store.getState().connection).toBe('unauthorized');
-    emitMessage({ type: 'session:init', agents: [], events: [], skins: ['mortis'] });
+    emitMessage({
+      type: 'session:init',
+      agents: [],
+      events: [],
+      skins: ['mortis'],
+      permissions: [],
+    });
     expect(store.getState().skins).toEqual(['mortis']);
   });
 

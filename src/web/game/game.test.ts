@@ -19,13 +19,14 @@ function agent(id: string, status: AgentView['status'] = 'thinking'): AgentView 
     status,
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }
 
 function setup(agents: AgentView[] = []) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents, events: [], skins: ['brom'] });
+  store.apply({ type: 'session:init', agents, events: [], skins: ['brom'], permissions: [] });
   const callbacks: FrameRequestCallback[] = [];
   const onRecruit = vi.fn();
   const onHover = vi.fn();

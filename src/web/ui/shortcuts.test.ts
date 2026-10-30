@@ -21,6 +21,7 @@ function agent(id: string): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }
@@ -44,6 +45,7 @@ function setup(blocked = false) {
     agents: [agent('a'), agent('b'), agent('c')],
     events: [],
     skins: [],
+    permissions: [],
   });
   const focusCompose = vi.fn();
   const shortcuts = createShortcuts({ store, focusCompose, isBlocked: () => blocked });

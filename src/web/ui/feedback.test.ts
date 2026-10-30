@@ -28,13 +28,14 @@ function agent(id: string, status: AgentStatus = 'idle'): AgentView {
     status,
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }
 
 function storeWith(agents: AgentView[], events: VillageEvent[] = []) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents, events, skins: [] });
+  store.apply({ type: 'session:init', agents, events, skins: [], permissions: [] });
   return store;
 }
 

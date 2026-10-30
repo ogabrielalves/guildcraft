@@ -69,13 +69,20 @@ function agent(id: string): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }
 
 function setup(options: { clipboard?: ClipboardPort | null; connected?: boolean } = {}) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents: [agent('a'), agent('b')], events: [], skins: [] });
+  store.apply({
+    type: 'session:init',
+    agents: [agent('a'), agent('b')],
+    events: [],
+    skins: [],
+    permissions: [],
+  });
   const listeners = new Set<MessageListener>();
   const sent: ClientMessage[] = [];
   const connected = { value: options.connected ?? true };
@@ -238,7 +245,13 @@ describe('createTerminalView', () => {
     connected.value = true;
     resize();
     expect(sent).toHaveLength(1);
-    emit({ type: 'session:init', agents: [agent('a'), agent('b')], events: [], skins: [] });
+    emit({
+      type: 'session:init',
+      agents: [agent('a'), agent('b')],
+      events: [],
+      skins: [],
+      permissions: [],
+    });
     expect(sent).toHaveLength(2);
   });
 
@@ -282,7 +295,7 @@ describe('createTerminalView', () => {
     expect(terminals[0]?.disposed).toBe(true);
     expect(terminals[0]?.dataListener).toBeNull();
     expect(view.element.querySelector('[data-agent-id="a"]')).toBeNull();
-    emit({ type: 'session:init', agents: [agent('c')], events: [], skins: [] });
+    emit({ type: 'session:init', agents: [agent('c')], events: [], skins: [], permissions: [] });
     expect(terminals[1]?.disposed).toBe(true);
     expect(view.element.children).toHaveLength(0);
   });

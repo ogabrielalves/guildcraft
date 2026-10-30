@@ -20,6 +20,7 @@ const VIEW: AgentView = {
   status: 'idle',
   permissionMode: 'default',
   tool: null,
+  waitingFor: null,
   queued: 0,
 };
 
@@ -33,6 +34,8 @@ let manager: {
   views: ReturnType<typeof vi.fn>;
   recentEvents: ReturnType<typeof vi.fn>;
   snapshot: ReturnType<typeof vi.fn>;
+  permissions: ReturnType<typeof vi.fn>;
+  decidePermission: ReturnType<typeof vi.fn>;
   input: ReturnType<typeof vi.fn>;
   resize: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
@@ -114,6 +117,8 @@ beforeEach(() => {
     views: vi.fn(() => [VIEW]),
     recentEvents: vi.fn(() => [EVENT]),
     snapshot: vi.fn(() => Promise.resolve('screen')),
+    permissions: vi.fn(() => []),
+    decidePermission: vi.fn(() => ok),
     input: vi.fn(() => ok),
     resize: vi.fn(() => ok),
     create: vi.fn(() => Promise.resolve({ ok: true, value: VIEW })),
@@ -136,7 +141,13 @@ describe('gateway handshake', () => {
     await start();
     const { next } = connect();
     expect(await next(2)).toEqual([
-      { type: 'session:init', agents: [VIEW], events: [EVENT], skins: ['mortis', 'lyra'] },
+      {
+        type: 'session:init',
+        agents: [VIEW],
+        events: [EVENT],
+        skins: ['mortis', 'lyra'],
+        permissions: [],
+      },
       { type: 'term:snapshot', agentId: 'a1', data: 'screen' },
     ]);
     expect(gateway.clientCount).toBe(1);

@@ -19,6 +19,8 @@ import { GRACE_MS, Lifecycle } from './lifecycle.js';
 import type { ClaudeCommand } from './platform/claude-binary.js';
 import { findClaudeBinary } from './platform/claude-binary.js';
 import { allowedOrigins, createToken, launchUrl } from './security.js';
+import { SessionMonitor } from './sessions/session-monitor.js';
+import { SessionRegistry } from './sessions/session-registry.js';
 import { AgentStore } from './store/agent-store.js';
 import { Gateway } from './ws/gateway.js';
 
@@ -179,6 +181,13 @@ export async function startServer(
     emit: (message) => {
       gateway?.broadcast(message);
     },
+    hasViewers: () => (gateway?.clientCount ?? 0) > 0,
+  });
+  const sessions = new SessionRegistry();
+  const monitor = new SessionMonitor({
+    manager,
+    read: () => sessions.read(),
+    log: deps.log,
   });
 
   const app = createApp({
@@ -194,6 +203,7 @@ export async function startServer(
   if (deps.devMode) origins.push(...allowedOrigins(DEV_WEB_PORT));
 
   const stop = async () => {
+    await monitor.stop();
     await manager.shutdown();
     await gateway?.close();
     await closeServer(server);
@@ -218,6 +228,7 @@ export async function startServer(
   if (deps.signals) lifecycle.watchSignals(deps.signals);
 
   await manager.restore(await store.load());
+  monitor.start();
 
   const url = deps.devMode
     ? `http://localhost:${DEV_WEB_PORT}/?${TOKEN_QUERY}=${encodeURIComponent(token)}`

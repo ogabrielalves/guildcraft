@@ -11,6 +11,9 @@ export type AgentStatus = (typeof AGENT_STATUSES)[number];
 export const PERMISSION_MODES = ['default', 'acceptEdits', 'plan'] as const;
 export type PermissionMode = (typeof PERMISSION_MODES)[number];
 
+export const WAITING_REASONS = ['permission', 'question', 'trust', 'dialog', 'other'] as const;
+export type WaitingReason = (typeof WAITING_REASONS)[number];
+
 export interface AgentTool {
   name: string;
   detail: string;
@@ -24,6 +27,7 @@ export interface AgentView {
   status: AgentStatus;
   permissionMode: PermissionMode;
   tool: AgentTool | null;
+  waitingFor: WaitingReason | null;
   queued: number;
 }
 

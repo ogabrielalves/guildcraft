@@ -20,11 +20,13 @@ import {
   MAX_QUEUED,
 } from '../../shared/constants.js';
 import { SUBMIT_DELAY_MS, SUBMIT_RETRY_MS } from './message-queue.js';
+import type { SessionEntry } from '../sessions/session-registry.js';
 
 const RULE = '─'.repeat(40);
 
 class FakeProcess implements ProcessHandle {
   running = false;
+  pid: number | null = 4242;
   written: string[] = [];
   screen = '';
   failStart = false;
@@ -972,5 +974,206 @@ describe('lifecycle', () => {
       ok: false,
       code: 'AGENT_NOT_FOUND',
     });
+  });
+});
+
+const BASH_REQUEST = { tool_name: 'Bash', tool_input: { command: 'npm test' } };
+const ASK_REQUEST = {
+  tool_name: 'AskUserQuestion',
+  tool_input: { questions: [{ question: 'Which?', options: [{ label: 'A' }] }] },
+};
+
+async function ready(ctx: ReturnType<typeof setup>) {
+  const agent = await created(ctx);
+  ctx.manager.hook(agent.id, 'SessionStart', { session_id: 's1', transcript_path: '/t.jsonl' });
+  return agent;
+}
+
+function opened(ctx: ReturnType<typeof setup>, id: string, body: unknown = BASH_REQUEST) {
+  const result = ctx.manager.openPermission(id, body);
+  if (!result.ok || !result.value.ok) throw new Error('not opened');
+  return result.value.id;
+}
+
+function session(overrides: Partial<SessionEntry> = {}): SessionEntry {
+  return {
+    pid: 4242,
+    sessionId: 's9',
+    state: 'busy',
+    waitingFor: null,
+    statusAt: 2_000,
+    ...overrides,
+  };
+}
+
+describe('permissions', () => {
+  it('shows a pending request as waiting', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    const requestId = opened(ctx, id);
+    expect(ctx.manager.views()[0]).toMatchObject({ status: 'waiting', waitingFor: 'permission' });
+    expect(ctx.manager.recentEvents().at(-1)).toMatchObject({ kind: 'waiting', agentId: id });
+    expect(ctx.manager.permissions().map((view) => view.id)).toEqual([requestId]);
+    expect(ctx.ofType('permission:request')).toHaveLength(1);
+  });
+
+  it('rejects requests for unknown, offline or malformed cases', async () => {
+    const ctx = setup();
+    expect(ctx.manager.openPermission('x', BASH_REQUEST)).toEqual({
+      ok: false,
+      code: 'AGENT_NOT_FOUND',
+    });
+    const { id, process } = await ready(ctx);
+    expect(ctx.manager.openPermission(id, {})).toEqual({ ok: false, code: 'INVALID_MESSAGE' });
+    process.exit(0);
+    expect(ctx.manager.openPermission(id, BASH_REQUEST)).toEqual({
+      ok: false,
+      code: 'AGENT_OFFLINE',
+    });
+  });
+
+  it('lets the hook skip without changing the agent', async () => {
+    const ctx = setup({ hasViewers: () => false });
+    const { id } = await ready(ctx);
+    expect(ctx.manager.openPermission(id, BASH_REQUEST)).toEqual({
+      ok: true,
+      value: { ok: false, skip: 'no-viewers' },
+    });
+    expect(ctx.statusOf(id)).toBe('idle');
+  });
+
+  it('resumes the agent after an answer from the page', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    const requestId = opened(ctx, id);
+    const waiting = ctx.manager.waitPermission(id, requestId, 1_000);
+    expect(ctx.manager.decidePermission(requestId, { behavior: 'allow' })).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    await expect(waiting).resolves.toEqual({ status: 'decided', decision: { behavior: 'allow' } });
+    expect(ctx.statusOf(id)).toBe('thinking');
+    expect(ctx.manager.decidePermission(requestId, { behavior: 'allow' })).toEqual({
+      ok: false,
+      code: 'PERMISSION_NOT_FOUND',
+    });
+  });
+
+  it('holds the queue after a deny that interrupts', async () => {
+    const ctx = setup();
+    const { id, process } = await ready(ctx);
+    ctx.manager.decidePermission(opened(ctx, id), { behavior: 'deny', interrupt: true });
+    expect(ctx.statusOf(id)).toBe('idle');
+    ctx.manager.sendPrompt([id], 'next');
+    await vi.advanceTimersByTimeAsync(SUBMIT_DELAY_MS + 10);
+    expect(process.written.some((data) => data.includes('next'))).toBe(true);
+  });
+
+  it('keeps waiting on the next request and on a terminal hand-back', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    const first = opened(ctx, id);
+    const second = opened(ctx, id, ASK_REQUEST);
+    ctx.manager.decidePermission(first, { behavior: 'deny' });
+    expect(ctx.manager.views()[0]).toMatchObject({ status: 'waiting', waitingFor: 'question' });
+    ctx.manager.decidePermission(second, { behavior: 'terminal' });
+    expect(ctx.statusOf(id)).toBe('waiting');
+    expect(ctx.ofType('permission:resolved').map((message) => message.outcome)).toEqual([
+      'denied',
+      'terminal',
+    ]);
+  });
+
+  it('keeps waiting through tool hooks from other calls', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    opened(ctx, id);
+    ctx.manager.hook(id, 'PreToolUse', { tool_name: 'Read', tool_input: { file_path: '/a' } });
+    expect(ctx.statusOf(id)).toBe('waiting');
+    ctx.manager.hook(id, 'PostToolUse', {
+      tool_name: 'Bash',
+      tool_input: { command: 'npm test' },
+    });
+    expect(ctx.manager.permissions()).toEqual([]);
+    expect(ctx.statusOf(id)).toBe('thinking');
+  });
+
+  it.each([
+    ['Stop', (ctx: ReturnType<typeof setup>, id: string) => ctx.manager.hook(id, 'Stop', {})],
+    ['Esc', (ctx: ReturnType<typeof setup>, id: string) => ctx.manager.interrupt(id)],
+    [
+      'exit',
+      (ctx: ReturnType<typeof setup>) => {
+        ctx.last().exit(0);
+      },
+    ],
+    ['remove', (ctx: ReturnType<typeof setup>, id: string) => ctx.manager.remove(id)],
+  ])('releases requests on %s', async (_name, act) => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    opened(ctx, id);
+    await act(ctx, id);
+    expect(ctx.manager.permissions()).toEqual([]);
+    expect(ctx.ofType('permission:resolved').at(-1)?.outcome).toBe('released');
+  });
+
+  it('releases a request answered in the console', async () => {
+    const lines: string[] = [];
+    const readLines = vi.fn(() => Promise.resolve(lines));
+    const ctx = setup({ readLines });
+    const { id } = await ready(ctx);
+    opened(ctx, id);
+    const use = { type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'npm test' } };
+    lines.push(JSON.stringify({ message: { content: [use] } }));
+    await ctx.manager.sweepPermissions();
+    expect(readLines).toHaveBeenCalledWith('/t.jsonl');
+    expect(ctx.manager.permissions()).toHaveLength(1);
+    lines.push(
+      JSON.stringify({ message: { content: [{ type: 'tool_result', tool_use_id: 't1' }] } }),
+    );
+    await ctx.manager.sweepPermissions();
+    expect(ctx.manager.permissions()).toEqual([]);
+  });
+});
+
+describe('session registry', () => {
+  it('matches by pid, adopts the session and applies newer states', async () => {
+    const ctx = setup();
+    const { id } = await created(ctx);
+    ctx.manager.hook(id, 'UserPromptSubmit', {});
+    ctx.manager.syncSessions([session({ state: 'waiting', waitingFor: 'question' })]);
+    expect(ctx.manager.views()[0]).toMatchObject({ status: 'waiting', waitingFor: 'question' });
+    expect(ctx.manager.recentEvents().at(-1)).toMatchObject({ kind: 'waiting', agentId: id });
+    ctx.manager.syncSessions([session({ pid: 1, state: 'idle', statusAt: 3_000 })]);
+    expect(ctx.statusOf(id)).toBe('idle');
+  });
+
+  it('matches by the session id from the hooks', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    ctx.manager.syncSessions([session({ pid: 1, sessionId: 's1' })]);
+    expect(ctx.statusOf(id)).toBe('thinking');
+  });
+
+  it('ignores stale entries, unknown sessions and agents with a pending request', async () => {
+    const ctx = setup();
+    const { id } = await ready(ctx);
+    ctx.manager.syncSessions([session({ statusAt: 500 })]);
+    ctx.manager.syncSessions([session({ pid: 1, sessionId: 'other' })]);
+    expect(ctx.statusOf(id)).toBe('idle');
+    opened(ctx, id);
+    ctx.manager.syncSessions([session({ sessionId: 's1', state: 'idle' })]);
+    expect(ctx.statusOf(id)).toBe('waiting');
+  });
+
+  it('leaves an open trust prompt to the trust logic', async () => {
+    const ctx = setup();
+    const { id, process } = await created(ctx);
+    process.screen = 'Do you trust the files in this folder?\n  maybe\n';
+    process.emit('x');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.manager.views()[0]).toMatchObject({ status: 'waiting', waitingFor: 'trust' });
+    ctx.manager.syncSessions([session({ state: 'idle' })]);
+    expect(ctx.statusOf(id)).toBe('waiting');
   });
 });

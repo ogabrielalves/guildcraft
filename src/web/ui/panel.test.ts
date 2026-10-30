@@ -21,6 +21,7 @@ function agent(id: string, overrides: Partial<AgentView> = {}): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
     ...overrides,
   };
@@ -33,6 +34,7 @@ function setup(options: { confirm?: Confirm; agents?: AgentView[]; skins?: strin
     agents: options.agents ?? [agent('a'), agent('b', { skin: 'lyra' })],
     events: [],
     skins: options.skins ?? ['mortis', 'corvin', 'lyra'],
+    permissions: [],
   });
   const sent: ClientMessage[] = [];
   const terminal = {
@@ -170,6 +172,7 @@ describe('createPanel', () => {
       agents: [agent('a')],
       events: [],
       skins: ['mortis', 'corvin'],
+      permissions: [],
     });
     expect(select().options).toHaveLength(2);
   });

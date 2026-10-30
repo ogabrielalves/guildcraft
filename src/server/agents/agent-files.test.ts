@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HOOK_EVENTS, isHookEvent } from '../hooks/hook-events.js';
+import { PERMISSION_HOOK_TIMEOUT_S } from '../hooks/permission-relay.js';
 import type { AgentFilesInput } from './agent-files.js';
 import { buildMcpConfig, buildSettings, quotePath, writeAgentFiles } from './agent-files.js';
 
@@ -23,8 +24,24 @@ describe('quotePath', () => {
 describe('buildSettings', () => {
   const { hooks } = buildSettings(INPUT);
 
-  it('registers every hook event', () => {
-    expect(Object.keys(hooks)).toEqual([...HOOK_EVENTS]);
+  it('registers every hook event plus the permission relay', () => {
+    expect(Object.keys(hooks)).toEqual([...HOOK_EVENTS, 'PermissionRequest']);
+  });
+
+  it('gives the permission relay a long timeout and every tool', () => {
+    expect(hooks.PermissionRequest).toEqual([
+      {
+        matcher: '*',
+        hooks: [
+          {
+            type: 'command',
+            command:
+              '"C:/Program Files/nodejs/node.exe" "C:/cache/guildcraft/dist/bin/hook.js" 7777 a1 PermissionRequest',
+            timeout: PERMISSION_HOOK_TIMEOUT_S,
+          },
+        ],
+      },
+    ]);
   });
 
   it('runs the hook relay with port, agent and event', () => {

@@ -12,6 +12,7 @@ describe('Agent', () => {
       ...INIT,
       status: 'offline',
       tool: null,
+      waitingFor: null,
       queued: 0,
     });
   });

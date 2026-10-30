@@ -20,13 +20,20 @@ function agent(id: string): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }
 
 function setup(connected = true) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents: [agent('a'), agent('b')], events: [], skins: [] });
+  store.apply({
+    type: 'session:init',
+    agents: [agent('a'), agent('b')],
+    events: [],
+    skins: [],
+    permissions: [],
+  });
   store.setConnection('open');
   const sent: ClientMessage[] = [];
   const link = { connected };

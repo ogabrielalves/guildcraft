@@ -16,16 +16,19 @@ interface Received {
 let server: Server;
 let port: number;
 let received: Received[];
+let reply: (req: IncomingMessage) => { status: number; body?: unknown };
 
 beforeEach(async () => {
   received = [];
+  reply = () => ({ status: 204 });
   server = createServer((req, res) => {
     let body = '';
     req.on('data', (chunk: Buffer) => (body += chunk.toString()));
     req.on('end', () => {
       received.push({ url: req.url, headers: req.headers, body });
-      res.statusCode = 204;
-      res.end();
+      const answer = reply(req);
+      res.statusCode = answer.status;
+      res.end(answer.body === undefined ? undefined : JSON.stringify(answer.body));
     });
   });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -58,7 +61,7 @@ it('relays the hook and exits silently', async () => {
   expect(received[0]?.url).toBe('/hook/a1/Stop');
   expect(received[0]?.headers['x-guildcraft-token']).toBe('secret');
   expect(received[0]?.headers['content-type']).toBe('application/json');
-  expect(received[0]?.body).toBe('{}');
+  expect(received[0]?.body).toBe('{"session_id":"s"}');
 }, 20_000);
 
 it('exits cleanly when the server is unreachable', async () => {
@@ -68,4 +71,25 @@ it('exits cleanly when the server is unreachable', async () => {
   server.listen(0, '127.0.0.1');
   const result = await run([closed, 'a1', 'Stop'], '{}');
   expect(result).toEqual({ code: 0, stdout: '' });
+}, 20_000);
+
+it('prints the decision of a permission request', async () => {
+  reply = (req) =>
+    req.method === 'POST'
+      ? { status: 201, body: { id: 'p1', expiresAt: 1 } }
+      : { status: 200, body: { status: 'decided', decision: { behavior: 'allow' } } };
+  const stdin = JSON.stringify({
+    hook_event_name: 'PermissionRequest',
+    tool_name: 'Bash',
+    tool_input: { command: 'npm test' },
+  });
+  const result = await run([String(port), 'a1', 'PermissionRequest'], stdin);
+  expect(result.code).toBe(0);
+  expect(JSON.parse(result.stdout)).toEqual({
+    hookSpecificOutput: { hookEventName: 'PermissionRequest', decision: { behavior: 'allow' } },
+  });
+  expect(received.map((entry) => entry.url)).toEqual([
+    '/hook/a1/permission',
+    '/hook/a1/permission/p1?timeout=25',
+  ]);
 }, 20_000);

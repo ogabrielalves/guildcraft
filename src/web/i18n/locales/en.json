@@ -103,6 +103,7 @@
     "INVALID_MESSAGE": "Invalid request",
     "EMPTY_PROMPT": "The prompt is empty",
     "QUEUE_FULL": "This adventurer has too many pending messages",
+    "PERMISSION_NOT_FOUND": "That request was already answered or expired.",
     "UNAUTHORIZED": "Session expired. Reopen Guildcraft from the terminal."
   }
 }

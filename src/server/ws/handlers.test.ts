@@ -16,6 +16,7 @@ function target(): { [K in keyof CommandTarget]: ReturnType<typeof vi.fn> } {
     interrupt: vi.fn(() => OK),
     setSkin: vi.fn(() => Promise.resolve(OK)),
     sendPrompt: vi.fn(() => ({ ok: true, value: [] })),
+    decidePermission: vi.fn(() => OK),
   };
 }
 
@@ -33,6 +34,11 @@ const CASES: [ClientMessage, keyof CommandTarget, unknown[]][] = [
   [{ type: 'agent:interrupt', agentId: 'a' }, 'interrupt', ['a']],
   [{ type: 'agent:setSkin', agentId: 'a', skin: 'lyra' }, 'setSkin', ['a', 'lyra']],
   [{ type: 'prompt:send', agentIds: ['a', 'b'], text: 'go' }, 'sendPrompt', [['a', 'b'], 'go']],
+  [
+    { type: 'permission:decide', requestId: 'p1', decision: { behavior: 'allow' } },
+    'decidePermission',
+    ['p1', { behavior: 'allow' }],
+  ],
 ];
 
 describe('handleClientMessage', () => {

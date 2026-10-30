@@ -12,6 +12,7 @@ export const ERROR_CODES = [
   'INVALID_MESSAGE',
   'EMPTY_PROMPT',
   'QUEUE_FULL',
+  'PERMISSION_NOT_FOUND',
   'UNAUTHORIZED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

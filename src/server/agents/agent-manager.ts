@@ -3,6 +3,7 @@ import type {
   PermissionMode,
   VillageEvent,
   VillageEventKind,
+  WaitingReason,
 } from '../../shared/agent.js';
 import {
   ENV_PREFIX,
@@ -11,9 +12,21 @@ import {
   MAX_PROMPT_LENGTH,
 } from '../../shared/constants.js';
 import type { ErrorCode, Failure } from '../../shared/errors.js';
+import type {
+  PermissionDecision,
+  PermissionOutcome,
+  PermissionRequestView,
+} from '../../shared/permission.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import type { HookEvent } from '../hooks/hook-events.js';
+import type { HookPayload } from '../hooks/hook-handler.js';
 import { handleHook, parseHookPayload } from '../hooks/hook-handler.js';
+import type { OpenResult, WaitResult } from '../permissions/permission-broker.js';
+import { PermissionBroker } from '../permissions/permission-broker.js';
+import { QUESTION_TOOL } from '../permissions/request.js';
+import { readTailLines } from '../permissions/tool-call.js';
+import type { SessionEntry } from '../sessions/session-registry.js';
+import { reconcileSession } from '../sessions/session-sync.js';
 import type { ClaudeCommand } from '../platform/claude-binary.js';
 import type { StoredAgent } from '../store/agent-store.js';
 import type { Agent } from './agent.js';
@@ -31,6 +44,7 @@ export const MAX_TRUST_ATTEMPTS = 3;
 
 export interface ProcessHandle {
   readonly running: boolean;
+  readonly pid: number | null;
   start(): void;
   write(data: string): void;
   resize(cols: number, rows: number): void;
@@ -60,6 +74,8 @@ export interface ManagerDeps {
   token: string;
   port: number;
   emit: (message: ServerMessage) => void;
+  hasViewers?: () => boolean;
+  readLines?: (path: string) => Promise<string[]>;
   now?: () => number;
 }
 
@@ -89,6 +105,10 @@ interface Runtime {
   trustCheck: Promise<void> | null;
   recheckTrust: boolean;
   hold: QueueHold;
+  sessionId: string | null;
+  transcriptPath: string | null;
+  session: SessionEntry | null;
+  lastSignalAt: number;
   unsubscribe: (() => void)[];
 }
 
@@ -140,13 +160,27 @@ export class AgentManager {
   private readonly runtimes = new Map<string, Runtime>();
   private readonly events: VillageEvent[] = [];
   private readonly now: () => number;
+  private readonly broker: PermissionBroker;
 
   constructor(private readonly deps: ManagerDeps) {
     this.now = deps.now ?? Date.now;
+    this.broker = new PermissionBroker({
+      emit: deps.emit,
+      hasViewers: deps.hasViewers ?? (() => true),
+      readLines: deps.readLines ?? ((path) => readTailLines(path)),
+      onResolved: (agentId, outcome, decision) => {
+        this.permissionResolved(agentId, outcome, decision);
+      },
+      now: this.now,
+    });
   }
 
   views(): AgentView[] {
     return this.deps.registry.list().map((agent) => agent.toView());
+  }
+
+  permissions(): PermissionRequestView[] {
+    return this.broker.list();
   }
 
   recentEvents(): VillageEvent[] {
@@ -220,6 +254,7 @@ export class AgentManager {
     // esc interrupts the turn without firing a stop hook
     if (data === ESC && agent.status !== 'offline' && agent.status !== 'starting') {
       if (BUSY_STATUSES.includes(agent.status)) runtime.hold = 'interrupted';
+      this.broker.releaseAgent(id);
       this.update(agent, 'idle');
     } else if (agent.status === 'waiting' && SUBMIT_KEY.test(data)) {
       this.update(agent, 'thinking');
@@ -321,12 +356,106 @@ export class AgentManager {
       runtime.queue.confirmSubmit();
     }
     if (runtime) this.advanceHold(runtime, event);
-    const outcome = handleHook(event, parseHookPayload(rawPayload), agent.status);
+    const payload = parseHookPayload(rawPayload);
+    if (runtime) this.trackSession(runtime, payload);
+    this.settlePermissions(id, event, payload);
+    const outcome = handleHook(event, payload, agent.status);
     if (!outcome) return ok(undefined);
     this.clearReadyTimer(id);
-    this.update(agent, outcome.status, outcome.tool);
+    if (this.broker.oldestFor(id) && outcome.status !== 'waiting') return ok(undefined);
+    this.update(agent, outcome.status, outcome.tool, outcome.waitingFor);
     if (outcome.event) this.record(outcome.event, id);
     return ok(undefined);
+  }
+
+  openPermission(id: string, body: unknown): ManagerResult<OpenResult> {
+    const agent = this.deps.registry.get(id);
+    if (!agent || !this.runtimes.has(id)) return fail('AGENT_NOT_FOUND');
+    if (agent.status === 'offline') return fail('AGENT_OFFLINE');
+    const result = this.broker.open(id, body);
+    if (!result.ok && 'invalid' in result) return fail('INVALID_MESSAGE');
+    if (result.ok) {
+      this.clearReadyTimer(id);
+      this.showPending(agent);
+    }
+    return ok(result);
+  }
+
+  waitPermission(id: string, requestId: string, timeoutMs: number): Promise<WaitResult> | null {
+    return this.broker.wait(id, requestId, timeoutMs);
+  }
+
+  decidePermission(requestId: string, decision: PermissionDecision): ManagerResult {
+    const code = this.broker.decide(requestId, decision);
+    return code ? fail(code) : ok(undefined);
+  }
+
+  syncSessions(entries: readonly SessionEntry[]): void {
+    for (const [id, runtime] of this.runtimes) {
+      const pid = runtime.process.pid;
+      const entry = entries.find(
+        (candidate) =>
+          (runtime.sessionId !== null && candidate.sessionId === runtime.sessionId) ||
+          (pid !== null && candidate.pid === pid),
+      );
+      runtime.session = entry ?? null;
+      const agent = this.deps.registry.get(id);
+      if (!agent || !entry) continue;
+      runtime.sessionId ??= entry.sessionId;
+      if (runtime.trustOpen || this.broker.oldestFor(id)) continue;
+      const next = reconcileSession(agent.status, runtime.lastSignalAt, entry);
+      if (!next) continue;
+      const wasWaiting = agent.status === 'waiting';
+      this.update(agent, next.status, null, next.waitingFor);
+      if (next.status === 'waiting' && !wasWaiting) this.record('waiting', id);
+    }
+  }
+
+  sweepPermissions(): Promise<void> {
+    return this.broker.sweep((agentId) => {
+      const runtime = this.runtimes.get(agentId);
+      const agent = this.deps.registry.get(agentId);
+      if (!runtime || agent?.status === 'offline') return null;
+      return { transcriptPath: runtime.transcriptPath, session: runtime.session };
+    });
+  }
+
+  private trackSession(runtime: Runtime, payload: HookPayload): void {
+    if (payload.sessionId) runtime.sessionId = payload.sessionId;
+    if (payload.transcriptPath) runtime.transcriptPath = payload.transcriptPath;
+  }
+
+  private settlePermissions(id: string, event: HookEvent, payload: HookPayload): void {
+    if (event === 'Stop') this.broker.releaseAgent(id);
+    else if (event === 'PostToolUse' && payload.toolName) {
+      this.broker.releaseCall(id, payload.toolName, payload.toolInput);
+    }
+  }
+
+  private showPending(agent: Agent): boolean {
+    const pending = this.broker.oldestFor(agent.id);
+    if (!pending) return false;
+    const reason: WaitingReason = pending.toolName === QUESTION_TOOL ? 'question' : 'permission';
+    const wasWaiting = agent.status === 'waiting';
+    this.update(agent, 'waiting', null, reason);
+    if (!wasWaiting) this.record('waiting', agent.id);
+    return true;
+  }
+
+  private permissionResolved(
+    agentId: string,
+    outcome: PermissionOutcome,
+    decision: PermissionDecision | null,
+  ): void {
+    const agent = this.deps.registry.get(agentId);
+    const runtime = this.runtimes.get(agentId);
+    if (!agent || !runtime || agent.status !== 'waiting' || this.showPending(agent)) return;
+    if (decision?.behavior === 'deny' && decision.interrupt === true) {
+      runtime.hold = 'interrupted';
+      this.update(agent, 'idle');
+    } else if (outcome === 'allowed' || outcome === 'answered' || outcome === 'denied') {
+      this.update(agent, 'thinking');
+    }
   }
 
   private advanceHold(runtime: Runtime, event: HookEvent): void {
@@ -360,6 +489,10 @@ export class AgentManager {
       trustCheck: null,
       recheckTrust: false,
       hold: 'none',
+      sessionId: null,
+      transcriptPath: null,
+      session: null,
+      lastSignalAt: this.now(),
       unsubscribe: [],
     };
     runtime.unsubscribe.push(
@@ -368,6 +501,7 @@ export class AgentManager {
         if (runtime.trustWindow) void this.checkTrust(agent, runtime);
       }),
       process.onExit(() => {
+        this.broker.releaseAgent(agent.id);
         this.clearReadyTimer(agent.id);
         clearTrustRetry(runtime);
         runtime.queue.clear();
@@ -454,7 +588,7 @@ export class AgentManager {
   }
 
   private awaitUser(agent: Agent): void {
-    this.update(agent, 'waiting');
+    this.update(agent, 'waiting', null, 'trust');
     this.record('waiting', agent.id);
   }
 
@@ -492,8 +626,15 @@ export class AgentManager {
     }
   }
 
-  private update(agent: Agent, status: Agent['status'], tool: Agent['tool'] = null): void {
-    agent.setStatus(status, tool);
+  private update(
+    agent: Agent,
+    status: Agent['status'],
+    tool: Agent['tool'] = null,
+    waitingFor: Agent['waitingFor'] = null,
+  ): void {
+    agent.setStatus(status, tool, waitingFor);
+    const runtime = this.runtimes.get(agent.id);
+    if (runtime) runtime.lastSignalAt = this.now();
     this.broadcast(agent);
     if (status === 'idle') this.tryDeliver(agent);
   }
@@ -525,6 +666,7 @@ export class AgentManager {
   private async teardown(id: string): Promise<void> {
     const runtime = this.runtimes.get(id);
     if (!runtime) return;
+    this.broker.releaseAgent(id);
     this.clearReadyTimer(id);
     clearTrustRetry(runtime);
     for (const timer of runtime.visitTimers) clearTimeout(timer);

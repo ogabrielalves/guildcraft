@@ -11,6 +11,7 @@ import { TOKEN_HEADER } from '../../shared/constants.js';
 import type { AppOptions } from './app.js';
 import { createApp } from './app.js';
 import { defaultFsDeps } from './routes/fs.js';
+import { waitTimeout } from './routes/hooks.js';
 
 const TOKEN = 'secret';
 
@@ -22,6 +23,7 @@ const VIEW: AgentView = {
   status: 'tool',
   permissionMode: 'default',
   tool: { name: 'Edit', detail: 'App.tsx' },
+  waitingFor: null,
   queued: 2,
 };
 
@@ -30,6 +32,8 @@ let server: Server;
 let base: string;
 let manager: {
   hook: ReturnType<typeof vi.fn>;
+  openPermission: ReturnType<typeof vi.fn>;
+  waitPermission: ReturnType<typeof vi.fn>;
   others: ReturnType<typeof vi.fn>;
   sendMessage: ReturnType<typeof vi.fn>;
 };
@@ -63,6 +67,8 @@ beforeEach(async () => {
   await writeFile(join(root, 'assets', 'maps', 'workshop.json'), '{"ok":true}');
   manager = {
     hook: vi.fn(() => ({ ok: true, value: undefined })),
+    openPermission: vi.fn(() => ({ ok: true, value: { ok: true, id: 'p1', expiresAt: 9 } })),
+    waitPermission: vi.fn(() => Promise.resolve({ status: 'pending' })),
     others: vi.fn(() => ({ ok: true, value: [VIEW] })),
     sendMessage: vi.fn(() => ({ ok: true, value: { queued: 1, busy: false } })),
   };
@@ -167,6 +173,60 @@ describe('hooks', () => {
   it('rejects oversized bodies', async () => {
     const body = JSON.stringify({ message: 'x'.repeat(1_100_000) });
     expect((await request('/hook/a1/Stop', { method: 'POST', body })).status).toBe(413);
+  });
+});
+
+describe('permission hooks', () => {
+  it('opens a request', async () => {
+    const body = JSON.stringify({ tool_name: 'Bash' });
+    const response = await request('/hook/a1/permission', { method: 'POST', body });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ id: 'p1', expiresAt: 9 });
+    expect(manager.openPermission).toHaveBeenCalledWith('a1', { tool_name: 'Bash' });
+    expect(manager.hook).not.toHaveBeenCalled();
+  });
+
+  it('tells the hook to skip', async () => {
+    manager.openPermission.mockReturnValue({ ok: true, value: { ok: false, skip: 'no-viewers' } });
+    const response = await request('/hook/a1/permission', { method: 'POST', body: '{}' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ skip: 'no-viewers' });
+  });
+
+  it('maps open failures to http status', async () => {
+    manager.openPermission.mockReturnValue({ ok: false, code: 'AGENT_NOT_FOUND' });
+    const response = await request('/hook/x/permission', { method: 'POST', body: '{}' });
+    expect(response.status).toBe(404);
+  });
+
+  it('long-polls for the decision with a capped timeout', async () => {
+    manager.waitPermission.mockResolvedValue({
+      status: 'decided',
+      decision: { behavior: 'allow' },
+    });
+    const response = await request('/hook/a1/permission/p1?timeout=99');
+    expect(await response.json()).toEqual({ status: 'decided', decision: { behavior: 'allow' } });
+    expect(manager.waitPermission).toHaveBeenCalledWith('a1', 'p1', 25_000);
+  });
+
+  it('returns 404 for an unknown request', async () => {
+    manager.waitPermission.mockReturnValue(null);
+    const response = await request('/hook/a1/permission/nope');
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: 'PERMISSION_NOT_FOUND' });
+  });
+});
+
+describe('waitTimeout', () => {
+  it.each([
+    ['5', 5_000],
+    ['0.5', 500],
+    ['99', 25_000],
+    ['0', 25_000],
+    ['x', 25_000],
+    [undefined, 25_000],
+  ])('turns %s seconds into %d ms', (raw, ms) => {
+    expect(waitTimeout(raw)).toBe(ms);
   });
 });
 

@@ -10,6 +10,8 @@ import {
   MAX_TERM_ROWS,
 } from './constants.js';
 import type { ErrorCode, ErrorParams } from './errors.js';
+import type { PermissionDecision, PermissionOutcome, PermissionRequestView } from './permission.js';
+import { parsePermissionDecision } from './permission.js';
 
 export type ClientMessage =
   | { type: 'term:input'; agentId: string; data: string }
@@ -26,10 +28,17 @@ export type ClientMessage =
   | { type: 'agent:restart'; agentId: string }
   | { type: 'agent:interrupt'; agentId: string }
   | { type: 'agent:setSkin'; agentId: string; skin: string }
-  | { type: 'prompt:send'; agentIds: string[]; text: string };
+  | { type: 'prompt:send'; agentIds: string[]; text: string }
+  | { type: 'permission:decide'; requestId: string; decision: PermissionDecision };
 
 export type ServerMessage =
-  | { type: 'session:init'; agents: AgentView[]; events: VillageEvent[]; skins: string[] }
+  | {
+      type: 'session:init';
+      agents: AgentView[];
+      events: VillageEvent[];
+      skins: string[];
+      permissions: PermissionRequestView[];
+    }
   | { type: 'term:snapshot' | 'term:output'; agentId: string; data: string }
   | { type: 'term:reset'; agentId: string }
   | { type: 'agent:updated'; agent: AgentView }
@@ -37,6 +46,13 @@ export type ServerMessage =
   | { type: 'agent:visit'; fromId: string; toId: string; preview: string }
   | { type: 'message:delivered'; fromId: string; toId: string }
   | { type: 'event'; event: VillageEvent }
+  | { type: 'permission:request'; request: PermissionRequestView }
+  | {
+      type: 'permission:resolved';
+      requestId: string;
+      agentId: string;
+      outcome: PermissionOutcome;
+    }
   | {
       type: 'error';
       code: ErrorCode;
@@ -100,6 +116,10 @@ function parseFields(type: string, m: Fields): ClientMessage | null {
         isText(m.text, MAX_PROMPT_LENGTH)
         ? { type, agentIds: m.agentIds, text: m.text }
         : null;
+    case 'permission:decide': {
+      const decision = parsePermissionDecision(m.decision);
+      return isId(m.requestId) && decision ? { type, requestId: m.requestId, decision } : null;
+    }
     default:
       return null;
   }

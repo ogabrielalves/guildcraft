@@ -12,6 +12,7 @@ import { BootError, DEV_WEB_PORT, childEnv, startServer } from './index.js';
 
 class FakeProcess implements ProcessHandle {
   running = false;
+  pid = null;
   constructor(
     readonly spec: SpawnSpec,
     private readonly hang: boolean,
@@ -118,7 +119,13 @@ describe('startServer', () => {
         resolve(JSON.parse(data.toString()) as ServerMessage);
       });
     });
-    expect(first).toEqual({ type: 'session:init', agents: [], events: [], skins: ['oren'] });
+    expect(first).toEqual({
+      type: 'session:init',
+      agents: [],
+      events: [],
+      skins: ['oren'],
+      permissions: [],
+    });
     socket.close();
   });
 

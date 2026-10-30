@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { AGENT_ID_PATTERN, ENV_PREFIX } from '../../shared/constants.js';
 import type { HookEvent } from '../hooks/hook-events.js';
 import { HOOK_EVENTS, TOOL_HOOK_EVENTS } from '../hooks/hook-events.js';
+import { PERMISSION_EVENT, PERMISSION_HOOK_TIMEOUT_S } from '../hooks/permission-relay.js';
 
 export const MCP_SERVER_NAME = 'guildcraft';
 
@@ -22,6 +23,7 @@ export interface AgentFilePaths {
 interface HookCommand {
   type: 'command';
   command: string;
+  timeout?: number;
 }
 
 interface HookMatcher {
@@ -43,18 +45,28 @@ export function assertSafeInput({ agentId, port }: AgentFilesInput): void {
   }
 }
 
-function hookCommand(input: AgentFilesInput, event: HookEvent): string {
+type RelayEvent = HookEvent | typeof PERMISSION_EVENT;
+
+function hookCommand(input: AgentFilesInput, event: RelayEvent): string {
   const { nodePath, hookScript, port, agentId } = input;
   return [quotePath(nodePath), quotePath(hookScript), port, agentId, event].join(' ');
 }
 
-export function buildSettings(input: AgentFilesInput): { hooks: Record<HookEvent, HookMatcher[]> } {
+export function buildSettings(input: AgentFilesInput): {
+  hooks: Record<RelayEvent, HookMatcher[]>;
+} {
   assertSafeInput(input);
-  const entries = HOOK_EVENTS.map((event): [HookEvent, HookMatcher[]] => {
+  const entries = HOOK_EVENTS.map((event): [RelayEvent, HookMatcher[]] => {
     const hooks: HookCommand[] = [{ type: 'command', command: hookCommand(input, event) }];
     return [event, [TOOL_HOOK_EVENTS.includes(event) ? { matcher: '*', hooks } : { hooks }]];
   });
-  return { hooks: Object.fromEntries(entries) as Record<HookEvent, HookMatcher[]> };
+  const permission: HookCommand = {
+    type: 'command',
+    command: hookCommand(input, PERMISSION_EVENT),
+    timeout: PERMISSION_HOOK_TIMEOUT_S,
+  };
+  entries.push([PERMISSION_EVENT, [{ matcher: '*', hooks: [permission] }]]);
+  return { hooks: Object.fromEntries(entries) as Record<RelayEvent, HookMatcher[]> };
 }
 
 export function buildMcpConfig(input: AgentFilesInput) {

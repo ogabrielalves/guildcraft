@@ -17,6 +17,7 @@ function agent(id: string): AgentView {
     status: 'thinking',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   };
 }

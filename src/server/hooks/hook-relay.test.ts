@@ -6,6 +6,7 @@ import {
   parseRelayArgs,
   readStream,
   relayHook,
+  runHook,
   slimPayload,
 } from './hook-relay.js';
 
@@ -50,6 +51,8 @@ describe('slimPayload', () => {
       message: 'needs permission',
       notification_type: 'permission_prompt',
       source: 'startup',
+      session_id: 's',
+      transcript_path: '/t',
     });
   });
 
@@ -125,5 +128,47 @@ describe('relayHook', () => {
     const broken = input({ readStdin: () => Promise.reject(new Error('EPIPE')) });
     await expect(relayHook(down.value)).resolves.toBe(false);
     await expect(relayHook(broken.value)).resolves.toBe(false);
+  });
+});
+
+describe('runHook', () => {
+  it('relays status hooks and prints nothing', async () => {
+    const { value, fetchMock } = input();
+    await expect(runHook(value)).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('parses the permission event', () => {
+    expect(parseRelayArgs(['7777', 'a1', 'PermissionRequest'])?.event).toBe('PermissionRequest');
+  });
+
+  it('runs the permission relay and returns its output', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{"id":"p1"}', { status: 201 }))
+      .mockResolvedValueOnce(
+        new Response('{"status":"decided","decision":{"behavior":"deny"}}', { status: 200 }),
+      );
+    const { value } = input({
+      args: ['7777', 'a1', 'PermissionRequest'],
+      readStdin: () => Promise.resolve('{"tool_name":"Bash","tool_input":{"command":"rm -rf x"}}'),
+      fetch: fetchMock,
+    });
+    const out = await runHook(value);
+    expect(JSON.parse(out ?? 'null')).toMatchObject({
+      hookSpecificOutput: { decision: { behavior: 'deny' } },
+    });
+    await expect(relayHook(value)).resolves.toBe(false);
+  });
+
+  it('stays silent when the permission relay cannot run', async () => {
+    const noToken = input({ args: ['7777', 'a1', 'PermissionRequest'], env: {} });
+    await expect(runHook(noToken.value)).resolves.toBeNull();
+    expect(noToken.fetchMock).not.toHaveBeenCalled();
+    const broken = input({
+      args: ['7777', 'a1', 'PermissionRequest'],
+      readStdin: () => Promise.reject(new Error('EPIPE')),
+    });
+    await expect(runHook(broken.value)).resolves.toBeNull();
   });
 });

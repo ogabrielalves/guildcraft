@@ -1,17 +1,25 @@
 import { AGENT_ID_PATTERN, ENV_PREFIX, TOKEN_HEADER } from '../../shared/constants.js';
 import type { HookEvent } from './hook-events.js';
 import { isHookEvent } from './hook-events.js';
+import { PERMISSION_EVENT, relayPermission } from './permission-relay.js';
 
 export const RELAY_TIMEOUT_MS = 3_000;
 export const MAX_STDIN_BYTES = 16 * 1024 * 1024;
 export const MAX_FIELD_LENGTH = 1_000;
 
-const PAYLOAD_FIELDS = ['tool_name', 'message', 'notification_type', 'source'] as const;
+const PAYLOAD_FIELDS = [
+  'tool_name',
+  'message',
+  'notification_type',
+  'source',
+  'session_id',
+  'transcript_path',
+] as const;
 
 export interface RelayTarget {
   port: number;
   agentId: string;
-  event: HookEvent;
+  event: HookEvent | typeof PERMISSION_EVENT;
 }
 
 export interface RelayInput {
@@ -26,6 +34,7 @@ export function parseRelayArgs([port, agentId, event]: readonly string[]): Relay
   const portNumber = Number(port);
   if (!Number.isInteger(portNumber) || portNumber < 1 || portNumber > 65535) return null;
   if (agentId === undefined || !AGENT_ID_PATTERN.test(agentId)) return null;
+  if (event === PERMISSION_EVENT) return { port: portNumber, agentId, event };
   if (!isHookEvent(event)) return null;
   return { port: portNumber, agentId, event };
 }
@@ -78,7 +87,7 @@ export async function readStream(
 export async function relayHook(input: RelayInput): Promise<boolean> {
   const target = parseRelayArgs(input.args);
   const token = input.env[`${ENV_PREFIX}TOKEN`];
-  if (!target || !token) return false;
+  if (!target || !token || target.event === PERMISSION_EVENT) return false;
   try {
     const payload = slimPayload(await input.readStdin());
     const response = await input.fetch(
@@ -93,5 +102,25 @@ export async function relayHook(input: RelayInput): Promise<boolean> {
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export async function runHook(input: RelayInput): Promise<string | null> {
+  const target = parseRelayArgs(input.args);
+  const token = input.env[`${ENV_PREFIX}TOKEN`];
+  if (target?.event !== PERMISSION_EVENT || !token) {
+    await relayHook(input);
+    return null;
+  }
+  try {
+    return await relayPermission({
+      port: target.port,
+      agentId: target.agentId,
+      token,
+      stdin: await input.readStdin(),
+      fetch: input.fetch,
+    });
+  } catch {
+    return null;
   }
 }

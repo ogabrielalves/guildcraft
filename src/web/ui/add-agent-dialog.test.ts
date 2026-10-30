@@ -32,6 +32,7 @@ function agent(id: string, overrides: Partial<AgentView> = {}): AgentView {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
     ...overrides,
   };
@@ -45,7 +46,13 @@ const flush = async () => {
 
 function setup(agents: AgentView[] = [], connected = true) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents, events: [], skins: ['mortis', 'corvin', 'lyra'] });
+  store.apply({
+    type: 'session:init',
+    agents,
+    events: [],
+    skins: ['mortis', 'corvin', 'lyra'],
+    permissions: [],
+  });
   const listeners = new Set<MessageListener>();
   const sent: ClientMessage[] = [];
   const link = { connected };
@@ -167,13 +174,19 @@ describe('createRecruitButton', () => {
     expect(button.element.textContent).toBe('+ RECRUIT');
     button.element.click();
     expect(onClick).toHaveBeenCalledOnce();
-    store.apply({ type: 'session:init', agents: crew(MAX_AGENTS), events: [], skins: [] });
+    store.apply({
+      type: 'session:init',
+      agents: crew(MAX_AGENTS),
+      events: [],
+      skins: [],
+      permissions: [],
+    });
     expect(button.element.disabled).toBe(true);
     expect(button.element.title).toBe(`The workshop is full (${MAX_AGENTS} adventurers)`);
     setLocale('pt-BR');
     expect(button.element.textContent).toBe(DICTIONARIES['pt-BR'].get('workshop.recruit'));
     button.destroy();
-    store.apply({ type: 'session:init', agents: [], events: [], skins: [] });
+    store.apply({ type: 'session:init', agents: [], events: [], skins: [], permissions: [] });
     expect(button.element.disabled).toBe(true);
   });
 });
@@ -274,7 +287,7 @@ describe('createAddAgentDialog', () => {
 
   it('cannot continue without characters', async () => {
     const ctx = setup();
-    ctx.store.apply({ type: 'session:init', agents: [], events: [], skins: [] });
+    ctx.store.apply({ type: 'session:init', agents: [], events: [], skins: [], permissions: [] });
     await openAt(ctx, 'web');
     expect(ctx.characters()).toHaveLength(0);
     expect(ctx.buttonByText('Next').disabled).toBe(true);

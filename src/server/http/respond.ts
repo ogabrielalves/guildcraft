@@ -6,6 +6,7 @@ const STATUS: Partial<Record<ErrorCode, number>> = {
   AGENT_NOT_FOUND: 404,
   AGENT_OFFLINE: 409,
   QUEUE_FULL: 429,
+  PERMISSION_NOT_FOUND: 404,
 };
 
 export function statusFor(code: ErrorCode): number {

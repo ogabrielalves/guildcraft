@@ -126,6 +126,7 @@ export function createDemoAgents(): AgentView[] {
     status: 'idle',
     permissionMode: 'default',
     tool: null,
+    waitingFor: null,
     queued: 0,
   }));
 }
@@ -186,6 +187,7 @@ export class DemoSocket {
       agents: this.agents,
       events: this.events,
       skins: [...DEMO_SKINS],
+      permissions: [],
     });
     for (const agent of this.agents) {
       this.emit({ type: 'term:snapshot', agentId: agent.id, data: banner(agent) });
@@ -287,6 +289,7 @@ export class DemoSocket {
       status: 'starting',
       permissionMode: message.permissionMode,
       tool: null,
+      waitingFor: null,
       queued: 0,
     };
     this.agents = [...this.agents, agent];

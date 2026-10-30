@@ -1,4 +1,9 @@
-import type { AgentStatus, AgentTool, VillageEventKind } from '../../shared/agent.js';
+import type {
+  AgentStatus,
+  AgentTool,
+  VillageEventKind,
+  WaitingReason,
+} from '../../shared/agent.js';
 import { describeTool } from './describe-tool.js';
 import type { HookEvent } from './hook-events.js';
 
@@ -8,15 +13,21 @@ export interface HookPayload {
   message: string | null;
   notificationType: string | null;
   source: string | null;
+  sessionId: string | null;
+  transcriptPath: string | null;
 }
 
 export interface HookOutcome {
   status: AgentStatus;
   tool: AgentTool | null;
   event: VillageEventKind | null;
+  waitingFor: WaitingReason | null;
 }
 
-const BLOCKING_NOTIFICATIONS = new Set(['permission_prompt', 'elicitation_dialog']);
+const BLOCKING_NOTIFICATIONS: Record<string, WaitingReason> = {
+  permission_prompt: 'permission',
+  elicitation_dialog: 'question',
+};
 const PERMISSION_MESSAGE = /permission/i;
 const QUESTION_TOOL = 'AskUserQuestion';
 
@@ -26,6 +37,8 @@ const EMPTY_PAYLOAD: HookPayload = {
   message: null,
   notificationType: null,
   source: null,
+  sessionId: null,
+  transcriptPath: null,
 };
 
 function stringField(record: Record<string, unknown>, key: string): string | null {
@@ -42,6 +55,8 @@ export function parseHookPayload(raw: unknown): HookPayload {
     message: stringField(record, 'message'),
     notificationType: stringField(record, 'notification_type'),
     source: stringField(record, 'source'),
+    sessionId: stringField(record, 'session_id'),
+    transcriptPath: stringField(record, 'transcript_path'),
   };
 }
 
@@ -49,13 +64,14 @@ function outcome(
   status: AgentStatus,
   event: VillageEventKind | null = null,
   tool: AgentTool | null = null,
+  waitingFor: WaitingReason | null = null,
 ): HookOutcome {
-  return { status, tool, event };
+  return { status, tool, event, waitingFor };
 }
 
-function blocksOnUser({ notificationType, message }: HookPayload): boolean {
-  if (notificationType !== null) return BLOCKING_NOTIFICATIONS.has(notificationType);
-  return message !== null && PERMISSION_MESSAGE.test(message);
+function blockingReason({ notificationType, message }: HookPayload): WaitingReason | null {
+  if (notificationType !== null) return BLOCKING_NOTIFICATIONS[notificationType] ?? null;
+  return message !== null && PERMISSION_MESSAGE.test(message) ? 'permission' : null;
 }
 
 export function handleHook(
@@ -74,11 +90,13 @@ export function handleHook(
       const name = payload.toolName ?? 'tool';
       const tool = { name, detail: describeTool(name, payload.toolInput) };
       return name === QUESTION_TOOL
-        ? outcome('waiting', 'waiting', tool)
+        ? outcome('waiting', 'waiting', tool, 'question')
         : outcome('tool', null, tool);
     }
-    case 'Notification':
-      return blocksOnUser(payload) ? outcome('waiting', 'waiting') : null;
+    case 'Notification': {
+      const reason = blockingReason(payload);
+      return reason ? outcome('waiting', 'waiting', null, reason) : null;
+    }
     case 'Stop':
       return outcome('idle', 'finished');
   }

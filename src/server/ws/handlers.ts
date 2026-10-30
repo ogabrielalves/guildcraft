@@ -13,6 +13,7 @@ export type CommandTarget = Pick<
   | 'interrupt'
   | 'setSkin'
   | 'sendPrompt'
+  | 'decidePermission'
 >;
 
 function codeOf(result: ManagerResult<unknown>): Failure | null {
@@ -51,5 +52,7 @@ export async function handleClientMessage(
       return codeOf(await manager.setSkin(message.agentId, message.skin));
     case 'prompt:send':
       return codeOf(manager.sendPrompt(message.agentIds, message.text));
+    case 'permission:decide':
+      return codeOf(manager.decidePermission(message.requestId, message.decision));
   }
 }
