@@ -12,7 +12,6 @@ function lpc(overrides: Record<string, unknown> = {}) {
   return {
     name: { en: 'Brom' },
     source: 'lpc',
-    station: 'anvil',
     facing: 'four',
     image: 'brom.png',
     frame: { width: 32, height: 32 },
@@ -42,7 +41,6 @@ describe('parseCharacterManifest', () => {
   it('fills animations from the sheet defaults', () => {
     const manifest = parseCharacterManifest(lpc());
     expect(manifest.name).toEqual({ en: 'Brom' });
-    expect(manifest.station).toBe('anvil');
     expect(manifest.facing).toBe('four');
     expect(manifest.animations.walk).toEqual({
       image: 'brom.png',
@@ -63,7 +61,6 @@ describe('parseCharacterManifest', () => {
       image: undefined,
       frame: undefined,
       anchor: undefined,
-      station: undefined,
     });
     const animations = Object.fromEntries(
       Object.keys(raw.animations).map((pose) => [
@@ -78,7 +75,6 @@ describe('parseCharacterManifest', () => {
       ]),
     );
     const manifest = parseCharacterManifest({ ...raw, facing: 'side', animations });
-    expect(manifest.station).toBeNull();
     expect(manifest.name).toEqual({});
     expect(manifest.animations.sit).toMatchObject({ image: 'sit.png', row: 0, start: 0 });
   });
@@ -91,7 +87,6 @@ describe('parseCharacterManifest', () => {
     ['a missing pose', { animations: { ...lpc().animations, sit: undefined } }, '$.animations.sit'],
     ['an unsafe sheet', { image: '../secret.png' }, '$.image'],
     ['a non-png sheet', { image: 'brom.gif' }, '$.image'],
-    ['an empty station', { station: '' }, '$.station'],
     ['a bad frame', { frame: { width: 0, height: 32 } }, '$.frame.width'],
     ['a bad anchor', { anchor: { x: 'a', y: 1 } }, '$.anchor.x'],
   ])('rejects %s', (_, overrides, path) => {

@@ -4,7 +4,7 @@ import { Particles } from './draw/effects.js';
 import { recordingPaint } from './draw/recording-paint.js';
 import type { FakeImage } from './fake-assets.js';
 import { SIDE_CHARACTER, STOVE, fakeAssets } from './fake-assets.js';
-import { bayAt, parseWorkshopMap } from './map.js';
+import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 import type { Scene } from './renderer.js';
 import {
@@ -14,14 +14,19 @@ import {
   STATION_RATE,
   drawScene,
   emittersFor,
-  stationFor,
+  stationBox,
   villagerBounds,
 } from './renderer.js';
 import { DEFAULT_EFFECT } from './stations.js';
 import { World } from './world.js';
 
+const raw = provisionalWorkshop();
 const map = parseWorkshopMap({
-  ...provisionalWorkshop(),
+  ...raw,
+  stations: raw.stations.map((station, index) => ({
+    ...station,
+    id: index === 1 ? 'missing' : 'stove',
+  })),
   floor: '#123456',
   scenery: [
     { color: '#1d1410', area: { x: 0, y: 0, width: 480, height: 24 } },
@@ -36,6 +41,12 @@ const map = parseWorkshopMap({
       source: { x: 1, y: 2, width: 20, height: 26 },
       at: { x: 100, y: 200 },
       flip: true,
+    },
+    {
+      image: 'tiles/shelf.png',
+      source: { x: 0, y: 0, width: 16, height: 16 },
+      at: { x: 300, y: 184 },
+      depth: 200,
     },
   ],
   embers: [{ x: 240, y: 72 }],
@@ -58,7 +69,7 @@ function agent(id: string, status: AgentStatus, skin = 'mortis'): AgentView {
 }
 
 function scene(agents: AgentView[], overrides: Partial<Scene> = {}): Scene {
-  const world = new World(map, () => 0.5);
+  const world = new World(map, () => 0);
   world.sync(agents);
   return {
     world,
@@ -101,7 +112,7 @@ describe('drawScene scenery', () => {
     expect(ctx.calls.at(-1)?.name).toBe('restore');
     expect(ctx.named('fillRect')[0]).toMatchObject({
       fillStyle: '#123456',
-      args: [0, 0, 480, 272],
+      args: [0, 0, 480, 352],
     });
     expect(ctx.named('fillRect')[1]).toMatchObject({ fillStyle: '#1d1410', args: [0, 0, 480, 24] });
     const draws = ctx.named('drawImage');
@@ -129,7 +140,8 @@ describe('drawScene scenery', () => {
       ],
     });
     const ctx = render({ ...scene([]), world: new World(tall) });
-    expect(ctx.named('drawImage').map((c) => c.args.slice(1, 5))).toEqual([
+    const floor = ctx.named('drawImage').filter((c) => imageUrl(c.args[0]).includes('floor'));
+    expect(floor.map((c) => c.args.slice(1, 5))).toEqual([
       [0, 0, 48, 48],
       [0, 0, 48, 12],
     ]);
@@ -140,13 +152,21 @@ describe('drawScene scenery', () => {
     expect(ctx.named('drawImage')).toHaveLength(0);
   });
 
-  it('marks every empty bay and outlines the hovered one', () => {
-    const ctx = render(scene([], { hovered: { kind: 'bay', bay: 3 } }));
-    const markers = ctx.named('fillRect').filter((c) => c.fillStyle === PALETTE.empty);
-    expect(markers).toHaveLength(16);
-    const outline = ctx.named('strokeRect');
-    expect(outline).toHaveLength(1);
-    expect(outline[0]?.args[0]).toBe(bayAt(map, 3).area.x + 4.5);
+  it('draws every station even when nobody works there', () => {
+    const urls = drawnImages(scene([]));
+    expect(urls.filter((url) => url.includes('stove'))).toHaveLength(9);
+  });
+
+  it('sorts depth scenery with the villagers', () => {
+    const target = scene([agent('a', 'idle')]);
+    const villager = target.world.villager('a');
+    if (!villager) throw new Error('missing villager');
+    const order = () =>
+      drawnImages(target).filter((url) => url.includes('shelf') || url.includes('mortis'));
+    villager.position = { x: 300, y: 190 };
+    expect(order()).toEqual(['/assets/characters/mortis/idle.png', '/assets/tiles/shelf.png']);
+    villager.position = { x: 300, y: 210 };
+    expect(order()).toEqual(['/assets/tiles/shelf.png', '/assets/characters/mortis/idle.png']);
   });
 });
 
@@ -158,11 +178,11 @@ describe('drawScene villagers and stations', () => {
   });
 
   it('places the station by its anchor and animates it only while working', () => {
-    const station = bayAt(map, 0).station;
+    const station = stationAt(map, 0).at;
     const at = (target: Scene) =>
       render(target)
         .named('drawImage')
-        .find((c) => imageUrl(c.args[0]).includes('stove'))?.args;
+        .find((c) => imageUrl(c.args[0]).includes('stove') && c.args[5] === station.x - 24)?.args;
     expect(at(scene([agent('a', 'thinking')], { time: 1 }))).toEqual([
       expect.anything(),
       0,
@@ -192,20 +212,21 @@ describe('drawScene villagers and stations', () => {
   it('lifts characters that hop', () => {
     const target = scene([agent('a', 'tool')], { time: 0.25 });
     target.world.handle({ kind: 'finished', agentId: 'a', at: 0 }, 0);
-    const { y } = bayAt(map, 0).work;
+    const { y } = stationAt(map, 0).work;
     const ctx = render(target);
     expect(ctx.named('translate').map((c) => c.args[1])).toContain(y - 31 - 3);
   });
 
   it('falls back to plain shapes for unknown characters and stations', () => {
-    const ctx = render(scene([agent('a', 'tool', 'stranger')]));
+    const ctx = render(scene([agent('a', 'thinking'), agent('b', 'tool', 'stranger')]));
     expect(ctx.named('drawImage').some((c) => imageUrl(c.args[0]).includes('stranger'))).toBe(
       false,
     );
     expect(ctx.named('fill').some((c) => String(c.fillStyle).startsWith('hsl('))).toBe(true);
     expect(ctx.named('fillRect').some((c) => c.fillStyle === PALETTE.stationActive)).toBe(true);
-    const idle = render(scene([agent('a', 'thinking', 'stranger')]));
+    const idle = render(scene([agent('a', 'thinking'), agent('b', 'thinking', 'stranger')]));
     expect(idle.named('fillRect').some((c) => c.fillStyle === PALETTE.stationTop)).toBe(true);
+    expect(idle.named('fillRect').some((c) => c.fillStyle === PALETTE.stationActive)).toBe(false);
   });
 
   it('colours villagers without agent data by id', () => {
@@ -236,13 +257,22 @@ describe('drawScene villagers and stations', () => {
     const target = scene([agent('a', 'idle')]);
     const villager = target.world.villager('a');
     if (!villager) throw new Error('missing villager');
-    const station = bayAt(map, 0).station;
+    const station = stationAt(map, 0).at;
+    const order = () =>
+      render(target)
+        .named('drawImage')
+        .filter(
+          (c) =>
+            imageUrl(c.args[0]).includes('mortis') ||
+            (imageUrl(c.args[0]).includes('stove') &&
+              c.args[5] === station.x - 24 &&
+              c.args[6] === station.y - 31),
+        )
+        .map((c) => imageUrl(c.args[0]));
     villager.position = { x: station.x, y: station.y - 5 };
-    const behind = drawnImages(target).filter((url) => !url.includes('tiles'));
-    expect(behind).toEqual(['/assets/characters/mortis/idle.png', '/assets/stations/stove.png']);
+    expect(order()).toEqual(['/assets/characters/mortis/idle.png', '/assets/stations/stove.png']);
     villager.position = { x: station.x, y: station.y + 5 };
-    const front = drawnImages(target).filter((url) => !url.includes('tiles'));
-    expect(front).toEqual(['/assets/stations/stove.png', '/assets/characters/mortis/idle.png']);
+    expect(order()).toEqual(['/assets/stations/stove.png', '/assets/characters/mortis/idle.png']);
   });
 });
 
@@ -287,19 +317,19 @@ describe('drawScene labels', () => {
 
 describe('emittersFor', () => {
   it('burns the embers and adds working stations', () => {
-    const target = scene([agent('a', 'tool'), agent('b', 'thinking'), agent('c', 'tool', 'x')]);
-    const station = bayAt(map, 0).station;
-    const fallback = bayAt(map, 2).station;
+    const target = scene([agent('a', 'tool'), agent('b', 'tool'), agent('c', 'thinking')]);
+    const station = stationAt(map, 0).at;
+    const fallback = stationAt(map, 1).at;
     expect(emittersFor(target)).toEqual([
       { key: 'ember:0', kind: 'embers', at: { x: 240, y: 72 }, rate: HEARTH_RATE },
       {
-        key: 'station:a',
+        key: 'station:0',
         kind: 'magic',
         at: { x: station.x, y: station.y - 31 + 8 },
         rate: STATION_RATE,
       },
       {
-        key: 'station:c',
+        key: 'station:1',
         kind: DEFAULT_EFFECT,
         at: { x: fallback.x, y: fallback.y - 16 },
         rate: STATION_RATE,
@@ -310,11 +340,11 @@ describe('emittersFor', () => {
 
 describe('geometry', () => {
   it('uses a fixed body box over the feet', () => {
-    const world = new World(map);
+    const world = new World(map, () => 0);
     world.sync([agent('a', 'thinking')]);
     const villager = world.villager('a');
     if (!villager) throw new Error('missing villager');
-    const work = bayAt(map, 0).work;
+    const work = stationAt(map, 0).work;
     expect(villagerBounds(villager)).toEqual({
       x: work.x - BODY.width / 2,
       y: work.y - BODY.height,
@@ -323,13 +353,19 @@ describe('geometry', () => {
     });
   });
 
-  it('finds the station of a character', () => {
-    const target = scene([agent('a', 'idle'), agent('b', 'idle', 'x')]);
-    const [a, b] = target.world.all();
-    if (!a || !b) throw new Error('missing villagers');
-    expect(stationFor(target, a)?.manifest).toBe(STOVE);
-    expect(stationFor(target, b)).toBeNull();
-    const bare = { ...SIDE_CHARACTER, station: null };
-    expect(stationFor({ ...target, assets: fakeAssets({ mortis: bare }) }, a)).toBeNull();
+  it('boxes a station by its anchor or a placeholder', () => {
+    const place = stationAt(map, 0);
+    expect(stationBox(place, { manifest: STOVE, base: '/assets/' })).toEqual({
+      x: place.at.x - 24,
+      y: place.at.y - 31,
+      width: 48,
+      height: 32,
+    });
+    expect(stationBox(place, null)).toEqual({
+      x: place.at.x - 10,
+      y: place.at.y - 16,
+      width: 20,
+      height: 16,
+    });
   });
 });

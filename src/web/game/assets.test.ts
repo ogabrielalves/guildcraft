@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { AssetLibrary, NO_ASSETS } from './assets.js';
 
 const character = {
-  station: 'stove',
   facing: 'side',
   animations: Object.fromEntries(
     ['idle', 'walk', 'work', 'sit', 'cheer'].map((pose) => [
@@ -52,7 +51,7 @@ describe('AssetLibrary', () => {
     await settle();
     const loaded = library.character('mortis');
     expect(loaded?.base).toBe('/assets/characters/mortis/');
-    expect(loaded?.manifest.station).toBe('stove');
+    expect(loaded?.manifest.facing).toBe('side');
     expect(request).toHaveBeenCalledTimes(1);
     expect(loadImage.mock.calls.map(([url]) => url).sort()).toEqual([
       '/assets/characters/mortis/idle.png',

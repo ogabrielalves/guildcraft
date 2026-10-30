@@ -1,76 +1,98 @@
 import { describe, expect, it } from 'vitest';
-import { bayAt, contains, parseWorkshopMap } from './map.js';
+import { Layout } from './layout.js';
+import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
-import { CHEER_TIME, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
+import { CHEER_TIME, VISIT_GAP, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
+const first = () => 0;
+
+function layout(): Layout {
+  return new Layout(map);
+}
 
 function run(villager: Villager, seconds: number, step = 0.05): void {
   for (let t = 0; t < seconds; t += step) villager.update(step);
 }
 
 function settle(villager: Villager): void {
-  for (let i = 0; i < 2000 && villager.moving; i += 1) villager.update(0.05);
+  for (let i = 0; i < 4000 && villager.moving; i += 1) villager.update(0.05);
 }
 
 describe('Villager', () => {
   it('starts at the work spot facing the station', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    expect(villager.position).toEqual(bayAt(map, 0).work);
+    const villager = new Villager('a', 0, layout(), 'write');
+    expect(villager.position).toEqual(stationAt(map, 0).work);
     expect(villager.facing).toBe('west');
     expect(villager.pose).toBe('work');
     expect(villager.moving).toBe(false);
   });
 
   it.each([
-    ['think', 'work', 'idle'],
-    ['read', 'read', 'idle'],
-    ['wait', 'read', 'idle'],
-    ['sleep', 'nap', 'sit'],
-    ['off', 'nap', 'sit'],
-  ] as const)('places %s at %s with pose %s', (activity, anchor, pose) => {
-    const villager = new Villager('a', 2, map, activity);
-    expect(villager.position).toEqual(bayAt(map, 2)[anchor]);
+    ['think', { x: 156, y: 128 }, 'west', 'idle'],
+    ['read', { x: 440, y: 120 }, 'north', 'idle'],
+    ['wait', { x: 440, y: 120 }, 'north', 'idle'],
+    ['sleep', { x: 440, y: 280 }, 'south', 'sit'],
+    ['off', { x: 440, y: 280 }, 'south', 'sit'],
+  ] as const)('places %s at %j facing %s with pose %s', (activity, at, facing, pose) => {
+    const villager = new Villager('a', 1, layout(), activity, first);
+    expect(villager.position).toEqual(at);
+    expect(villager.facing).toBe(facing);
     expect(villager.pose).toBe(pose);
   });
 
-  it('walks to the new anchor when the activity changes', () => {
-    const villager = new Villager('a', 1, map, 'read');
+  it('falls back to its station when every spot is taken', () => {
+    const shared = layout();
+    new Villager('a', 0, shared, 'sleep');
+    new Villager('b', 1, shared, 'sleep');
+    const third = new Villager('c', 2, shared, 'sleep');
+    expect(third.position).toEqual(stationAt(map, 2).work);
+  });
+
+  it('walks to the new anchor when the activity changes and frees its spot', () => {
+    const shared = layout();
+    const villager = new Villager('a', 1, shared, 'read', first);
     villager.setActivity('term');
     expect(villager.moving).toBe(true);
     expect(villager.pose).toBe('walk');
-    villager.update(0.1);
-    expect(villager.position).not.toEqual(bayAt(map, 1).read);
+    expect(shared.claim('read', 'b', first)?.at).toEqual({ x: 440, y: 120 });
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 1).work);
+    expect(villager.position).toEqual(stationAt(map, 1).work);
     expect(villager.pose).toBe('work');
     expect(villager.facing).toBe('west');
   });
 
   it('ignores a repeated activity', () => {
-    const villager = new Villager('a', 1, map, 'read');
+    const villager = new Villager('a', 1, layout(), 'read');
     villager.setActivity('read');
     expect(villager.moving).toBe(false);
   });
 
-  it('wanders inside its bay while idle', () => {
+  it('wanders over walkable floor while idle', () => {
     let seed = 0;
-    const villager = new Villager('a', 3, map, 'idle', () => (seed = (seed + 0.37) % 1));
-    const area = bayAt(map, 3).area;
-    expect(contains(area, villager.position)).toBe(true);
+    const shared = layout();
+    const villager = new Villager('a', 3, shared, 'idle', () => (seed = (seed + 0.37) % 1));
+    expect(shared.nav.walkable(villager.position)).toBe(true);
     let walked = false;
     for (let i = 0; i < 400; i += 1) {
       villager.update(0.05);
       walked ||= villager.moving;
-      expect(contains(area, villager.position)).toBe(true);
     }
     expect(walked).toBe(true);
+    settle(villager);
+    expect(shared.nav.walkable(villager.position)).toBe(true);
   });
 
   it('pauses between wander walks', () => {
     let next = 0;
-    const values = [0.1, 0.1, 0.9, 0.9, 0];
-    const villager = new Villager('a', 0, map, 'idle', () => values[next++ % values.length] ?? 0);
+    const values = [0.1, 0.9, 0.5];
+    const villager = new Villager(
+      'a',
+      0,
+      layout(),
+      'idle',
+      () => values[next++ % values.length] ?? 0,
+    );
     villager.update(0.01);
     expect(villager.moving).toBe(true);
     settle(villager);
@@ -78,16 +100,17 @@ describe('Villager', () => {
     expect(villager.moving).toBe(false);
   });
 
-  it('visits another bay, lingers and walks home', () => {
-    const villager = new Villager('a', 0, map, 'write');
+  it('visits a host, lingers facing it and walks home', () => {
+    const villager = new Villager('a', 0, layout(), 'write');
+    const host = stationAt(map, 3).work;
     expect(villager.note).toBeNull();
-    villager.startVisit(7, 'hello');
+    villager.startVisit(host, 'hello');
     expect(villager.visiting).toBe(true);
     expect(villager.note).toBe('hello');
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 7).guest);
+    expect(villager.position).toEqual({ x: host.x - VISIT_GAP, y: host.y });
     expect(villager.pose).toBe('idle');
-    expect(villager.facing).toBe('north');
+    expect(villager.facing).toBe('east');
     villager.update(VISIT_LINGER / 2);
     expect(villager.moving).toBe(false);
     villager.update(VISIT_LINGER);
@@ -95,63 +118,55 @@ describe('Villager', () => {
     expect(villager.note).toBeNull();
     expect(villager.moving).toBe(true);
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 0).work);
+    expect(villager.position).toEqual(stationAt(map, 0).work);
   });
 
-  it('takes the corridor on the way to another bay', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(6);
-    let reachedCorridor = false;
+  it('stands on the near side of a host to its left', () => {
+    const villager = new Villager('a', 4, layout(), 'write');
+    const host = stationAt(map, 0).work;
+    villager.startVisit(host);
+    settle(villager);
+    expect(villager.position).toEqual({ x: host.x + VISIT_GAP, y: host.y });
+    expect(villager.facing).toBe('west');
+  });
+
+  it('walks around obstacles on the way', () => {
+    const shared = layout();
+    const villager = new Villager('a', 0, shared, 'write');
+    villager.startVisit(stationAt(map, 9).work);
     while (villager.moving) {
       villager.update(0.05);
-      reachedCorridor ||= villager.position.y === map.corridorY;
+      expect(shared.nav.walkable(villager.position)).toBe(true);
     }
-    expect(reachedCorridor).toBe(true);
   });
 
   it('keeps a new activity for after the visit', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(5);
+    const villager = new Villager('a', 0, layout(), 'write', first);
+    villager.startVisit(stationAt(map, 5).work);
     villager.setActivity('sleep');
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 5).guest);
     run(villager, VISIT_LINGER + 0.1);
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 0).nap);
+    expect(villager.position).toEqual({ x: 440, y: 280 });
     expect(villager.pose).toBe('sit');
   });
 
-  it('finishes crossing the corridor before changing course', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(7);
-    villager.update(1);
-    villager.startVisit(6);
-    settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 6).guest);
-  });
-
-  it('changes course at once inside its own bay', () => {
-    const villager = new Villager('a', 0, map, 'read');
+  it('changes course at once', () => {
+    const villager = new Villager('a', 0, layout(), 'read', first);
     villager.setActivity('write');
     villager.update(0.1);
     villager.setActivity('sleep');
     settle(villager);
-    expect(villager.position).toEqual(bayAt(map, 0).nap);
-  });
-
-  it('ignores visits to itself or to unknown bays', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(0);
-    villager.startVisit(9);
-    expect(villager.visiting).toBe(false);
+    expect(villager.position).toEqual({ x: 440, y: 280 });
   });
 
   it('is at its station only while working there', () => {
-    const villager = new Villager('a', 0, map, 'write');
+    const shared = layout();
+    const villager = new Villager('a', 0, shared, 'write');
     expect(villager.atStation).toBe(true);
-    villager.startVisit(2);
+    villager.startVisit(stationAt(map, 2).work);
     expect(villager.atStation).toBe(false);
-    const reader = new Villager('b', 1, map, 'read');
+    const reader = new Villager('b', 1, shared, 'read');
     expect(reader.atStation).toBe(false);
     reader.setActivity('term');
     expect(reader.atStation).toBe(false);
@@ -160,7 +175,7 @@ describe('Villager', () => {
   });
 
   it('cheers for a moment when it finishes', () => {
-    const villager = new Villager('a', 0, map, 'write');
+    const villager = new Villager('a', 0, layout(), 'write');
     villager.celebrate();
     expect(villager.pose).toBe('cheer');
     villager.update(CHEER_TIME + 0.1);
@@ -168,28 +183,157 @@ describe('Villager', () => {
   });
 
   it('does not cheer while visiting', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    villager.startVisit(3);
+    const villager = new Villager('a', 0, layout(), 'write');
+    villager.startVisit(stationAt(map, 3).work);
     villager.celebrate();
     settle(villager);
     expect(villager.pose).toBe('idle');
   });
 
   it('remembers the last horizontal side it faced', () => {
-    const villager = new Villager('a', 0, map, 'write');
-    expect(villager.side).toBe('west');
-    villager.startVisit(7);
-    settle(villager);
+    const villager = new Villager('a', 0, layout(), 'read', first);
     expect(villager.facing).toBe('north');
     expect(villager.side).toBe('east');
+    villager.setActivity('write');
+    settle(villager);
+    expect(villager.facing).toBe('west');
+    expect(villager.side).toBe('west');
+  });
+
+  it('releases its spot when it leaves', () => {
+    const shared = layout();
+    const villager = new Villager('a', 0, shared, 'sleep', first);
+    villager.leave();
+    expect(shared.claim('nap', 'b', first)?.at).toEqual({ x: 440, y: 280 });
   });
 
   it('walks at a steady speed', () => {
-    const villager = new Villager('a', 0, map, 'read');
+    const villager = new Villager('a', 0, layout(), 'read');
     const start = { ...villager.position };
     villager.setActivity('write');
     villager.update(0.1);
     const moved = Math.hypot(villager.position.x - start.x, villager.position.y - start.y);
     expect(moved).toBeCloseTo(WALK_SPEED * 0.1);
+  });
+});
+
+describe('Villager idle life', () => {
+  const fixed = (value: number) => () => value;
+
+  function pair(guestRandom: number, hostRandom = 0.5) {
+    const shared = layout();
+    const crowd: Villager[] = [];
+    const peers = () => crowd;
+    const guest = new Villager('a', 0, shared, 'idle', fixed(guestRandom), peers);
+    const host = new Villager('b', 9, shared, 'idle', fixed(hostRandom), peers);
+    crowd.push(guest, host);
+    const step = (seconds: number) => {
+      for (let t = 0; t < seconds; t += 0.05) {
+        guest.update(0.05);
+        host.update(0.05);
+      }
+    };
+    return { shared, guest, host, step };
+  }
+
+  it('picks a plan and spends its time at the matching spot', () => {
+    const shared = layout();
+    const villager = new Villager('a', 0, shared, 'idle', fixed(0.5));
+    villager.update(0.01);
+    expect(villager.doing).toBeNull();
+    settle(villager);
+    expect(villager.position).toEqual({ x: 240, y: 200 });
+    expect(villager.facing).toBe('north');
+    expect(villager.doing).toBe('hearth');
+    expect(villager.pose).toBe('idle');
+    run(villager, 8.9);
+    expect(villager.doing).toBe('hearth');
+    run(villager, 0.2);
+    settle(villager);
+    expect(villager.doing).toBe('bookshelf');
+    expect(villager.position).toEqual({ x: 440, y: 200 });
+    expect(shared.hasFree('hearth')).toBe(true);
+  });
+
+  it('naps on a bed', () => {
+    const villager = new Villager('a', 0, layout(), 'idle', fixed(0.97));
+    villager.update(0.01);
+    settle(villager);
+    expect(villager.position).toEqual({ x: 440, y: 320 });
+    expect(villager.doing).toBe('nap');
+    expect(villager.pose).toBe('sit');
+  });
+
+  it('wanders when every spot is taken', () => {
+    const shared = layout();
+    const kinds = ['read', 'read', 'nap', 'nap', 'hearth', 'table'] as const;
+    kinds.forEach((kind, index) => shared.claim(kind, `x${String(index)}`));
+    const villager = new Villager('a', 0, shared, 'idle', fixed(0.5));
+    villager.update(0.01);
+    settle(villager);
+    expect(villager.doing).toBe('wander');
+    expect(shared.nav.walkable(villager.position)).toBe(true);
+  });
+
+  it('walks over to chat with an idle colleague, both facing each other', () => {
+    const { guest, host, step } = pair(0.8);
+    guest.update(0.01);
+    expect(guest.canChat).toBe(false);
+    expect(host.canChat).toBe(false);
+    expect(host.doing).toBeNull();
+    while (guest.moving) step(0.05);
+    expect(guest.doing).toBe('chat');
+    expect(host.doing).toBe('chat');
+    expect(Math.abs(guest.position.x - host.position.x)).toBeCloseTo(18);
+    expect(guest.facing).toBe(guest.position.x < host.position.x ? 'east' : 'west');
+    expect(host.facing).toBe(guest.position.x < host.position.x ? 'west' : 'east');
+  });
+
+  it('ends the chat for both when the time is up', () => {
+    const { guest, host, step } = pair(0.8);
+    guest.update(0.01);
+    while (guest.moving) step(0.05);
+    step(7.4);
+    expect(guest.doing).not.toBe('chat');
+    expect(host.doing).not.toBe('chat');
+  });
+
+  it('frees the host when the guest gets work', () => {
+    const { guest, host, step } = pair(0.8);
+    guest.update(0.01);
+    guest.setActivity('write');
+    expect(host.canChat).toBe(true);
+    expect(host.doing).toBeNull();
+    step(0.1);
+    expect(host.moving || host.doing !== null).toBe(true);
+  });
+
+  it('frees the guest when the host gets work mid chat', () => {
+    const { guest, host, step } = pair(0.8);
+    guest.update(0.01);
+    while (guest.moving) step(0.05);
+    host.setActivity('think');
+    expect(guest.doing).toBeNull();
+    expect(guest.canChat).toBe(true);
+    host.leave();
+    guest.leave();
+  });
+
+  it('drops the chat for a visit or when it leaves', () => {
+    const { guest, host } = pair(0.8);
+    guest.update(0.01);
+    guest.startVisit(stationAt(map, 4).work);
+    expect(host.canChat).toBe(true);
+    const other = pair(0.8);
+    other.guest.update(0.01);
+    other.guest.leave();
+    expect(other.host.canChat).toBe(true);
+  });
+
+  it('has no idle plan while working', () => {
+    const villager = new Villager('a', 0, layout(), 'write');
+    run(villager, 5);
+    expect(villager.doing).toBeNull();
+    expect(villager.canChat).toBe(false);
   });
 });

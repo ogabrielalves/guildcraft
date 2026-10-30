@@ -4,7 +4,6 @@
     "pt-BR": "Mortis"
   },
   "source": "pixel-crawler",
-  "station": "cauldron",
   "facing": "side",
   "animations": {
     "idle": {

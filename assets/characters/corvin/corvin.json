@@ -4,7 +4,6 @@
     "pt-BR": "Corvin"
   },
   "source": "pixel-crawler",
-  "station": "workbench",
   "facing": "side",
   "animations": {
     "idle": {

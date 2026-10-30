@@ -2,16 +2,15 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { MAX_AGENTS } from '../../shared/constants.js';
-import type { Bay } from './map.js';
-import { WANDER_MARGIN, contains, parseWorkshopMap } from './map.js';
+import type { Point } from './map.js';
+import { contains, parseWorkshopMap } from './map.js';
 import type { Rect } from './parse.js';
-import { BODY } from './renderer.js';
+import { NavGrid } from './pathing.js';
+import { BODY, stationBox } from './renderer.js';
 import { POSES, parseCharacterManifest } from './sprite-sheet.js';
 import { parseStationManifest } from './stations.js';
 
 const ROOT = join(import.meta.dirname, '../../../assets');
-const PILLAR_CLEARANCE = 8;
-const PILLAR_HEIGHT = 60;
 
 function json(path: string): unknown {
   return JSON.parse(readFileSync(join(ROOT, path), 'utf8'));
@@ -46,7 +45,6 @@ describe('shipped characters', () => {
 
   it.each(characters)('%s has a valid manifest whose frames fit its sheets', (id) => {
     const manifest = parseCharacterManifest(json(`characters/${id}/${id}.json`));
-    expect(manifest.station === null || stations.includes(manifest.station)).toBe(true);
     for (const pose of POSES) {
       const animation = manifest.animations[pose];
       const sheet = `characters/${id}/${animation.image}`;
@@ -86,15 +84,7 @@ function inside(outer: Rect, box: Rect): boolean {
   );
 }
 
-function overlaps(a: Rect, b: Rect): boolean {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-}
-
-function usable({ area }: Bay): Rect {
-  return { ...area, x: area.x + PILLAR_CLEARANCE, width: area.width - 2 * PILLAR_CLEARANCE };
-}
-
-function body(at: { x: number; y: number }): Rect {
+function body(at: Point): Rect {
   return {
     x: at.x - BODY.width / 2,
     y: at.y - BODY.height,
@@ -105,57 +95,45 @@ function body(at: { x: number; y: number }): Rect {
 
 describe('shipped workshop map', () => {
   const map = parseWorkshopMap(json('maps/workshop.json'));
+  const world = { x: 0, y: 0, width: map.width, height: map.height };
+  const nav = new NavGrid(map);
+  const manifests = new Map(
+    stations.map((id) => [id, parseStationManifest(json(`stations/${id}.json`))]),
+  );
 
-  it('has one bay per agent and a corridor between the rows', () => {
-    expect(map.bays).toHaveLength(MAX_AGENTS);
-    const above = map.bays.filter((bay) => bay.area.y + bay.area.height <= map.corridorY);
-    expect(above).toHaveLength(MAX_AGENTS / 2);
+  it('has a free station for every agent, each a known one', () => {
+    expect(map.stations.length).toBeGreaterThanOrEqual(MAX_AGENTS);
+    for (const { id } of map.stations) expect(stations).toContain(id);
   });
 
-  const boxes = stations.map((id) => {
-    const manifest = parseStationManifest(json(`stations/${id}.json`));
-    return { id, manifest };
-  });
-
-  it.each(map.bays.map((bay, index) => [index, bay] as const))(
-    'bay %i fits every station clear of its pillars and edges',
-    (_, bay) => {
-      for (const { id, manifest } of boxes) {
-        const box = {
-          x: bay.station.x - manifest.anchor.x,
-          y: bay.station.y - manifest.anchor.y,
-          ...manifest.frame,
-        };
-        expect(inside(usable(bay), box), id).toBe(true);
-        const worker = body(bay.work);
-        expect(inside(usable(bay), { ...worker, y: bay.area.y }), `${id} worker`).toBe(true);
-        expect(worker.x >= box.x + box.width, `${id} worker beside`).toBe(true);
-      }
+  it.each(map.stations.map((place, index) => [index, place] as const))(
+    'station %i stands inside the world on its own obstacle',
+    (_, place) => {
+      const manifest = manifests.get(place.id);
+      const box = stationBox(place, manifest ? { manifest, base: '' } : null);
+      expect(inside(world, box)).toBe(true);
+      expect(nav.walkable({ x: place.at.x, y: place.at.y - 2 })).toBe(false);
+      expect(nav.walkable(place.work)).toBe(true);
+      expect(inside(world, body(place.work))).toBe(true);
     },
   );
 
-  it('keeps wandering adventurers clear of the pillars', () => {
-    for (const bay of map.bays) {
-      const left = body({ x: bay.area.x + WANDER_MARGIN.side, y: bay.area.y + bay.area.height });
-      const right = body({
-        x: bay.area.x + bay.area.width - WANDER_MARGIN.side,
-        y: bay.area.y + bay.area.height,
+  it('lets everyone walk from any station to every work point and spot', () => {
+    const start = map.stations[0]?.work ?? { x: 0, y: 0 };
+    const targets = [...map.stations.map(({ work }) => work), ...map.spots.map(({ at }) => at)];
+    for (const target of targets) {
+      const path = nav.route(start, nav.nearest(target));
+      path.slice(1).forEach((point, index) => {
+        const previous = path[index] ?? point;
+        expect(nav.clear(previous, point), JSON.stringify(target)).toBe(true);
       });
-      expect(left.x).toBeGreaterThanOrEqual(usable(bay).x);
-      expect(right.x + right.width).toBeLessThanOrEqual(usable(bay).x + usable(bay).width);
     }
   });
 
-  it('keeps the pillars out of the usable part of every bay', () => {
-    const pillars = map.scenery.flatMap((item) =>
-      item.kind === 'image' && item.repeat === null && item.source.height >= PILLAR_HEIGHT
-        ? [{ ...item.at, width: item.source.width, height: item.source.height }]
-        : [],
-    );
-    expect(pillars.length).toBeGreaterThanOrEqual(MAX_AGENTS);
-    for (const pillar of pillars) {
-      for (const bay of map.bays) expect(overlaps(pillar, usable(bay))).toBe(false);
-    }
+  it('has spots to read and to nap', () => {
+    expect(map.spots.some(({ kind }) => kind === 'read')).toBe(true);
+    expect(map.spots.some(({ kind }) => kind === 'nap')).toBe(true);
+    for (const { at } of map.spots) expect(inside(world, body(at))).toBe(true);
   });
 
   it('keeps every scenery crop inside its sheet', () => {
@@ -165,7 +143,6 @@ describe('shipped workshop map', () => {
   });
 
   it('keeps embers inside the world', () => {
-    const world = { x: 0, y: 0, width: map.width, height: map.height };
     for (const ember of map.embers) expect(contains(world, ember)).toBe(true);
   });
 });

@@ -1,22 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AssetError } from './parse.js';
-import {
-  DEFAULT_FLOOR,
-  bayAt,
-  contains,
-  loadWorkshopMap,
-  parseWorkshopMap,
-  wanderPoint,
-} from './map.js';
+import { DEFAULT_FLOOR, contains, loadWorkshopMap, parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
-
-type RawWorkshop = ReturnType<typeof provisionalWorkshop>;
-
-function rawBay(raw: RawWorkshop, index: number): RawWorkshop['bays'][number] {
-  const bay = raw.bays[index];
-  if (bay === undefined) throw new Error(`missing bay ${String(index)}`);
-  return bay;
-}
 
 function invalidAt(raw: unknown): string | undefined {
   try {
@@ -29,19 +14,23 @@ function invalidAt(raw: unknown): string | undefined {
 }
 
 describe('parseWorkshopMap', () => {
-  it('reads the size, corridor and all bays', () => {
-    const map = parseWorkshopMap(provisionalWorkshop());
-    expect(map).toMatchObject({ width: 480, height: 272, tileSize: 16, corridorY: 160 });
-    expect(map.bays).toHaveLength(8);
-    expect(map.bays[5]).toEqual(provisionalWorkshop().bays[5]);
+  it('reads the size, stations, obstacles and spots', () => {
+    const raw = provisionalWorkshop();
+    const map = parseWorkshopMap(raw);
+    expect(map).toMatchObject({ width: 480, height: 352, tileSize: 16 });
+    expect(map.stations).toHaveLength(10);
+    expect(map.stations[6]).toEqual(raw.stations[6]);
+    expect(map.obstacles).toEqual(raw.obstacles);
+    expect(map.spots[0]).toEqual({ kind: 'read', at: { x: 440, y: 120 }, facing: 'north' });
+    expect(map.spots[1]?.facing).toBe('south');
   });
 
   it('drops unknown fields', () => {
-    const raw = { ...provisionalWorkshop(), extra: true };
-    raw.bays[0] = { ...rawBay(raw, 0), ...{ note: 'x' } };
-    const map = parseWorkshopMap(raw);
+    const raw = provisionalWorkshop();
+    const station = { ...raw.stations[0], note: 'x' };
+    const map = parseWorkshopMap({ ...raw, extra: true, stations: [station, ...raw.stations] });
     expect(map).not.toHaveProperty('extra');
-    expect(map.bays[0]).not.toHaveProperty('note');
+    expect(map.stations[0]).not.toHaveProperty('note');
   });
 
   it.each([null, [], 'map', 3])('rejects a non-object root %j', (raw) => {
@@ -52,41 +41,44 @@ describe('parseWorkshopMap', () => {
     ['width', 0],
     ['height', -1],
     ['tileSize', '16'],
-    ['corridorY', Number.NaN],
-    ['corridorY', 300],
-    ['corridorY', -1],
   ])('rejects %s = %j', (field, value) => {
     expect(invalidAt({ ...provisionalWorkshop(), [field]: value })).toBe(`$.${field}`);
   });
 
-  it('requires exactly one bay per agent', () => {
+  it('requires at least one station per agent', () => {
     const raw = provisionalWorkshop();
-    expect(invalidAt({ ...raw, bays: raw.bays.slice(1) })).toBe('$.bays');
-    expect(invalidAt({ ...raw, bays: {} })).toBe('$.bays');
+    expect(invalidAt({ ...raw, stations: raw.stations.slice(3) })).toBe('$.stations');
+    expect(invalidAt({ ...raw, stations: {} })).toBe('$.stations');
   });
 
-  it('rejects a bay point outside its area', () => {
+  it.each([
+    [{ id: '' }, '$.stations[2].id'],
+    [{ at: { x: 900, y: 10 } }, '$.stations[2].at'],
+    [{ work: { x: 10, y: -1 } }, '$.stations[2].work'],
+    [{ work: { x: 10, y: null } }, '$.stations[2].work.y'],
+  ])('rejects station %j', (overrides, path) => {
     const raw = provisionalWorkshop();
-    rawBay(raw, 2).nap = { x: 0, y: 0 };
-    expect(invalidAt(raw)).toBe('$.bays[2].nap');
+    const stations: unknown[] = [...raw.stations];
+    stations[2] = { ...raw.stations[2], ...overrides };
+    expect(invalidAt({ ...raw, stations })).toBe(path);
   });
 
-  it('rejects a missing or malformed point', () => {
+  it.each([
+    [{ kind: 'dance' }, '$.spots[1].kind'],
+    [{ facing: 'up' }, '$.spots[1].facing'],
+    [{ at: { x: 10, y: 999 } }, '$.spots[1].at'],
+  ])('rejects spot %j', (overrides, path) => {
     const raw = provisionalWorkshop();
-    rawBay(raw, 1).guest = { x: 100, y: null } as unknown as { x: number; y: number };
-    expect(invalidAt(raw)).toBe('$.bays[1].guest.y');
+    const spots: unknown[] = [...raw.spots];
+    spots[1] = { ...raw.spots[1], ...overrides };
+    expect(invalidAt({ ...raw, spots })).toBe(path);
   });
 
-  it('rejects a bay with an empty area', () => {
+  it('rejects an obstacle with an empty size', () => {
     const raw = provisionalWorkshop();
-    rawBay(raw, 3).area.width = 0;
-    expect(invalidAt(raw)).toBe('$.bays[3].area.width');
-  });
-
-  it('rejects a bay that leaves the map', () => {
-    const raw = provisionalWorkshop();
-    rawBay(raw, 7).area.width = 600;
-    expect(invalidAt(raw)).toBe('$.bays[7].area');
+    expect(invalidAt({ ...raw, obstacles: [{ x: 0, y: 0, width: 0, height: 4 }] })).toBe(
+      '$.obstacles[0].width',
+    );
   });
 });
 
@@ -94,14 +86,16 @@ describe('parseWorkshopMap scenery and embers', () => {
   const base = provisionalWorkshop();
 
   it('defaults to a plain floor with nothing else', () => {
-    expect(parseWorkshopMap(base)).toMatchObject({
+    expect(parseWorkshopMap({ ...base, obstacles: undefined, spots: undefined })).toMatchObject({
       floor: DEFAULT_FLOOR,
+      obstacles: [],
+      spots: [],
       scenery: [],
       embers: [],
     });
   });
 
-  it('reads fills, images and embers', () => {
+  it('reads fills, images, depths and embers', () => {
     const map = parseWorkshopMap({
       ...base,
       floor: '#112233',
@@ -113,6 +107,7 @@ describe('parseWorkshopMap scenery and embers', () => {
           at: { x: 5, y: 6 },
           repeat: { width: 30, height: 40 },
           flip: true,
+          depth: 12,
         },
         { image: 'tiles/b.png', source: { x: 0, y: 0, width: 8, height: 8 }, at: { x: 0, y: 0 } },
       ],
@@ -120,7 +115,7 @@ describe('parseWorkshopMap scenery and embers', () => {
     });
     expect(map.floor).toBe('#112233');
     expect(map.scenery).toEqual([
-      { kind: 'fill', color: '#000', area: { x: 0, y: 0, width: 10, height: 10 } },
+      { kind: 'fill', color: '#000', area: { x: 0, y: 0, width: 10, height: 10 }, depth: null },
       {
         kind: 'image',
         image: 'tiles/a.png',
@@ -128,6 +123,7 @@ describe('parseWorkshopMap scenery and embers', () => {
         at: { x: 5, y: 6 },
         repeat: { width: 30, height: 40 },
         flip: true,
+        depth: 12,
       },
       {
         kind: 'image',
@@ -136,6 +132,7 @@ describe('parseWorkshopMap scenery and embers', () => {
         at: { x: 0, y: 0 },
         repeat: null,
         flip: false,
+        depth: null,
       },
     ]);
     expect(map.embers).toEqual([{ x: 7, y: 8 }]);
@@ -147,6 +144,10 @@ describe('parseWorkshopMap scenery and embers', () => {
     [
       { scenery: [{ color: 'x', area: { x: 0, y: 0, width: 1, height: 1 } }] },
       '$.scenery[0].color',
+    ],
+    [
+      { scenery: [{ color: '#000', area: { x: 0, y: 0, width: 1, height: 1 }, depth: 'a' }] },
+      '$.scenery[0].depth',
     ],
     [{ scenery: [{ image: '../x.png' }] }, '$.scenery[0].image'],
     [
@@ -187,7 +188,7 @@ describe('loadWorkshopMap', () => {
     const request = vi.fn(() => Promise.resolve(Response.json(provisionalWorkshop())));
     const map = await loadWorkshopMap('/assets/maps/workshop.json', request);
     expect(request).toHaveBeenCalledWith('/assets/maps/workshop.json');
-    expect(map.bays).toHaveLength(8);
+    expect(map.stations).toHaveLength(10);
   });
 
   it('fails on an http error', async () => {
@@ -196,19 +197,10 @@ describe('loadWorkshopMap', () => {
   });
 });
 
-describe('bayAt', () => {
-  it('returns the bay or rejects an unknown index', () => {
+describe('stationAt', () => {
+  it('returns the station or rejects an unknown index', () => {
     const map = parseWorkshopMap(provisionalWorkshop());
-    expect(bayAt(map, 3)).toBe(map.bays[3]);
-    expect(() => bayAt(map, 8)).toThrow(RangeError);
-  });
-});
-
-describe('wanderPoint', () => {
-  it('picks a point inside the bay area', () => {
-    const bay = bayAt(parseWorkshopMap(provisionalWorkshop()), 4);
-    expect(wanderPoint(bay, () => 0)).toEqual({ x: 16, y: 196 });
-    expect(wanderPoint(bay, () => 1)).toEqual({ x: 80, y: 232 });
-    expect(contains(bay.area, wanderPoint(bay))).toBe(true);
+    expect(stationAt(map, 3)).toBe(map.stations[3]);
+    expect(() => stationAt(map, 10)).toThrow(RangeError);
   });
 });

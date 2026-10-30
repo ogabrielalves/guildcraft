@@ -4,7 +4,6 @@
     "pt-BR": "Brom"
   },
   "source": "lpc",
-  "station": "anvil",
   "facing": "four",
   "image": "brom.png",
   "frame": {

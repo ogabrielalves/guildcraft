@@ -1,12 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Engine, MAX_FRAME_TIME, MAX_ZOOM, fitView, screenToWorld } from './engine.js';
+import {
+  CAMERA_ZOOM,
+  Engine,
+  MAX_FRAME_TIME,
+  MAX_ZOOM,
+  clampView,
+  fitView,
+  panView,
+  scaleLimits,
+  screenToWorld,
+  zoomView,
+} from './engine.js';
 
 describe('fitView', () => {
-  it('fills the screen and centers the world', () => {
+  it('fills the screen and crops the top of a taller world', () => {
     expect(fitView({ width: 960, height: 480 }, { width: 480, height: 272 })).toEqual({
       scale: 2,
       x: 0,
-      y: -32,
+      y: -64,
     });
   });
 
@@ -17,11 +28,18 @@ describe('fitView', () => {
     expect(view.y).toBeLessThan(0);
   });
 
+  it('centers a world that fits the height and crops the sides', () => {
+    const view = fitView({ width: 960, height: 700 }, { width: 480, height: 272 });
+    expect(view.scale).toBeCloseTo(2 * MAX_ZOOM);
+    expect(view.x).toBe(-72);
+    expect(view.y).toBe(37);
+  });
+
   it('never scales below one', () => {
     expect(fitView({ width: 200, height: 100 }, { width: 480, height: 272 })).toEqual({
       scale: 1,
       x: -140,
-      y: -86,
+      y: -172,
     });
   });
 });
@@ -31,6 +49,46 @@ describe('screenToWorld', () => {
     expect(screenToWorld({ scale: 2, x: 20, y: 28 }, { x: 120, y: 48 })).toEqual({
       x: 50,
       y: 10,
+    });
+  });
+});
+
+describe('camera', () => {
+  const screen = { width: 200, height: 100 };
+  const world = { width: 100, height: 100 };
+
+  it('zooms between the whole world and a few times the fitted view', () => {
+    expect(scaleLimits(screen, world)).toEqual({ min: 1, max: MAX_ZOOM * CAMERA_ZOOM });
+    expect(scaleLimits({ width: 100, height: 100 }, world)).toEqual({ min: 1, max: CAMERA_ZOOM });
+  });
+
+  it('centers an axis the world does not fill and clamps the other', () => {
+    expect(clampView({ scale: 1, x: 30, y: 7 }, screen, world)).toEqual({ scale: 1, x: 50, y: 0 });
+    expect(clampView({ scale: 3, x: 30, y: -500 }, screen, world)).toEqual({
+      scale: 3,
+      x: 0,
+      y: -200,
+    });
+    expect(clampView({ scale: 0.1, x: 0, y: 0 }, screen, world).scale).toBe(1);
+  });
+
+  it('zooms around a fixed screen point', () => {
+    const view = zoomView({ scale: 2, x: 0, y: -50 }, screen, world, { x: 100, y: 50 }, 1.5);
+    expect(view.scale).toBe(3);
+    expect(screenToWorld(view, { x: 100, y: 50 })).toEqual({ x: 50, y: 50 });
+    expect(zoomView(view, screen, world, { x: 0, y: 0 }, 100).scale).toBe(MAX_ZOOM * CAMERA_ZOOM);
+  });
+
+  it('pans inside the world edges', () => {
+    expect(panView({ scale: 3, x: -50, y: -50 }, screen, world, 20, -10)).toEqual({
+      scale: 3,
+      x: -30,
+      y: -60,
+    });
+    expect(panView({ scale: 3, x: -50, y: -50 }, screen, world, 500, -500)).toEqual({
+      scale: 3,
+      x: 0,
+      y: -200,
     });
   });
 });
@@ -118,5 +176,29 @@ describe('Engine', () => {
     const { engine } = setup();
     engine.start();
     expect(engine.toWorld(70, 54)).toEqual({ x: 60, y: 34 });
+  });
+
+  it('zooms toward the pointer and pans in client pixels', () => {
+    const { engine } = setup();
+    engine.start();
+    engine.zoomAt(60, 50, 2);
+    expect(engine.view).toEqual({ scale: 4, x: -100, y: -60 });
+    expect(engine.toWorld(60, 50)).toEqual({ x: 50, y: 30 });
+    engine.panBy(10, 5);
+    expect(engine.view).toEqual({ scale: 4, x: -80, y: -50 });
+    engine.panBy(100, 100);
+    expect(engine.view).toEqual({ scale: 4, x: 0, y: 0 });
+  });
+
+  it('keeps the zoom and the focus when the canvas resizes', () => {
+    const { engine, canvas } = setup();
+    engine.start();
+    engine.zoomAt(60, 50, 2);
+    engine.panBy(10, 5);
+    Object.assign(canvas, { clientWidth: 250 });
+    engine.resize();
+    expect(engine.view.scale).toBeCloseTo(2.3);
+    expect(engine.view.x).toBe(-83);
+    expect(engine.view.y).toBe(0);
   });
 });

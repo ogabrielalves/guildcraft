@@ -33,7 +33,6 @@ export interface Animation {
 
 export interface CharacterManifest {
   name: Partial<Record<string, string>>;
-  station: string | null;
   facing: Facing;
   animations: Record<Pose, Animation>;
 }
@@ -94,7 +93,6 @@ export function parseCharacterManifest(value: unknown): CharacterManifest {
   }
   return {
     name: optional(raw.name, names, '$.name', {}),
-    station: optional<string | null>(raw.station, text, '$.station', null),
     facing: facingOf(raw.facing, '$.facing'),
     animations: parsed,
   };

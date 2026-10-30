@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentStatus, AgentView, VillageEvent } from '../../shared/agent.js';
-import { bayAt, parseWorkshopMap } from './map.js';
+import { parseWorkshopMap } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 import { EVENT_FRESHNESS_MS, World } from './world.js';
 
@@ -25,33 +25,43 @@ function event(kind: VillageEvent['kind'], agentId: string, targetId?: string): 
 }
 
 describe('World', () => {
-  it('gives each agent the first free bay', () => {
-    const world = new World(map);
+  it('gives each agent a random free station', () => {
+    const world = new World(map, () => 0.5);
     world.sync([agent('a'), agent('b'), agent('c')]);
-    expect(world.all().map((v) => [v.id, v.bay])).toEqual([
-      ['a', 0],
-      ['b', 1],
-      ['c', 2],
+    expect(world.all().map((v) => [v.id, v.station])).toEqual([
+      ['a', 5],
+      ['b', 4],
+      ['c', 6],
     ]);
-    expect(world.villager('b')?.bay).toBe(1);
+    expect(world.owner(6)?.id).toBe('c');
+    expect(world.owner(0)).toBeUndefined();
+    expect(world.freeStations()).toEqual([0, 1, 2, 3, 7, 8, 9]);
   });
 
-  it('keeps bays stable when someone leaves and reuses the free one', () => {
-    const world = new World(map);
+  it('keeps stations stable when someone leaves and reuses the free one', () => {
+    const world = new World(map, () => 0);
     world.sync([agent('a'), agent('b'), agent('c')]);
     world.sync([agent('a'), agent('c')]);
     expect(world.villager('b')).toBeUndefined();
-    expect(world.villager('c')?.bay).toBe(2);
+    expect(world.villager('c')?.station).toBe(2);
     world.sync([agent('a'), agent('c'), agent('d')]);
-    expect(world.villager('d')?.bay).toBe(1);
-    expect([...world.occupiedBays()].sort()).toEqual([0, 1, 2]);
+    expect(world.villager('d')?.station).toBe(1);
   });
 
-  it('leaves agents beyond the last bay out', () => {
+  it('leaves agents beyond the last station out', () => {
     const world = new World(map);
-    world.sync(Array.from({ length: 9 }, (_, i) => agent(`a${String(i)}`)));
-    expect(world.all()).toHaveLength(8);
-    expect(world.villager('a8')).toBeUndefined();
+    world.sync(Array.from({ length: 11 }, (_, i) => agent(`a${String(i)}`)));
+    expect(world.all()).toHaveLength(10);
+    expect(world.villager('a10')).toBeUndefined();
+    expect(world.freeStations()).toEqual([]);
+  });
+
+  it('frees the spot of an agent that leaves', () => {
+    const world = new World(map, () => 0);
+    world.sync([agent('a', 'offline')]);
+    world.sync([]);
+    world.sync([agent('b', 'offline')]);
+    expect(world.villager('b')?.position).toEqual({ x: 440, y: 280 });
   });
 
   it('updates the activity of known villagers', () => {
@@ -71,13 +81,15 @@ describe('World', () => {
 
   it('sends the sender to visit the recipient', () => {
     const world = new World(map);
-    world.sync([agent('a', 'thinking'), agent('b')]);
+    world.sync([agent('a', 'thinking'), agent('b', 'thinking')]);
     world.visit('a', 'b', 'please review');
     const sender = world.villager('a');
     expect(sender?.visiting).toBe(true);
     expect(sender?.note).toBe('please review');
-    for (let i = 0; i < 400 && sender?.moving; i += 1) world.update(0.05);
-    expect(sender?.position).toEqual(bayAt(map, 1).guest);
+    for (let i = 0; i < 2000 && sender?.moving; i += 1) world.update(0.05);
+    const host = world.villager('b')?.position ?? { x: 0, y: 0 };
+    expect(Math.abs((sender?.position.x ?? 0) - host.x)).toBeCloseTo(18);
+    expect(sender?.position.y).toBe(host.y);
   });
 
   it('cheers when an agent finishes', () => {
@@ -98,6 +110,7 @@ describe('World', () => {
     expect(world.villager('a')?.visiting).toBe(false);
     world.visit('ghost', 'b');
     world.visit('a', 'ghost');
+    world.visit('a', 'a');
     expect(world.villager('a')?.visiting).toBe(false);
   });
 });

@@ -1,265 +1,361 @@
 {
-  "width": 480,
-  "height": 272,
+  "width": 640,
+  "height": 352,
   "tileSize": 16,
-  "corridorY": 168,
   "floor": "#6b4a2f",
-  "bays": [
+  "stations": [
     {
-      "area": {
-        "x": 0,
-        "y": 80,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 48,
-        "y": 152
-      },
-      "station": {
-        "x": 40,
-        "y": 146
-      },
-      "work": {
-        "x": 80,
-        "y": 148
-      },
-      "read": {
-        "x": 80,
-        "y": 110
-      },
-      "nap": {
-        "x": 78,
-        "y": 128
-      },
-      "guest": {
+      "id": "anvil",
+      "at": {
         "x": 64,
         "y": 150
-      }
-    },
-    {
-      "area": {
-        "x": 96,
-        "y": 80,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 144,
-        "y": 152
-      },
-      "station": {
-        "x": 136,
-        "y": 146
       },
       "work": {
-        "x": 176,
+        "x": 106,
         "y": 148
-      },
-      "read": {
-        "x": 176,
-        "y": 110
-      },
-      "nap": {
-        "x": 174,
-        "y": 128
-      },
-      "guest": {
-        "x": 160,
-        "y": 150
       }
     },
     {
-      "area": {
-        "x": 288,
-        "y": 80,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 336,
-        "y": 152
-      },
-      "station": {
-        "x": 328,
-        "y": 146
+      "id": "furnace",
+      "at": {
+        "x": 216,
+        "y": 150
       },
       "work": {
-        "x": 368,
+        "x": 188,
         "y": 148
-      },
-      "read": {
-        "x": 368,
-        "y": 110
-      },
-      "nap": {
-        "x": 366,
-        "y": 128
-      },
-      "guest": {
-        "x": 352,
-        "y": 150
       }
     },
     {
-      "area": {
-        "x": 384,
-        "y": 80,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 432,
-        "y": 152
-      },
-      "station": {
-        "x": 424,
-        "y": 146
+      "id": "alchemy-large",
+      "at": {
+        "x": 420,
+        "y": 150
       },
       "work": {
-        "x": 464,
+        "x": 386,
         "y": 148
-      },
-      "read": {
-        "x": 464,
-        "y": 110
-      },
-      "nap": {
-        "x": 462,
-        "y": 128
-      },
-      "guest": {
-        "x": 448,
+      }
+    },
+    {
+      "id": "alchemy-small",
+      "at": {
+        "x": 584,
         "y": 150
+      },
+      "work": {
+        "x": 558,
+        "y": 148
       }
     },
     {
-      "area": {
-        "x": 0,
-        "y": 184,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 48,
-        "y": 184
-      },
-      "station": {
-        "x": 40,
-        "y": 250
+      "id": "scribe-desk",
+      "at": {
+        "x": 112,
+        "y": 256
       },
       "work": {
-        "x": 80,
-        "y": 252
-      },
-      "read": {
-        "x": 80,
-        "y": 214
-      },
-      "nap": {
-        "x": 78,
-        "y": 232
-      },
-      "guest": {
-        "x": 64,
+        "x": 149,
         "y": 254
       }
     },
     {
-      "area": {
-        "x": 96,
-        "y": 184,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 144,
-        "y": 184
-      },
-      "station": {
-        "x": 136,
-        "y": 250
+      "id": "sawmill",
+      "at": {
+        "x": 72,
+        "y": 328
       },
       "work": {
-        "x": 176,
-        "y": 252
-      },
-      "read": {
-        "x": 176,
-        "y": 214
-      },
-      "nap": {
-        "x": 174,
-        "y": 232
-      },
-      "guest": {
-        "x": 160,
-        "y": 254
+        "x": 110,
+        "y": 326
       }
     },
     {
-      "area": {
-        "x": 288,
-        "y": 184,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 336,
-        "y": 184
-      },
-      "station": {
-        "x": 328,
-        "y": 250
+      "id": "workbench",
+      "at": {
+        "x": 192,
+        "y": 328
       },
       "work": {
-        "x": 368,
-        "y": 252
-      },
-      "read": {
-        "x": 368,
-        "y": 214
-      },
-      "nap": {
-        "x": 366,
-        "y": 232
-      },
-      "guest": {
-        "x": 352,
-        "y": 254
+        "x": 226,
+        "y": 326
       }
     },
     {
-      "area": {
-        "x": 384,
-        "y": 184,
-        "width": 96,
-        "height": 72
-      },
-      "door": {
-        "x": 432,
-        "y": 184
-      },
-      "station": {
-        "x": 424,
-        "y": 250
+      "id": "grill",
+      "at": {
+        "x": 452,
+        "y": 328
       },
       "work": {
-        "x": 464,
-        "y": 252
-      },
-      "read": {
-        "x": 464,
-        "y": 214
-      },
-      "nap": {
-        "x": 462,
-        "y": 232
-      },
-      "guest": {
-        "x": 448,
-        "y": 254
+        "x": 411.5,
+        "y": 326
       }
+    },
+    {
+      "id": "cauldron",
+      "at": {
+        "x": 572,
+        "y": 328
+      },
+      "work": {
+        "x": 539,
+        "y": 326
+      }
+    }
+  ],
+  "obstacles": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 640,
+      "height": 88
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "width": 8,
+      "height": 352
+    },
+    {
+      "x": 632,
+      "y": 0,
+      "width": 8,
+      "height": 352
+    },
+    {
+      "x": 0,
+      "y": 344,
+      "width": 640,
+      "height": 8
+    },
+    {
+      "x": 296,
+      "y": 88,
+      "width": 48,
+      "height": 8
+    },
+    {
+      "x": 34,
+      "y": 136,
+      "width": 60,
+      "height": 14
+    },
+    {
+      "x": 200,
+      "y": 136,
+      "width": 32,
+      "height": 14
+    },
+    {
+      "x": 398,
+      "y": 136,
+      "width": 44,
+      "height": 14
+    },
+    {
+      "x": 570,
+      "y": 136,
+      "width": 28,
+      "height": 14
+    },
+    {
+      "x": 87,
+      "y": 242,
+      "width": 50,
+      "height": 14
+    },
+    {
+      "x": 46,
+      "y": 314,
+      "width": 52,
+      "height": 14
+    },
+    {
+      "x": 170,
+      "y": 314,
+      "width": 44,
+      "height": 14
+    },
+    {
+      "x": 424,
+      "y": 314,
+      "width": 57,
+      "height": 14
+    },
+    {
+      "x": 551,
+      "y": 314,
+      "width": 42,
+      "height": 14
+    },
+    {
+      "x": 22,
+      "y": 202,
+      "width": 44,
+      "height": 15
+    },
+    {
+      "x": 72,
+      "y": 202,
+      "width": 30,
+      "height": 15
+    },
+    {
+      "x": 108,
+      "y": 202,
+      "width": 44,
+      "height": 15
+    },
+    {
+      "x": 548,
+      "y": 196,
+      "width": 31,
+      "height": 12
+    },
+    {
+      "x": 588,
+      "y": 196,
+      "width": 31,
+      "height": 12
+    },
+    {
+      "x": 306,
+      "y": 268,
+      "width": 28,
+      "height": 24
+    },
+    {
+      "x": 12,
+      "y": 324,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "x": 612,
+      "y": 324,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "x": 256,
+      "y": 108,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "x": 368,
+      "y": 108,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "x": 500,
+      "y": 252,
+      "width": 16,
+      "height": 12
+    },
+    {
+      "x": 240,
+      "y": 236,
+      "width": 16,
+      "height": 12
+    }
+  ],
+  "spots": [
+    {
+      "kind": "read",
+      "at": {
+        "x": 44,
+        "y": 228
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "read",
+      "at": {
+        "x": 87,
+        "y": 228
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "read",
+      "at": {
+        "x": 130,
+        "y": 228
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "nap",
+      "at": {
+        "x": 563,
+        "y": 234
+      }
+    },
+    {
+      "kind": "nap",
+      "at": {
+        "x": 603,
+        "y": 234
+      }
+    },
+    {
+      "kind": "hearth",
+      "at": {
+        "x": 308,
+        "y": 120
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "hearth",
+      "at": {
+        "x": 332,
+        "y": 120
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "hearth",
+      "at": {
+        "x": 320,
+        "y": 140
+      },
+      "facing": "north"
+    },
+    {
+      "kind": "table",
+      "at": {
+        "x": 292,
+        "y": 284
+      },
+      "facing": "east"
+    },
+    {
+      "kind": "table",
+      "at": {
+        "x": 348,
+        "y": 284
+      },
+      "facing": "west"
+    },
+    {
+      "kind": "table",
+      "at": {
+        "x": 320,
+        "y": 262
+      },
+      "facing": "south"
+    },
+    {
+      "kind": "table",
+      "at": {
+        "x": 320,
+        "y": 306
+      },
+      "facing": "north"
     }
   ],
   "scenery": [
@@ -276,8 +372,8 @@
         "y": 80
       },
       "repeat": {
-        "width": 480,
-        "height": 192
+        "width": 640,
+        "height": 272
       }
     },
     {
@@ -285,7 +381,7 @@
       "area": {
         "x": 0,
         "y": 0,
-        "width": 480,
+        "width": 640,
         "height": 24
       }
     },
@@ -302,7 +398,7 @@
         "y": 24
       },
       "repeat": {
-        "width": 480,
+        "width": 640,
         "height": 8
       }
     },
@@ -319,7 +415,7 @@
         "y": 32
       },
       "repeat": {
-        "width": 480,
+        "width": 640,
         "height": 48
       }
     },
@@ -332,7 +428,7 @@
         "height": 36
       },
       "at": {
-        "x": 28,
+        "x": 32,
         "y": 34
       }
     },
@@ -345,7 +441,7 @@
         "height": 36
       },
       "at": {
-        "x": 424,
+        "x": 580,
         "y": 34
       }
     },
@@ -358,7 +454,7 @@
         "height": 17
       },
       "at": {
-        "x": 72,
+        "x": 104,
         "y": 40
       }
     },
@@ -371,7 +467,7 @@
         "height": 17
       },
       "at": {
-        "x": 392,
+        "x": 520,
         "y": 40
       }
     },
@@ -384,7 +480,7 @@
         "height": 56
       },
       "at": {
-        "x": 100,
+        "x": 140,
         "y": 24
       }
     },
@@ -397,7 +493,7 @@
         "height": 56
       },
       "at": {
-        "x": 336,
+        "x": 456,
         "y": 24
       }
     },
@@ -410,7 +506,7 @@
         "height": 22
       },
       "at": {
-        "x": 158,
+        "x": 228,
         "y": 34
       }
     },
@@ -423,7 +519,7 @@
         "height": 16
       },
       "at": {
-        "x": 152,
+        "x": 222,
         "y": 46
       }
     },
@@ -436,7 +532,7 @@
         "height": 16
       },
       "at": {
-        "x": 164,
+        "x": 234,
         "y": 46
       }
     },
@@ -449,7 +545,7 @@
         "height": 16
       },
       "at": {
-        "x": 176,
+        "x": 246,
         "y": 46
       }
     },
@@ -462,7 +558,7 @@
         "height": 16
       },
       "at": {
-        "x": 188,
+        "x": 258,
         "y": 46
       }
     },
@@ -475,7 +571,7 @@
         "height": 23
       },
       "at": {
-        "x": 282,
+        "x": 376,
         "y": 38
       }
     },
@@ -488,7 +584,7 @@
         "height": 16
       },
       "at": {
-        "x": 316,
+        "x": 412,
         "y": 42
       }
     },
@@ -501,7 +597,7 @@
         "height": 86
       },
       "at": {
-        "x": 211,
+        "x": 291,
         "y": 0
       }
     },
@@ -514,203 +610,8 @@
         "height": 48
       },
       "at": {
-        "x": 38,
-        "y": 94
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 384,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 134,
-        "y": 94
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 336,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 326,
-        "y": 94
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 384,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 422,
-        "y": 94
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 384,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 38,
-        "y": 198
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 336,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 134,
-        "y": 198
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 384,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 326,
-        "y": 198
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 336,
-        "y": 336,
-        "width": 48,
-        "height": 48
-      },
-      "at": {
-        "x": 422,
-        "y": 198
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 88,
-        "y": 83
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 184,
-        "y": 83
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 280,
-        "y": 83
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 376,
-        "y": 83
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 88,
-        "y": 187
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 184,
-        "y": 187
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 280,
-        "y": 187
-      }
-    },
-    {
-      "image": "tiles/interior-walls.png",
-      "source": {
-        "x": 366,
-        "y": 130,
-        "width": 16,
-        "height": 66
-      },
-      "at": {
-        "x": 376,
-        "y": 187
+        "x": 296,
+        "y": 96
       }
     },
     {
@@ -722,36 +623,79 @@
         "height": 80
       },
       "at": {
-        "x": 200,
-        "y": 186
+        "x": 280,
+        "y": 232
       }
     },
     {
       "image": "tiles/interior-props.png",
       "source": {
-        "x": 62,
-        "y": 1,
-        "width": 20,
-        "height": 26
+        "x": 48,
+        "y": 97,
+        "width": 48,
+        "height": 47
       },
       "at": {
-        "x": 202,
-        "y": 206
-      }
+        "x": 20,
+        "y": 170
+      },
+      "depth": 217
     },
     {
       "image": "tiles/interior-props.png",
       "source": {
-        "x": 62,
-        "y": 1,
-        "width": 20,
-        "height": 26
+        "x": 279,
+        "y": 0,
+        "width": 34,
+        "height": 48
       },
       "at": {
-        "x": 258,
-        "y": 206
+        "x": 70,
+        "y": 169
       },
-      "flip": true
+      "depth": 217
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 48,
+        "y": 97,
+        "width": 48,
+        "height": 47
+      },
+      "at": {
+        "x": 106,
+        "y": 170
+      },
+      "depth": 217
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 0,
+        "y": 293,
+        "width": 31,
+        "height": 54
+      },
+      "at": {
+        "x": 548,
+        "y": 196
+      },
+      "depth": 250
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 0,
+        "y": 293,
+        "width": 31,
+        "height": 54
+      },
+      "at": {
+        "x": 588,
+        "y": 196
+      },
+      "depth": 250
     },
     {
       "image": "tiles/interior-props.png",
@@ -762,22 +706,39 @@
         "height": 39
       },
       "at": {
-        "x": 222,
-        "y": 200
-      }
+        "x": 302,
+        "y": 254
+      },
+      "depth": 293
     },
     {
       "image": "tiles/interior-props.png",
       "source": {
-        "x": 16,
-        "y": 352,
-        "width": 16,
-        "height": 32
+        "x": 62,
+        "y": 1,
+        "width": 20,
+        "height": 26
       },
       "at": {
-        "x": 194,
-        "y": 88
-      }
+        "x": 282,
+        "y": 260
+      },
+      "depth": 286
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 62,
+        "y": 1,
+        "width": 20,
+        "height": 26
+      },
+      "at": {
+        "x": 338,
+        "y": 260
+      },
+      "depth": 286,
+      "flip": true
     },
     {
       "image": "tiles/interior-props.png",
@@ -788,22 +749,10 @@
         "height": 32
       },
       "at": {
-        "x": 270,
-        "y": 88
-      }
-    },
-    {
-      "image": "tiles/interior-props.png",
-      "source": {
-        "x": 48,
-        "y": 352,
-        "width": 16,
-        "height": 32
+        "x": 12,
+        "y": 304
       },
-      "at": {
-        "x": 2,
-        "y": 150
-      }
+      "depth": 336
     },
     {
       "image": "tiles/interior-props.png",
@@ -814,9 +763,24 @@
         "height": 32
       },
       "at": {
-        "x": 18,
-        "y": 150
-      }
+        "x": 612,
+        "y": 304
+      },
+      "depth": 336
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 48,
+        "y": 352,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 256,
+        "y": 88
+      },
+      "depth": 120
     },
     {
       "image": "tiles/interior-props.png",
@@ -827,9 +791,24 @@
         "height": 32
       },
       "at": {
-        "x": 446,
-        "y": 150
-      }
+        "x": 368,
+        "y": 88
+      },
+      "depth": 120
+    },
+    {
+      "image": "tiles/interior-props.png",
+      "source": {
+        "x": 48,
+        "y": 352,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 500,
+        "y": 232
+      },
+      "depth": 264
     },
     {
       "image": "tiles/interior-props.png",
@@ -840,14 +819,15 @@
         "height": 32
       },
       "at": {
-        "x": 462,
-        "y": 150
-      }
+        "x": 240,
+        "y": 216
+      },
+      "depth": 248
     }
   ],
   "embers": [
     {
-      "x": 240,
+      "x": 320,
       "y": 72
     }
   ]

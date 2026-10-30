@@ -33,7 +33,6 @@ export function fakeAssets(
 
 export const SIDE_CHARACTER: CharacterManifest = {
   name: { en: 'Mortis' },
-  station: 'stove',
   facing: 'side',
   animations: {
     idle: {

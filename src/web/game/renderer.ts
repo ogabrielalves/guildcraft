@@ -6,13 +6,13 @@ import { drawNameplate } from './draw/nameplate.js';
 import type { Paint } from './draw/paint.js';
 import { TAU } from './draw/paint.js';
 import { drawRing, drawShadow } from './draw/rings.js';
-import type { Bay, Point, Rect, Scenery, WorkshopMap } from './map.js';
+import type { Point, Rect, Scenery, StationPlace, WorkshopMap } from './map.js';
 import { frameAt } from './sprite-sheet.js';
 import { DEFAULT_EFFECT, stationFrame } from './stations.js';
 import type { Villager } from './villager.js';
 import type { World } from './world.js';
 
-export type Hover = { kind: 'villager'; id: string } | { kind: 'bay'; bay: number } | null;
+export type Hover = { kind: 'villager'; id: string } | null;
 
 export interface Scene {
   world: World;
@@ -29,7 +29,6 @@ export const PALETTE = {
   station: '#8a6a45',
   stationTop: '#a88456',
   stationActive: '#ffd76a',
-  empty: '#f1e4cf',
 };
 
 export const STATION_RATE = 8;
@@ -53,34 +52,18 @@ function skinOf(scene: Pick<Scene, 'agents'>, villager: Villager): string {
   return scene.agents.get(villager.id)?.skin ?? '';
 }
 
-export function stationFor(
-  scene: Pick<Scene, 'agents' | 'assets'>,
-  villager: Villager,
-): Station | null {
-  const id = scene.assets.character(skinOf(scene, villager))?.manifest.station;
-  return id ? scene.assets.station(id) : null;
-}
-
-function stationBox(bay: Bay, station: Station | null): Rect {
+export function stationBox(place: StationPlace, station: Station | null): Rect {
   if (!station) {
     const { width, height } = PLACEHOLDER;
-    return { x: bay.station.x - width / 2, y: bay.station.y - height, width, height };
+    return { x: place.at.x - width / 2, y: place.at.y - height, width, height };
   }
   const { anchor, frame } = station.manifest;
   return {
-    x: bay.station.x - anchor.x,
-    y: bay.station.y - anchor.y,
+    x: place.at.x - anchor.x,
+    y: place.at.y - anchor.y,
     width: frame.width,
     height: frame.height,
   };
-}
-
-function owned(scene: Scene): { villager: Villager; bay: Bay }[] {
-  const { map } = scene.world;
-  return scene.world.all().flatMap((villager) => {
-    const bay = map.bays[villager.bay];
-    return bay ? [{ villager, bay }] : [];
-  });
 }
 
 export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): Emitter[] {
@@ -92,13 +75,13 @@ export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): 
     rate: HEARTH_RATE,
   }));
   for (const villager of scene.world.all()) {
-    const bay = map.bays[villager.bay];
-    if (!villager.atStation || bay === undefined) continue;
-    const station = stationFor(scene, villager);
-    const box = stationBox(bay, station);
+    const place = map.stations[villager.station];
+    if (!villager.atStation || place === undefined) continue;
+    const station = scene.assets.station(place.id);
+    const box = stationBox(place, station);
     const emit = station?.manifest.emit ?? { x: box.width / 2, y: 0 };
     emitters.push({
-      key: `station:${villager.id}`,
+      key: `station:${String(villager.station)}`,
       kind: station?.manifest.effect ?? DEFAULT_EFFECT,
       at: { x: box.x + emit.x, y: box.y + emit.y },
       rate: STATION_RATE,
@@ -140,41 +123,30 @@ function drawTiled(ctx: Paint, image: CanvasImageSource, item: Scenery & { kind:
   }
 }
 
-function drawScenery(ctx: Paint, map: WorkshopMap, assets: Assets): void {
+function drawSceneryItem(ctx: Paint, item: Scenery, assets: Assets): void {
+  if (item.kind === 'fill') {
+    ctx.fillStyle = item.color;
+    ctx.fillRect(item.area.x, item.area.y, item.area.width, item.area.height);
+    return;
+  }
+  const image = assets.image(assets.url(item.image));
+  if (image) drawTiled(ctx, image, item);
+}
+
+function drawFloor(ctx: Paint, map: WorkshopMap, assets: Assets): void {
   ctx.fillStyle = map.floor;
   ctx.fillRect(0, 0, map.width, map.height);
   for (const item of map.scenery) {
-    if (item.kind === 'fill') {
-      ctx.fillStyle = item.color;
-      ctx.fillRect(item.area.x, item.area.y, item.area.width, item.area.height);
-      continue;
-    }
-    const image = assets.image(assets.url(item.image));
-    if (image) drawTiled(ctx, image, item);
+    if (item.depth === null) drawSceneryItem(ctx, item, assets);
   }
 }
 
-function drawEmptyBay(ctx: Paint, bay: Bay, hovered: boolean): void {
-  const cx = bay.area.x + bay.area.width / 2;
-  const cy = bay.area.y + bay.area.height / 2;
-  ctx.globalAlpha = hovered ? 0.9 : 0.35;
-  ctx.fillStyle = PALETTE.empty;
-  ctx.fillRect(cx - 6, cy - 1, 12, 2);
-  ctx.fillRect(cx - 1, cy - 6, 2, 12);
-  if (hovered) {
-    ctx.strokeStyle = PALETTE.empty;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(bay.area.x + 4.5, bay.area.y + 4.5, bay.area.width - 9, bay.area.height - 9);
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawStation(ctx: Paint, bay: Bay, villager: Villager, scene: Scene): void {
-  const station = stationFor(scene, villager);
-  const box = stationBox(bay, station);
+function drawStation(ctx: Paint, place: StationPlace, active: boolean, scene: Scene): void {
+  const station = scene.assets.station(place.id);
+  const box = stationBox(place, station);
   const image = station ? scene.assets.image(station.base + station.manifest.image) : null;
   if (station && image) {
-    const frame = stationFrame(station.manifest, villager.atStation, scene.time);
+    const frame = stationFrame(station.manifest, active, scene.time);
     blit(ctx, {
       image,
       source: { x: frame.sx, y: frame.sy, width: frame.width, height: frame.height },
@@ -185,7 +157,7 @@ function drawStation(ctx: Paint, bay: Bay, villager: Villager, scene: Scene): vo
   }
   ctx.fillStyle = PALETTE.station;
   ctx.fillRect(box.x, box.y, box.width, box.height);
-  ctx.fillStyle = villager.atStation ? PALETTE.stationActive : PALETTE.stationTop;
+  ctx.fillStyle = active ? PALETTE.stationActive : PALETTE.stationTop;
   ctx.fillRect(box.x, box.y, box.width, 4);
 }
 
@@ -248,25 +220,32 @@ function drawLabels(ctx: Paint, villager: Villager, scene: Scene): void {
     drawNote(ctx, note, villager.position.x, bubbleBottom, scene.time);
     return;
   }
-  const bubble = bubbleFor(villager.activity, villager.visiting);
+  const bubble = bubbleFor(villager.activity, villager.visiting, villager.doing);
   if (bubble !== null) drawBubble(ctx, bubble, villager.position.x, bubbleBottom, scene.time);
 }
 
 export function drawScene(ctx: Paint, scene: Scene): void {
-  const { map } = scene.world;
-  const pairs = owned(scene);
-  const occupied = new Set(pairs.map(({ villager }) => villager.bay));
+  const { world } = scene;
+  const { map } = world;
   ctx.save();
-  drawScenery(ctx, map, scene.assets);
-  map.bays.forEach((bay, index) => {
-    if (occupied.has(index)) return;
-    drawEmptyBay(ctx, bay, scene.hovered?.kind === 'bay' && scene.hovered.bay === index);
-  });
+  drawFloor(ctx, map, scene.assets);
   const layers = [
-    ...pairs.map(({ villager, bay }) => ({
-      depth: bay.station.y,
+    ...map.scenery.flatMap((item) =>
+      item.depth === null
+        ? []
+        : [
+            {
+              depth: item.depth,
+              draw: () => {
+                drawSceneryItem(ctx, item, scene.assets);
+              },
+            },
+          ],
+    ),
+    ...map.stations.map((place, index) => ({
+      depth: place.at.y,
       draw: () => {
-        drawStation(ctx, bay, villager, scene);
+        drawStation(ctx, place, world.owner(index)?.atStation ?? false, scene);
       },
     })),
     ...scene.world.all().map((villager) => ({

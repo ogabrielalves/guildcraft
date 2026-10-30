@@ -2,7 +2,7 @@
 
 Everything the workshop draws comes from `assets/`. The code never hardcodes a sprite, a station or a map coordinate. Add or change art by editing the files described here.
 
-The world is 480 × 272 px at 1×, built on the 16 px grid of the Pixel Crawler pack. Characters stand about 30 px tall.
+The world is 640 × 352 px at 1×, built on the 16 px grid of the Pixel Crawler pack. Characters stand about 30 px tall.
 
 Every asset needs an entry in [`assets/CREDITS.md`](../assets/CREDITS.md) with its author, link and license.
 
@@ -30,7 +30,6 @@ Image paths must be relative, end in `.png` and never contain `..`.
 {
   "name": { "en": "Brom", "pt-BR": "Brom" },
   "source": "lpc",
-  "station": "anvil", // id of assets/stations/<id>.json
   "facing": "four", // "four" or "side"
   "image": "brom.png", // defaults for every animation
   "frame": { "width": 32, "height": 32 },
@@ -80,7 +79,7 @@ Frames of different animations can have different sizes. The anchor keeps the fe
 1. Build it in the [Universal LPC Spritesheet Character Generator](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/) and export the sheet, the credits and the JSON.
 2. Downscale the sheet to 50% with nearest-neighbor sampling, so 64 px frames become 32 px.
 3. Save it as `assets/characters/<id>/<id>.png`. Save the generator JSON as `<id>.lpc.json` and keep `<id>.credits.txt` and `<id>.credits.csv` next to it.
-4. Copy an existing LPC manifest and change `name` and `station`. The row map of the downscaled sheets is in [`assets/characters/lpc-rows.md`](../assets/characters/lpc-rows.md).
+4. Copy an existing LPC manifest and change `name`. The row map of the downscaled sheets is in [`assets/characters/lpc-rows.md`](../assets/characters/lpc-rows.md).
 5. Add the character's section to `assets/CREDITS.md`.
 
 ## Station manifest
@@ -94,7 +93,7 @@ Frames of different animations can have different sizes. The anchor keeps the fe
   "columns": 8, // frames per row of the sheet
   "frames": 35,
   "fps": 12,
-  "anchor": { "x": 32, "y": 78 }, // pixel placed on the bay's station point
+  "anchor": { "x": 32, "y": 78 }, // pixel placed on the station's `at` point in the map
   "emit": { "x": 28, "y": 46 }, // where the particles come out
   "effect": "sparks",
 }
@@ -108,9 +107,9 @@ Frames of different animations can have different sizes. The anchor keeps the fe
 | `emit`          | top center           | particle origin inside the frame                                              |
 | `effect`        | required             | `bubbles`, `sparks`, `magic`, `smoke`, `dust`, `embers`, `sawdust` or `paper` |
 
-Crop stations tightly: the `frame` box is what has to fit inside a bay. For example, the anvil sheet has 64 × 80 cells, but the anvil itself only uses rows 17 to 78, so its manifest says `"origin": { "x": 0, "y": 17 }`, `"frame": { "width": 64, "height": 62 }` and `"cell": { "width": 64, "height": 80 }`.
+Crop stations tightly: the `frame` box is what the map has to make room for. For example, the anvil sheet has 64 × 80 cells, but the anvil itself only uses rows 17 to 78, so its manifest says `"origin": { "x": 0, "y": 17 }`, `"frame": { "width": 64, "height": 62 }` and `"cell": { "width": 64, "height": 80 }`.
 
-The station shows frame 0 while its owner is away. It animates and emits particles only while the owner works at it.
+Stations are furniture of the map, not of a character. Each agent takes a random free station when it joins. The station shows frame 0 while nobody works there. It animates and emits particles only while its agent works at it.
 
 ## Workshop map
 
@@ -118,38 +117,61 @@ The station shows frame 0 while its owner is away. It animates and emits particl
 
 ```jsonc
 {
-  "width": 480,
-  "height": 272,
+  "width": 640,
+  "height": 352,
   "tileSize": 16,
-  "corridorY": 160, // y of the walkway between the two rows
   "floor": "#6b4a2f", // fallback color under the scenery
-  "bays": [/* exactly 8 */],
-  "scenery": [/* drawn in order, behind everyone */],
-  "embers": [{ "x": 240, "y": 72 }], // points that always emit embers (the fireplace)
+  "stations": [/* at least 8, one per agent */],
+  "obstacles": [/* rectangles nobody walks through */],
+  "spots": [/* where agents read, nap and spend idle time */],
+  "scenery": [/* drawn in order */],
+  "embers": [{ "x": 320, "y": 72 }], // points that always emit embers (the fireplace)
 }
 ```
 
-Each bay has an `area` and six points, all inside the area:
+Each station places a station manifest in the room:
 
-| Point     | Meaning                                                                         |
-| --------- | ------------------------------------------------------------------------------- |
-| `door`    | where the bay meets the corridor; routes between bays go door → corridor → door |
-| `station` | where the station's `anchor` is placed                                          |
-| `work`    | where the owner works, facing the station                                       |
-| `read`    | where the owner reads or waits for approval                                     |
-| `nap`     | where the owner sleeps                                                          |
-| `guest`   | where a visitor stops                                                           |
+```json
+{ "id": "anvil", "at": { "x": 64, "y": 150 }, "work": { "x": 106, "y": 148 } }
+```
 
-Pillars stand on the left and right edges of every bay and take 8 px of each side. The usable part of a bay is its area minus those 8 px:
+| Field  | Meaning                                                         |
+| ------ | --------------------------------------------------------------- |
+| `id`   | the station manifest, `assets/stations/<id>.json`               |
+| `at`   | where the manifest's `anchor` is placed                         |
+| `work` | where the agent stands while it works there, facing the station |
 
-- any station, placed by its `anchor` on the `station` point, must fit inside the usable part, because any character can take any bay;
-- the `work` point must leave room for the worker (16 px wide) between the station and the pillar;
-- when idle, the owner wanders inside the usable part.
+The same id can appear more than once. Add an obstacle under the bottom of every station so people walk around it instead of through it.
+
+### Obstacles and walking
+
+Agents walk on a grid of 8 px cells. A cell is blocked when any rectangle in `obstacles` touches it, so cover the walls, the edges of the room, the stations and the feet of the furniture. Leave the rest free: agents wander over every open cell when they are idle, and find their way around the blocked ones.
+
+Keep `work` points and spots on open cells. A spot may sit on a bed or a rug that is not an obstacle; the agent walks to the nearest open cell and steps onto it.
+
+### Spots
+
+```json
+{ "kind": "nap", "at": { "x": 563, "y": 250 }, "facing": "south" }
+```
+
+| `kind`   | Used when                                                            |
+| -------- | -------------------------------------------------------------------- |
+| `read`   | the agent reads files or waits for your approval; idle agents browse |
+| `nap`    | the agent is starting, sleeping or offline; idle agents take a nap   |
+| `hearth` | an idle agent warms up by the fire                                   |
+| `table`  | an idle agent sits at the table                                      |
+
+An idle agent keeps busy on its own: it wanders, visits the hearth, a bookshelf or the table, naps, or walks over to chat with another idle agent. The choice is weighted and avoids repeating the last plan; plans whose spots are all taken are skipped.
+
+`facing` is `north`, `west`, `south` or `east` (default `south`). Each spot holds one agent. When all `read` or `nap` spots are taken, a busy agent stays at its station.
+
+### Scenery
 
 Scenery items are either a color fill:
 
 ```json
-{ "color": "#1d1410", "area": { "x": 0, "y": 0, "width": 480, "height": 24 } }
+{ "color": "#1d1410", "area": { "x": 0, "y": 0, "width": 640, "height": 24 } }
 ```
 
 or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `flip` to mirror it:
@@ -159,11 +181,11 @@ or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `fli
   "image": "tiles/interior-walls.png",
   "source": { "x": 320, "y": 96, "width": 16, "height": 48 },
   "at": { "x": 0, "y": 32 },
-  "repeat": { "width": 480, "height": 48 }
+  "repeat": { "width": 640, "height": 48 }
 }
 ```
 
-Stations and adventurers are sorted by their feet, so someone standing behind a station is drawn behind it.
+Scenery without `depth` is drawn first, behind everyone: floors, walls, rugs. Give standing furniture a `depth`, usually the y of its feet, so it is sorted with the stations and the adventurers. Everything sorted is drawn by its feet, so someone standing behind a bookshelf is drawn behind it.
 
 ## Checking your changes
 
@@ -171,8 +193,8 @@ Stations and adventurers are sorted by their feet, so someone standing behind a 
 
 - every character and station manifest is valid;
 - every referenced sheet exists and every frame fits inside it;
-- every station a character names exists;
-- the map has 8 bays and every scenery crop fits its sheet;
-- every station fits every bay without crossing a pillar or an edge, with the worker beside it.
+- the map has a known station for every agent, each inside the world and on its own obstacle;
+- every `work` point and spot can be reached from every station;
+- every scenery crop fits its sheet.
 
 To see the result, run `npm run dev` and open the page with `?demo` to get a workshop full of fake adventurers.

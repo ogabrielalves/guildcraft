@@ -14,26 +14,41 @@ import {
   positive,
   rect,
   size,
+  text,
 } from './parse.js';
+import type { Direction } from './sprite-sheet.js';
+import { DIRECTIONS } from './sprite-sheet.js';
 
 export type { Point, Rect, Size } from './parse.js';
 
-export const BAY_POINTS = ['door', 'station', 'work', 'read', 'nap', 'guest'] as const;
-export type BayPoint = (typeof BAY_POINTS)[number];
+export const SPOT_KINDS = ['read', 'nap', 'hearth', 'table'] as const;
+export type SpotKind = (typeof SPOT_KINDS)[number];
 
-export type Bay = Record<BayPoint, Point> & { area: Rect };
+export interface StationPlace {
+  id: string;
+  at: Point;
+  work: Point;
+}
 
-export type Scenery =
+export interface Spot {
+  kind: SpotKind;
+  at: Point;
+  facing: Direction;
+}
+
+export type Scenery = (
   | { kind: 'image'; image: string; source: Rect; at: Point; repeat: Size | null; flip: boolean }
-  | { kind: 'fill'; color: string; area: Rect };
+  | { kind: 'fill'; color: string; area: Rect }
+) & { depth: number | null };
 
 export interface WorkshopMap {
   width: number;
   height: number;
   tileSize: number;
-  corridorY: number;
   floor: string;
-  bays: Bay[];
+  stations: StationPlace[];
+  obstacles: Rect[];
+  spots: Spot[];
   scenery: Scenery[];
   embers: Point[];
 }
@@ -49,30 +64,28 @@ export function contains(area: Rect, target: Point): boolean {
   );
 }
 
-function parseBay(value: unknown, path: string): Bay {
-  const raw = fields(value, path);
-  const area = rect(raw.area, `${path}.area`);
-  const bay = { area } as Bay;
-  for (const name of BAY_POINTS) {
-    const spot = point(raw[name], `${path}.${name}`);
-    if (!contains(area, spot)) throw new AssetError(`${path}.${name}`);
-    bay[name] = spot;
-  }
-  return bay;
-}
-
 function flag(value: unknown, path: string): boolean {
   if (typeof value !== 'boolean') throw new AssetError(path);
   return value;
 }
 
+function oneOf<T extends string>(options: readonly T[]) {
+  return (value: unknown, path: string): T => {
+    const found = options.find((option) => option === value);
+    if (found === undefined) throw new AssetError(path);
+    return found;
+  };
+}
+
 function parseScenery(value: unknown, path: string): Scenery {
   const raw = fields(value, path);
+  const depth = optional<number | null>(raw.depth, finite, `${path}.depth`, null);
   if (raw.color !== undefined) {
     return {
       kind: 'fill',
       color: color(raw.color, `${path}.color`),
       area: rect(raw.area, `${path}.area`),
+      depth,
     };
   }
   return {
@@ -82,6 +95,25 @@ function parseScenery(value: unknown, path: string): Scenery {
     at: point(raw.at, `${path}.at`),
     repeat: optional<Size | null>(raw.repeat, size, `${path}.repeat`, null),
     flip: optional(raw.flip, flag, `${path}.flip`, false),
+    depth,
+  };
+}
+
+function parseStation(value: unknown, path: string): StationPlace {
+  const raw = fields(value, path);
+  return {
+    id: text(raw.id, `${path}.id`),
+    at: point(raw.at, `${path}.at`),
+    work: point(raw.work, `${path}.work`),
+  };
+}
+
+function parseSpot(value: unknown, path: string): Spot {
+  const raw = fields(value, path);
+  return {
+    kind: oneOf(SPOT_KINDS)(raw.kind, `${path}.kind`),
+    at: point(raw.at, `${path}.at`),
+    facing: optional(raw.facing, oneOf(DIRECTIONS), `${path}.facing`, 'south'),
   };
 }
 
@@ -93,23 +125,28 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
   const raw = fields(value, '$');
   const width = positive(raw.width, '$.width');
   const height = positive(raw.height, '$.height');
-  const tileSize = positive(raw.tileSize, '$.tileSize');
-  const corridorY = finite(raw.corridorY, '$.corridorY');
-  if (corridorY < 0 || corridorY > height) throw new AssetError('$.corridorY');
-  if (!Array.isArray(raw.bays) || raw.bays.length !== MAX_AGENTS) throw new AssetError('$.bays');
-  const bays = each(raw.bays, '$.bays', parseBay);
-  bays.forEach(({ area }, index) => {
-    if (area.x < 0 || area.y < 0 || area.x + area.width > width || area.y + area.height > height) {
-      throw new AssetError(`$.bays[${String(index)}].area`);
-    }
+  const bounds = { x: 0, y: 0, width, height };
+  const inside = (target: Point, path: string) => {
+    if (!contains(bounds, target)) throw new AssetError(path);
+  };
+  const stations = each(raw.stations, '$.stations', parseStation);
+  if (stations.length < MAX_AGENTS) throw new AssetError('$.stations');
+  stations.forEach(({ at, work }, index) => {
+    inside(at, `$.stations[${String(index)}].at`);
+    inside(work, `$.stations[${String(index)}].work`);
+  });
+  const spots = each(raw.spots, '$.spots', parseSpot);
+  spots.forEach(({ at }, index) => {
+    inside(at, `$.spots[${String(index)}].at`);
   });
   return {
     width,
     height,
-    tileSize,
-    corridorY,
+    tileSize: positive(raw.tileSize, '$.tileSize'),
     floor: optional(raw.floor, color, '$.floor', DEFAULT_FLOOR),
-    bays,
+    stations,
+    obstacles: each(raw.obstacles, '$.obstacles', rect),
+    spots,
     scenery: each(raw.scenery, '$.scenery', parseScenery),
     embers: each(raw.embers, '$.embers', point),
   };
@@ -119,19 +156,8 @@ export async function loadWorkshopMap(url: string, request: FetchLike): Promise<
   return parseWorkshopMap(await fetchJson(url, request));
 }
 
-export function bayAt(map: WorkshopMap, index: number): Bay {
-  const bay = map.bays[index];
-  if (bay === undefined) throw new RangeError(`unknown bay ${String(index)}`);
-  return bay;
-}
-
-export const WANDER_MARGIN = { side: 16, top: 20, bottom: 8 };
-
-export function wanderPoint(bay: Bay, random: () => number = Math.random): Point {
-  const { x, y, width, height } = bay.area;
-  const { side, top, bottom } = WANDER_MARGIN;
-  return {
-    x: x + side + random() * (width - 2 * side),
-    y: y + top + random() * (height - top - bottom),
-  };
+export function stationAt(map: WorkshopMap, index: number): StationPlace {
+  const station = map.stations[index];
+  if (station === undefined) throw new RangeError(`unknown station ${String(index)}`);
+  return station;
 }

@@ -5,7 +5,7 @@ import type { ServerMessage } from '../../shared/protocol.js';
 import { Store } from '../state/store.js';
 import { NO_ASSETS } from './assets.js';
 import { createGame } from './game.js';
-import { bayAt, parseWorkshopMap } from './map.js';
+import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
@@ -28,7 +28,6 @@ function setup(agents: AgentView[] = []) {
   const store = new Store();
   store.apply({ type: 'session:init', agents, events: [], skins: ['brom'], permissions: [] });
   const callbacks: FrameRequestCallback[] = [];
-  const onRecruit = vi.fn();
   const onHover = vi.fn();
   const listeners = new Set<(message: ServerMessage) => void>();
   const socket = {
@@ -45,7 +44,6 @@ function setup(agents: AgentView[] = []) {
     socket,
     map,
     assets: NO_ASSETS,
-    onRecruit,
     onHover,
     now: () => 5000,
     random: () => 0.5,
@@ -58,7 +56,7 @@ function setup(agents: AgentView[] = []) {
   Object.defineProperty(game.element, 'clientWidth', { value: map.width });
   Object.defineProperty(game.element, 'clientHeight', { value: map.height });
   document.body.append(game.element);
-  return { store, game, callbacks, onRecruit, onHover, emit, listeners };
+  return { store, game, callbacks, onHover, emit, listeners };
 }
 
 function at(x: number, y: number) {
@@ -127,21 +125,37 @@ describe('createGame', () => {
     expect(callbacks).toHaveLength(1);
   });
 
-  it('selects villagers and recruits on empty bays', () => {
-    const { store, game, onRecruit, onHover } = setup([agent('a')]);
+  it('selects villagers and ignores stations', () => {
+    const { store, game, onHover } = setup([agent('a')]);
     game.start();
-    const work = bayAt(map, 0).work;
+    const work = game.world.villager('a')?.position ?? { x: 0, y: 0 };
     game.element.dispatchEvent(new MouseEvent('click', at(work.x, work.y - 8)));
     expect(store.getState().selected).toEqual(['a']);
-    const empty = bayAt(map, 6).area;
-    game.element.dispatchEvent(new MouseEvent('mousemove', at(empty.x + 2, empty.y + 2)));
-    expect(onHover).toHaveBeenLastCalledWith({ kind: 'bay', bay: 6 }, empty.x + 2, empty.y + 2);
-    game.element.dispatchEvent(new MouseEvent('click', at(empty.x + 2, empty.y + 2)));
-    expect(onRecruit).toHaveBeenCalledWith(6);
+    const free = stationAt(map, 2).at;
+    game.element.dispatchEvent(new MouseEvent('mousemove', at(free.x, free.y - 4)));
+    expect(onHover).toHaveBeenLastCalledWith(null, free.x, free.y - 4);
+    game.element.dispatchEvent(new MouseEvent('click', at(free.x, free.y - 4)));
+    expect(store.getState().selected).toEqual(['a']);
+  });
+
+  it('zooms with the wheel and pans by dragging the floor', () => {
+    const { game } = setup();
+    game.start();
+    const wheel = new WheelEvent('wheel', { deltaY: -400, cancelable: true });
+    Object.defineProperties(wheel, { clientX: { value: 0 }, clientY: { value: 0 } });
+    game.element.dispatchEvent(wheel);
+    const zoomed = game.engine.view;
+    expect(zoomed.scale).toBeGreaterThan(1);
+    expect([zoomed.x, zoomed.y]).toEqual([0, 0]);
+    game.element.dispatchEvent(new MouseEvent('mousedown', { ...at(200, 220), button: 0 }));
+    game.element.dispatchEvent(new MouseEvent('mousemove', at(150, 200)));
+    game.element.dispatchEvent(new MouseEvent('mouseup'));
+    expect(game.engine.view.x).toBe(-50);
+    expect(game.engine.view.y).toBe(-20);
   });
 
   it('stops everything on destroy', () => {
-    const { store, game, onRecruit, listeners } = setup([agent('a')]);
+    const { store, game, listeners } = setup([agent('a')]);
     game.start();
     game.destroy();
     expect(listeners.size).toBe(0);
@@ -149,7 +163,8 @@ describe('createGame', () => {
     expect(game.element.isConnected).toBe(false);
     store.apply({ type: 'agent:updated', agent: agent('b') });
     expect(game.world.villager('b')).toBeUndefined();
-    game.element.dispatchEvent(new MouseEvent('click', at(2, 90)));
-    expect(onRecruit).not.toHaveBeenCalled();
+    const work = game.world.villager('a')?.position ?? { x: 0, y: 0 };
+    game.element.dispatchEvent(new MouseEvent('click', at(work.x, work.y - 8)));
+    expect(store.getState().selected).toEqual([]);
   });
 });

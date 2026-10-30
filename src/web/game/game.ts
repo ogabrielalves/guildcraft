@@ -18,7 +18,6 @@ export interface GameOptions {
   socket: Pick<GameSocket, 'onMessage'>;
   map: WorkshopMap;
   assets: Assets;
-  onRecruit(bay: number): void;
   onHover?(hover: Hover, clientX: number, clientY: number): void;
   now?: () => number;
   random?: () => number;
@@ -91,12 +90,15 @@ export function createGame(options: GameOptions): Game {
     onSelect(agentId, mode) {
       store.select(agentId, mode);
     },
-    onRecruit(bay) {
-      options.onRecruit(bay);
-    },
     onHover(hover, clientX, clientY) {
       hovered = hover;
       options.onHover?.(hover, clientX, clientY);
+    },
+    onPan(dx, dy) {
+      engine.panBy(dx, dy);
+    },
+    onZoom(clientX, clientY, factor) {
+      engine.zoomAt(clientX, clientY, factor);
     },
   });
 

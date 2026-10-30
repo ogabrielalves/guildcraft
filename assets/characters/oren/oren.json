@@ -4,7 +4,6 @@
     "pt-BR": "Oren"
   },
   "source": "lpc",
-  "station": "alchemy-small",
   "facing": "four",
   "image": "oren.png",
   "frame": {

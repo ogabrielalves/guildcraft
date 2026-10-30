@@ -94,17 +94,11 @@ if (root) {
       socket,
       map,
       assets,
-      onRecruit: () => {
-        dialog.open();
-      },
       onHover: (hover, clientX, clientY) => {
         const agent = hover?.kind === 'villager' ? store.agent(hover.id) : undefined;
-        const text =
-          hover?.kind === 'bay'
-            ? t('workshop.recruit')
-            : agent
-              ? `${agent.name} · ${agent.tool !== null && agent.tool.detail !== '' ? agent.tool.detail : t(statusKey(agent.status))}`
-              : null;
+        const text = agent
+          ? `${agent.name} · ${agent.tool !== null && agent.tool.detail !== '' ? agent.tool.detail : t(statusKey(agent.status))}`
+          : null;
         const bounds = game.element.getBoundingClientRect();
         if (text === null) tooltip.hide();
         else tooltip.show(text, clientX - bounds.left, clientY - bounds.top);

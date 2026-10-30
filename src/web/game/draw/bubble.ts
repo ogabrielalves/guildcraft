@@ -1,4 +1,4 @@
-import type { Activity } from '../activity.js';
+import type { Activity, IdlePlan } from '../activity.js';
 import type { Paint } from './paint.js';
 
 export const BUBBLE_COLORS = { fill: '#f1e4cf', border: '#17110d' };
@@ -16,9 +16,18 @@ const ACTIVITY_BUBBLES: Partial<Record<Activity, string>> = {
   off: '💤',
 };
 
-export function bubbleFor(activity: Activity, visiting: boolean): string | null {
+const IDLE_BUBBLES: Partial<Record<IdlePlan, string>> = {
+  chat: '💬',
+  nap: '💤',
+};
+
+export function bubbleFor(
+  activity: Activity,
+  visiting: boolean,
+  doing: IdlePlan | null = null,
+): string | null {
   if (visiting) return NOTE_ICON;
-  return ACTIVITY_BUBBLES[activity] ?? null;
+  return ACTIVITY_BUBBLES[activity] ?? (doing === null ? null : (IDLE_BUBBLES[doing] ?? null));
 }
 
 export function shortNote(text: string, max = NOTE_LENGTH): string {

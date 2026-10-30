@@ -4,7 +4,6 @@
     "pt-BR": "Lyra"
   },
   "source": "pixel-crawler",
-  "station": "grill",
   "facing": "side",
   "animations": {
     "idle": {

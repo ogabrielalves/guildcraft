@@ -95,6 +95,16 @@ describe('bubble', () => {
     expect(bubbleFor(activity, visiting)).toBe(text);
   });
 
+  it.each([
+    ['idle', 'chat', '💬'],
+    ['idle', 'nap', '💤'],
+    ['idle', 'hearth', null],
+    ['idle', null, null],
+    ['think', 'chat', '💭'],
+  ] as const)('shows %s while doing %s as %s', (activity, doing, text) => {
+    expect(bubbleFor(activity, false, doing)).toBe(text);
+  });
+
   it('draws a framed bubble with a tail and the icon', () => {
     const ctx = recordingPaint();
     drawBubble(ctx, '💭', 30, 20, 0);

@@ -4,7 +4,6 @@
     "pt-BR": "Seren"
   },
   "source": "lpc",
-  "station": "furnace",
   "facing": "four",
   "image": "seren.png",
   "frame": {

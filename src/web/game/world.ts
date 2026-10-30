@@ -1,17 +1,21 @@
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import { activityOf } from './activity.js';
+import { Layout } from './layout.js';
 import type { WorkshopMap } from './map.js';
 import { Villager } from './villager.js';
 
 export const EVENT_FRESHNESS_MS = 10_000;
 
 export class World {
+  readonly layout: Layout;
   private readonly villagers = new Map<string, Villager>();
 
   constructor(
     readonly map: WorkshopMap,
     private readonly random: () => number = Math.random,
-  ) {}
+  ) {
+    this.layout = new Layout(map);
+  }
 
   villager(agentId: string): Villager | undefined {
     return this.villagers.get(agentId);
@@ -25,14 +29,21 @@ export class World {
     return this.all().sort((a, b) => a.position.y - b.position.y);
   }
 
-  occupiedBays(): Set<number> {
-    return new Set(this.all().map((villager) => villager.bay));
+  owner(station: number): Villager | undefined {
+    return this.all().find((villager) => villager.station === station);
+  }
+
+  freeStations(): number[] {
+    const taken = new Set(this.all().map((villager) => villager.station));
+    return this.map.stations.flatMap((_, index) => (taken.has(index) ? [] : [index]));
   }
 
   sync(agents: readonly AgentView[]): void {
     const ids = new Set(agents.map((agent) => agent.id));
-    for (const id of this.villagers.keys()) {
-      if (!ids.has(id)) this.villagers.delete(id);
+    for (const [id, villager] of this.villagers) {
+      if (ids.has(id)) continue;
+      villager.leave();
+      this.villagers.delete(id);
     }
     for (const agent of agents) {
       const activity = activityOf(agent);
@@ -41,9 +52,12 @@ export class World {
         existing.setActivity(activity);
         continue;
       }
-      const bay = this.freeBay();
-      if (bay === null) continue;
-      this.villagers.set(agent.id, new Villager(agent.id, bay, this.map, activity, this.random));
+      const station = this.pickStation();
+      if (station === null) continue;
+      this.villagers.set(
+        agent.id,
+        new Villager(agent.id, station, this.layout, activity, this.random, () => this.all()),
+      );
     }
   }
 
@@ -53,17 +67,16 @@ export class World {
   }
 
   visit(fromId: string, toId: string, note: string | null = null): void {
-    const target = this.villagers.get(toId);
-    if (target) this.villagers.get(fromId)?.startVisit(target.bay, note);
+    const host = this.villagers.get(toId);
+    if (host && fromId !== toId) this.villagers.get(fromId)?.startVisit(host.position, note);
   }
 
   update(dt: number): void {
     for (const villager of this.villagers.values()) villager.update(dt);
   }
 
-  private freeBay(): number | null {
-    const taken = this.occupiedBays();
-    const index = this.map.bays.findIndex((_, bay) => !taken.has(bay));
-    return index === -1 ? null : index;
+  private pickStation(): number | null {
+    const free = this.freeStations();
+    return free[Math.floor(this.random() * free.length)] ?? null;
   }
 }
