@@ -16,6 +16,8 @@ function agent(id: string, status: AgentStatus = 'idle'): AgentView {
     permissionMode: 'default',
     tool: null,
     waitingFor: null,
+    model: null,
+    effort: null,
     queued: 0,
   };
 }

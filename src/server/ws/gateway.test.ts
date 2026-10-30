@@ -21,6 +21,8 @@ const VIEW: AgentView = {
   permissionMode: 'default',
   tool: null,
   waitingFor: null,
+  model: null,
+  effort: null,
   queued: 0,
 };
 

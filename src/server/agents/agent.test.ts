@@ -13,6 +13,8 @@ describe('Agent', () => {
       status: 'offline',
       tool: null,
       waitingFor: null,
+      model: null,
+      effort: null,
       queued: 0,
     });
   });
@@ -43,6 +45,16 @@ describe('Agent', () => {
     expect(agent.setStatus('tool')).toBe(true);
     expect(agent.tool).toBeNull();
     expect(agent.setStatus('tool')).toBe(false);
+  });
+
+  it('reports whether the model or effort changed', () => {
+    const agent = new Agent(INIT);
+    expect(agent.setModel('claude-opus-5-5', 'medium')).toBe(true);
+    expect(agent.setModel('claude-opus-5-5', 'medium')).toBe(false);
+    expect(agent.setModel('claude-opus-5-5', 'high')).toBe(true);
+    expect(agent.setModel('claude-sonnet-5-5', 'high')).toBe(true);
+    expect(agent.setModel('claude-sonnet-5-5', null)).toBe(true);
+    expect(agent.toView()).toMatchObject({ model: 'claude-sonnet-5-5', effort: null });
   });
 
   it('returns a view that does not share the tool object', () => {

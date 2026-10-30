@@ -25,6 +25,8 @@ export class Agent {
   status: AgentStatus = 'offline';
   tool: AgentTool | null = null;
   waitingFor: WaitingReason | null = null;
+  model: string | null = null;
+  effort: string | null = null;
   queued = 0;
 
   constructor(init: AgentInit) {
@@ -53,6 +55,13 @@ export class Agent {
     return changed;
   }
 
+  setModel(model: string, effort: string | null): boolean {
+    const changed = this.model !== model || this.effort !== effort;
+    this.model = model;
+    this.effort = effort;
+    return changed;
+  }
+
   toView(): AgentView {
     return {
       id: this.id,
@@ -63,6 +72,8 @@ export class Agent {
       permissionMode: this.permissionMode,
       tool: this.tool && { ...this.tool },
       waitingFor: this.waitingFor,
+      model: this.model,
+      effort: this.effort,
       queued: this.queued,
     };
   }

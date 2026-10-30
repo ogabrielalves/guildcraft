@@ -64,6 +64,8 @@ function agent(id: string, status: AgentStatus, skin = 'mortis'): AgentView {
     permissionMode: 'default',
     tool: status === 'tool' ? { name: 'Bash', detail: 'npm test' } : null,
     waitingFor: null,
+    model: null,
+    effort: null,
     queued: 0,
   };
 }

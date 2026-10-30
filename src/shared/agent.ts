@@ -28,6 +28,8 @@ export interface AgentView {
   permissionMode: PermissionMode;
   tool: AgentTool | null;
   waitingFor: WaitingReason | null;
+  model: string | null;
+  effort: string | null;
   queued: number;
 }
 

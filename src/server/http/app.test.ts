@@ -24,6 +24,8 @@ const VIEW: AgentView = {
   permissionMode: 'default',
   tool: { name: 'Edit', detail: 'App.tsx' },
   waitingFor: null,
+  model: null,
+  effort: null,
   queued: 2,
 };
 

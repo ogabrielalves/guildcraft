@@ -1136,6 +1136,77 @@ describe('permissions', () => {
   });
 });
 
+describe('model', () => {
+  function line(model: string, effort: string) {
+    return JSON.stringify({ type: 'assistant', message: { model }, effort });
+  }
+
+  it('reads the model and effort from the transcript after each turn', async () => {
+    const lines = [line('claude-haiku-5-5', 'low')];
+    const readLines = vi.fn(() => Promise.resolve(lines));
+    const ctx = setup({ readLines });
+    const { id } = await ready(ctx);
+    expect(readLines).not.toHaveBeenCalled();
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(readLines).toHaveBeenCalledWith('/t.jsonl');
+    expect(ctx.ofType('agent:updated').at(-1)?.agent).toMatchObject({
+      model: 'claude-haiku-5-5',
+      effort: 'low',
+    });
+    ctx.manager.hook(id, 'Stop', {});
+    const updates = ctx.ofType('agent:updated').length;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.ofType('agent:updated')).toHaveLength(updates);
+    lines.push(line('claude-sonnet-5-5', 'max'));
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.manager.views()[0]).toMatchObject({ model: 'claude-sonnet-5-5', effort: 'max' });
+  });
+
+  it('waits for a transcript path', async () => {
+    const readLines = vi.fn(() => Promise.resolve([line('claude-opus-5-5', 'medium')]));
+    const ctx = setup({ readLines });
+    const { id } = await created(ctx);
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(readLines).not.toHaveBeenCalled();
+    expect(ctx.manager.views()[0]?.model).toBeNull();
+  });
+
+  it('keeps the last model when the transcript has none or fails', async () => {
+    const readLines = vi.fn(() => Promise.resolve([line('claude-opus-5-5', 'medium')]));
+    const ctx = setup({ readLines });
+    const { id } = await ready(ctx);
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    readLines.mockResolvedValueOnce([]);
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    readLines.mockRejectedValueOnce(new Error('EBUSY'));
+    ctx.manager.hook(id, 'Stop', {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.manager.views()[0]).toMatchObject({ model: 'claude-opus-5-5', effort: 'medium' });
+  });
+
+  it('ignores a read that finishes after a restart', async () => {
+    let finish: (lines: string[]) => void = () => undefined;
+    const readLines = vi.fn(
+      () =>
+        new Promise<string[]>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const ctx = setup({ readLines });
+    const { id } = await ready(ctx);
+    ctx.manager.hook(id, 'Stop', {});
+    await ctx.manager.restart(id);
+    finish([line('claude-opus-5-5', 'medium')]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ctx.manager.views()[0]?.model).toBeNull();
+  });
+});
+
 describe('session registry', () => {
   it('matches by pid, adopts the session and applies newer states', async () => {
     const ctx = setup();

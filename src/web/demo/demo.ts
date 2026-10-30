@@ -127,6 +127,8 @@ export function createDemoAgents(): AgentView[] {
     permissionMode: 'default',
     tool: null,
     waitingFor: null,
+    model: null,
+    effort: null,
     queued: 0,
   }));
 }
@@ -290,6 +292,8 @@ export class DemoSocket {
       permissionMode: message.permissionMode,
       tool: null,
       waitingFor: null,
+      model: null,
+      effort: null,
       queued: 0,
     };
     this.agents = [...this.agents, agent];

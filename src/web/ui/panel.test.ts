@@ -34,6 +34,8 @@ function agent(id: string, overrides: Partial<AgentView> = {}): AgentView {
     permissionMode: 'default',
     tool: null,
     waitingFor: null,
+    model: null,
+    effort: null,
     queued: 0,
     ...overrides,
   };

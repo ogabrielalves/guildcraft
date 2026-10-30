@@ -27,6 +27,8 @@ import { QUESTION_TOOL } from '../permissions/request.js';
 import { readTailLines } from '../permissions/tool-call.js';
 import type { SessionEntry } from '../sessions/session-registry.js';
 import { reconcileSession } from '../sessions/session-sync.js';
+import type { ModelInfo } from '../sessions/transcript-model.js';
+import { latestModel } from '../sessions/transcript-model.js';
 import type { ClaudeCommand } from '../platform/claude-binary.js';
 import type { StoredAgent } from '../store/agent-store.js';
 import type { Agent } from './agent.js';
@@ -161,13 +163,15 @@ export class AgentManager {
   private readonly events: VillageEvent[] = [];
   private readonly now: () => number;
   private readonly broker: PermissionBroker;
+  private readonly readLines: (path: string) => Promise<string[]>;
 
   constructor(private readonly deps: ManagerDeps) {
     this.now = deps.now ?? Date.now;
+    this.readLines = deps.readLines ?? ((path) => readTailLines(path));
     this.broker = new PermissionBroker({
       emit: deps.emit,
       hasViewers: deps.hasViewers ?? (() => true),
-      readLines: deps.readLines ?? ((path) => readTailLines(path)),
+      readLines: this.readLines,
       onResolved: (agentId, outcome, decision) => {
         this.permissionResolved(agentId, outcome, decision);
       },
@@ -358,6 +362,7 @@ export class AgentManager {
     if (runtime) this.advanceHold(runtime, event);
     const payload = parseHookPayload(rawPayload);
     if (runtime) this.trackSession(runtime, payload);
+    if (runtime && event === 'Stop') void this.refreshModel(agent, runtime);
     this.settlePermissions(id, event, payload);
     const outcome = handleHook(event, payload, agent.status);
     if (!outcome) return ok(undefined);
@@ -423,6 +428,18 @@ export class AgentManager {
   private trackSession(runtime: Runtime, payload: HookPayload): void {
     if (payload.sessionId) runtime.sessionId = payload.sessionId;
     if (payload.transcriptPath) runtime.transcriptPath = payload.transcriptPath;
+  }
+
+  private async refreshModel(agent: Agent, runtime: Runtime): Promise<void> {
+    if (!runtime.transcriptPath) return;
+    let info: ModelInfo | null;
+    try {
+      info = latestModel(await this.readLines(runtime.transcriptPath));
+    } catch {
+      return;
+    }
+    if (!info || this.runtimes.get(agent.id) !== runtime) return;
+    if (agent.setModel(info.model, info.effort)) this.broadcast(agent);
   }
 
   private settlePermissions(id: string, event: HookEvent, payload: HookPayload): void {
