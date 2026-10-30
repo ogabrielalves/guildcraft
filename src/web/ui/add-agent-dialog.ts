@@ -75,7 +75,7 @@ export function suggestName(label: string, agents: readonly Pick<AgentView, 'nam
 }
 
 export function defaultSkin(skins: readonly string[], agents: readonly Pick<AgentView, 'skin'>[]) {
-  return skins.find((skin) => !agents.some((agent) => agent.skin === skin)) ?? skins[0] ?? null;
+  return skins.find((skin) => !agents.some((agent) => agent.skin === skin)) ?? null;
 }
 
 export function isFull(agents: readonly unknown[]): boolean {
@@ -141,6 +141,8 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   const title = make('h2', 'dialog__title');
   const full = make('p', 'recruit__full');
   full.setAttribute('role', 'alert');
+  const allUsed = make('p', 'recruit__full recruit__all-used');
+  allUsed.setAttribute('role', 'alert');
 
   const details = make('section', 'recruit__step recruit__step--details');
   const characterLabel = label(make('span', 'recruit__label'), 'recruit.character');
@@ -193,7 +195,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   const pickerBody = make('div', 'folder-picker__body');
   picker.append(pickerHeader, pickerBody);
 
-  element.append(title, full, details, trust, errorBox, footer, picker);
+  element.append(title, full, allUsed, details, trust, errorBox, footer, picker);
 
   const agents = () => store.getState().agents;
   const agentName = () =>
@@ -225,7 +227,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
 
   const renderCatalog = () => {
     const skins = store.getState().skins;
-    if (skin === null || !skins.includes(skin)) skin = defaultSkin(skins, agents());
+    const used = new Set(agents().map((agent) => agent.skin));
     catalog.replaceChildren(
       ...skins.map((id) => {
         const card = make('button', 'recruit__character');
@@ -239,7 +241,8 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
         const name = make('span', 'recruit__character-name');
         name.textContent = characterName(assets, id, getLocale());
         card.append(portrait, name);
-        if (agents().some((agent) => agent.skin === id)) {
+        card.disabled = used.has(id);
+        if (used.has(id)) {
           const badge = make('span', 'recruit__in-use');
           badge.textContent = t('recruit.inUse');
           card.append(badge);
@@ -254,12 +257,26 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     drawPortraits();
   };
 
+  const pickSkin = () => {
+    const skins = store.getState().skins;
+    if (skin === null || !skins.includes(skin) || agents().some((agent) => agent.skin === skin)) {
+      skin = defaultSkin(skins, agents());
+    }
+  };
+
   const render = () => {
+    pickSkin();
     const isTrust = step === 'trust';
     const busy = pending !== null;
     title.textContent = t(isTrust ? 'recruit.trustTitle' : 'recruit.title');
     full.hidden = !isFull(agents());
     full.textContent = t('workshop.full', { max: MAX_AGENTS });
+    const skins = store.getState().skins;
+    allUsed.hidden =
+      isFull(agents()) ||
+      skins.length === 0 ||
+      skins.some((id) => !agents().some((agent) => agent.skin === id));
+    allUsed.textContent = t('recruit.allInUse');
     details.hidden = isTrust;
     trust.hidden = !isTrust;
     back.hidden = !isTrust;

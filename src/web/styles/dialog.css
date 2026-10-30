@@ -242,6 +242,18 @@
   border-color: var(--ink);
 }
 
+.recruit__character:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.6;
+  transform: none;
+}
+
+.recruit__character:disabled:hover {
+  border-color: var(--border);
+  transform: none;
+}
+
 .recruit__character[aria-checked='true'] {
   background: #ffe6a6;
   border-color: var(--ink);

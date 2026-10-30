@@ -40,6 +40,10 @@
     "model": "Model",
     "effort": "Effort"
   },
+  "console": {
+    "title": "{name} · Console",
+    "close": "Close console"
+  },
   "waitingFor": {
     "permission": "Your approval for a tool",
     "question": "An answer to a question",
@@ -72,6 +76,7 @@
     "chooseFolder": "Choose a folder…",
     "character": "Character",
     "inUse": "In use",
+    "allInUse": "Every character is already in the guild. Remove an adventurer to recruit another.",
     "next": "Next",
     "back": "Back",
     "cancel": "Cancel",

@@ -172,6 +172,26 @@ describe('drawScene scenery', () => {
   });
 });
 
+describe('foreground props', () => {
+  it('covers a villager walking behind a prop but not one in front of it', () => {
+    const target = scene([agent('a', 'idle'), agent('b', 'idle')]);
+    const behind = target.world.villager('a');
+    const front = target.world.villager('b');
+    if (!behind || !front) throw new Error('missing villagers');
+    behind.position = { x: 305, y: 195 };
+    front.position = { x: 310, y: 205 };
+    const order = render(target)
+      .named('drawImage')
+      .map((call) => imageUrl(call.args[0]))
+      .filter((url) => url.includes('shelf') || url.includes('characters'));
+    expect(order).toEqual([
+      '/assets/characters/mortis/idle.png',
+      '/assets/tiles/shelf.png',
+      '/assets/characters/mortis/idle.png',
+    ]);
+  });
+});
+
 describe('drawScene villagers and stations', () => {
   it('draws the station frame and the character sprite', () => {
     const urls = drawnImages(scene([agent('a', 'thinking')]));

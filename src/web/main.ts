@@ -91,7 +91,14 @@ if (root) {
   hud.className = 'hud';
   hud.append(recruit.element, createStats(store).element, createFeed(store).element);
   const tooltip = createTooltip();
-  mountShell(root, store, [hud, panel.element, compose.element, toasts.element, tooltip.element]);
+  mountShell(root, store, [
+    hud,
+    panel.element,
+    panel.console,
+    compose.element,
+    toasts.element,
+    tooltip.element,
+  ]);
   const startGame = (map: WorkshopMap) => {
     const started = createGame({
       store,

@@ -81,10 +81,12 @@ export interface PanelOptions {
   doing?: (agentId: string) => IdlePlan | null;
   every?: Every;
   frames?: Frames;
+  keys?: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
 }
 
 export interface Panel {
   readonly element: HTMLElement;
+  readonly console: HTMLElement;
   destroy(): void;
 }
 
@@ -155,6 +157,7 @@ export function createPanel(options: PanelOptions): Panel {
   const labels = new Map<HTMLElement, TranslationKey>();
   let shown: AgentView | null = null;
   let shownSkins: readonly string[] | null = null;
+  let shownAgents: readonly AgentView[] | null = null;
   let consoleOpen = false;
   let stopRefresh: (() => void) | null = null;
 
@@ -171,7 +174,6 @@ export function createPanel(options: PanelOptions): Panel {
 
   const element = make('aside', 'panel');
   element.hidden = true;
-  element.dataset.console = 'closed';
 
   const portrait = make('canvas', 'panel__portrait');
   portrait.width = PORTRAIT.width;
@@ -276,17 +278,35 @@ export function createPanel(options: PanelOptions): Panel {
   actions.append(toggle, interrupt, restart);
   const manage = make('div', 'panel__manage');
   manage.append(skinField, remove, removeAll);
-  const tools = make('div', 'panel__console-tools');
-  tools.append(copy, paste);
-  const consoleSection = make('section', 'panel__console');
-  consoleSection.hidden = true;
-  consoleSection.append(tools, terminal.element);
-  element.append(header, details, actions, manage, consoleSection);
+  element.append(header, details, actions, manage);
+
+  const consoleTitle = make('h2', 'console-window__title');
+  const consoleClose = make('button', 'console-window__close');
+  consoleClose.type = 'button';
+  consoleClose.textContent = '×';
+  consoleClose.addEventListener('click', () => {
+    setConsole(false);
+  });
+  const consoleBar = make('header', 'console-window__bar');
+  consoleBar.append(consoleTitle, copy, paste, consoleClose);
+  const consoleWindow = make('section', 'console-window');
+  consoleWindow.hidden = true;
+  consoleWindow.setAttribute('role', 'dialog');
+  consoleWindow.append(consoleBar, terminal.element);
+
+  const keys = options.keys ?? window;
+  const onKey = (event: Event) => {
+    if (!(event instanceof KeyboardEvent) || event.key !== 'Escape' || !consoleOpen) return;
+    if (event.target instanceof Node && terminal.element.contains(event.target)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setConsole(false);
+  };
+  keys.addEventListener('keydown', onKey, true);
 
   function setConsole(open: boolean): void {
     consoleOpen = open;
-    consoleSection.hidden = !open;
-    element.dataset.console = open ? 'open' : 'closed';
+    consoleWindow.hidden = !open;
     labels.set(toggle, open ? 'panel.hideConsole' : 'panel.console');
     toggle.textContent = t(labels.get(toggle) ?? 'panel.console');
     toggle.setAttribute('aria-expanded', String(open));
@@ -296,16 +316,22 @@ export function createPanel(options: PanelOptions): Panel {
     }
   }
 
-  const renderSkins = (agent: AgentView, skins: readonly string[]) => {
-    const choices = skinChoices(skins, agent.skin).map((skin) => {
+  const renderSkins = (agent: AgentView, state: StoreState) => {
+    const taken = new Set(
+      state.agents.filter((other) => other.id !== agent.id).map((other) => other.skin),
+    );
+    const choices = skinChoices(state.skins, agent.skin).map((skin) => {
       const option = document.createElement('option');
       option.value = skin;
-      option.textContent = skinLabel(skin);
+      option.disabled = taken.has(skin);
+      option.textContent = option.disabled
+        ? `${skinLabel(skin)} · ${t('recruit.inUse')}`
+        : skinLabel(skin);
       return option;
     });
     skinSelect.replaceChildren(...choices);
     skinSelect.value = agent.skin;
-    skinSelect.disabled = choices.length < 2;
+    skinSelect.disabled = choices.filter((option) => !option.disabled).length < 2;
   };
 
   const renderDetails = (agent: AgentView) => {
@@ -346,6 +372,10 @@ export function createPanel(options: PanelOptions): Panel {
     interrupt.disabled = agent.status === 'offline';
     close.title = t('panel.close');
     close.setAttribute('aria-label', t('panel.close'));
+    consoleTitle.textContent = t('console.title', { name: agent.name });
+    consoleWindow.setAttribute('aria-label', consoleTitle.textContent);
+    consoleClose.title = t('console.close');
+    consoleClose.setAttribute('aria-label', t('console.close'));
     renderDetails(agent);
     renderPortrait(agent);
   };
@@ -356,28 +386,33 @@ export function createPanel(options: PanelOptions): Panel {
 
   const render = (state: StoreState) => {
     const agent = focused() ?? null;
-    if (agent === shown && state.skins === shownSkins) return;
+    if (agent === shown && state.skins === shownSkins && state.agents === shownAgents) return;
     const wasHidden = element.hidden;
     element.hidden = agent === null;
     if (agent) {
       renderAgent(agent);
-      renderSkins(agent, state.skins);
+      renderSkins(agent, state);
     }
     shown = agent;
     shownSkins = state.skins;
+    shownAgents = state.agents;
     if (agent && stopRefresh === null) stopRefresh = every(refresh, REFRESH_MS);
     if (agent && assets && animation === null) animation = frames.request(animate);
     if (!agent) {
       stopRefresh?.();
       stopRefresh = null;
       stopAnimation();
+      if (consoleOpen) setConsole(false);
     }
     if (wasHidden && agent && consoleOpen) terminal.fit();
   };
 
   const renderTexts = () => {
     for (const [target, key] of labels) target.textContent = t(key);
-    if (shown) renderAgent(shown);
+    if (shown) {
+      renderAgent(shown);
+      renderSkins(shown, store.getState());
+    }
   };
 
   renderTexts();
@@ -387,13 +422,16 @@ export function createPanel(options: PanelOptions): Panel {
 
   return {
     element,
+    console: consoleWindow,
     destroy() {
       stopRefresh?.();
       stopRefresh = null;
       stopAnimation();
+      keys.removeEventListener('keydown', onKey, true);
       unsubscribeStore();
       unsubscribeLocale();
       element.remove();
+      consoleWindow.remove();
     },
   };
 }

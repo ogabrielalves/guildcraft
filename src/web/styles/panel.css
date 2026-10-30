@@ -18,12 +18,6 @@
   image-rendering: pixelated;
 }
 
-.panel[data-console='open'] {
-  bottom: var(--gap);
-  width: min(680px, calc(100% - 2 * var(--gap)));
-  max-height: none;
-}
-
 .panel[hidden] {
   display: none;
 }
@@ -158,8 +152,7 @@
 }
 
 .panel__actions,
-.panel__manage,
-.panel__console-tools {
+.panel__manage {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -235,23 +228,71 @@
   color: #ffc2b8;
 }
 
-.panel__console {
+.console-window {
+  --menu-room: calc(2 * (360px + 3 * var(--gap)));
+  position: absolute;
+  top: calc(var(--hud-height) + (100% - var(--hud-height)) / 2);
+  left: 50%;
+  z-index: 20;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  flex: 1 1 auto;
-  gap: 6px;
-  min-height: 0;
+  gap: 8px;
+  width: max(min(860px, calc(100% - var(--menu-room))), min(560px, calc(100% - 2 * var(--gap))));
+  height: min(560px, calc(100% - var(--hud-height) - 2 * var(--gap)));
+  padding: 6px 4px 4px;
+  border-style: solid;
+  border-width: 10px 12px 8px;
+  border-image: url('/assets/ui/slate-frame.png') 5 6 4 6 fill / 10px 12px 8px stretch;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 60%);
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
 }
 
-.panel__console[hidden] {
+.console-window[hidden] {
   display: none;
 }
 
-.panel__console-tools {
-  justify-content: flex-end;
+.console-window__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.panel__console-tools .panel__action {
-  min-height: 30px;
+.console-window__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: 400 20px/1.1 var(--font-pixel);
+  color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-window__bar .panel__action {
+  min-height: 32px;
   font-size: 14px;
+}
+
+.console-window__close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: 400 18px/1 var(--font-pixel);
+  color: #fbeed6;
+  text-shadow: 1px 1px 0 #000;
+  background: none;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('/assets/ui/wood-button.png') 4 fill / 8px stretch;
+  cursor: pointer;
+}
+
+.console-window__close:hover {
+  filter: brightness(1.18);
+}
+
+.console-window__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

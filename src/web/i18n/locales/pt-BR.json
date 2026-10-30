@@ -40,6 +40,10 @@
     "model": "Modelo",
     "effort": "Esforço"
   },
+  "console": {
+    "title": "{name} · Console",
+    "close": "Fechar console"
+  },
   "waitingFor": {
     "permission": "Sua aprovação para uma ferramenta",
     "question": "Uma resposta a uma pergunta",
@@ -72,6 +76,7 @@
     "chooseFolder": "Escolher pasta…",
     "character": "Personagem",
     "inUse": "Em uso",
+    "allInUse": "Todos os personagens já estão na guilda. Remova um aventureiro para recrutar outro.",
     "next": "Próximo",
     "back": "Voltar",
     "cancel": "Cancelar",

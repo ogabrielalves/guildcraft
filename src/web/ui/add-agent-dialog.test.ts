@@ -158,7 +158,7 @@ describe('helpers', () => {
 
   it('prefers a skin nobody is using', () => {
     expect(defaultSkin(['mortis', 'corvin'], [{ skin: 'mortis' }])).toBe('corvin');
-    expect(defaultSkin(['mortis'], [{ skin: 'mortis' }])).toBe('mortis');
+    expect(defaultSkin(['mortis'], [{ skin: 'mortis' }])).toBeNull();
     expect(defaultSkin([], [])).toBeNull();
   });
 
@@ -245,7 +245,7 @@ describe('createAddAgentDialog', () => {
   });
 
   it('names the agent after the character, with a suffix when taken', async () => {
-    const ctx = setup([agent('x', { name: 'Mortis', skin: 'mortis' })]);
+    const ctx = setup([agent('x', { name: 'Mortis', skin: 'corvin' })]);
     await openAt(ctx, 'web');
     ctx.characters()[0]?.click();
     ctx.buttonByText('Next').click();
@@ -276,6 +276,42 @@ describe('createAddAgentDialog', () => {
     lyra?.click();
     expect(ctx.characters()[2]?.getAttribute('aria-checked')).toBe('true');
     expect(ctx.characters()[0]?.textContent).toBe('MortisIn use');
+  });
+
+  it('greys out characters in use and does not let them be picked', async () => {
+    const ctx = setup([agent('x', { skin: 'mortis' })]);
+    await openAt(ctx, 'web');
+    const mortis = ctx.characters()[0];
+    expect(mortis instanceof HTMLButtonElement && mortis.disabled).toBe(true);
+    mortis?.click();
+    expect(ctx.characters()[0]?.getAttribute('aria-checked')).toBe('false');
+    expect(ctx.characters()[1]?.getAttribute('aria-checked')).toBe('true');
+    expect(ctx.one('.recruit__all-used').hidden).toBe(true);
+    ctx.characters()[2]?.click();
+    ctx.store.apply({ type: 'agent:updated', agent: agent('y', { skin: 'lyra' }) });
+    expect(ctx.characters()[2]?.getAttribute('aria-checked')).toBe('false');
+    expect(ctx.characters()[1]?.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('blocks Next with a message when every character is in use', async () => {
+    const ctx = setup([
+      agent('x', { skin: 'mortis' }),
+      agent('y', { skin: 'corvin' }),
+      agent('z', { skin: 'lyra' }),
+    ]);
+    await openAt(ctx, 'web');
+    expect(ctx.characters().every((card) => card.getAttribute('aria-checked') === 'false')).toBe(
+      true,
+    );
+    expect(ctx.buttonByText('Next').disabled).toBe(true);
+    const message = ctx.one('.recruit__all-used');
+    expect(message.hidden).toBe(false);
+    expect(message.textContent).toBe(
+      'Every character is already in the guild. Remove an adventurer to recruit another.',
+    );
+    ctx.store.apply({ type: 'agent:removed', agentId: 'z' });
+    expect(message.hidden).toBe(true);
+    expect(ctx.buttonByText('Next').disabled).toBe(false);
   });
 
   it('requires a folder and a character to continue', async () => {

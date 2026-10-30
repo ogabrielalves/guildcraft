@@ -49,6 +49,7 @@ interface SetupOptions {
   skins?: string[];
   doing?: IdlePlan | null;
   assets?: Assets;
+  keys?: EventTarget;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -85,6 +86,7 @@ function setup(options: SetupOptions = {}) {
     terminal,
     confirm,
     ...(options.assets ? { assets: options.assets } : {}),
+    ...(options.keys ? { keys: options.keys } : {}),
     doing: () => doing,
     every: (callback, ms) => {
       expect(ms).toBe(REFRESH_MS);
@@ -110,7 +112,9 @@ function setup(options: SetupOptions = {}) {
     doing = plan;
   };
   const query = (selector: string): HTMLElement => {
-    const found = panel.element.querySelector<HTMLElement>(selector);
+    const found =
+      panel.element.querySelector<HTMLElement>(selector) ??
+      panel.console.querySelector<HTMLElement>(selector);
     if (!found) throw new Error(`missing ${selector}`);
     return found;
   };
@@ -227,30 +231,80 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
   });
 
-  it('keeps the console closed until asked and remembers it between agents', () => {
-    const { panel, store, terminal, query, button, click } = setup();
-    const section = query('.panel__console');
-    expect(terminal.element.parentElement).toBe(section);
+  it('opens the console in its own window without widening the menu', () => {
+    const { panel, store, terminal, button, click } = setup();
+    const window = panel.console;
+    expect(terminal.element.parentElement).toBe(window);
+    expect(window.getAttribute('role')).toBe('dialog');
+    expect(panel.element.contains(terminal.element)).toBe(false);
     store.focus('a');
-    expect(section.hidden).toBe(true);
+    expect(window.hidden).toBe(true);
     expect(button('console').textContent).toBe('Open console');
     click('console');
-    expect(section.hidden).toBe(false);
-    expect(panel.element.dataset.console).toBe('open');
+    expect(window.hidden).toBe(false);
+    expect(panel.element.hidden).toBe(false);
+    expect(panel.element.dataset.console).toBeUndefined();
+    expect(window.querySelector('.console-window__title')?.textContent).toBe('Agent a · Console');
+    expect(window.getAttribute('aria-label')).toBe('Agent a · Console');
     expect(button('console').getAttribute('aria-expanded')).toBe('true');
     expect(button('console').textContent).toBe('Hide console');
     expect(terminal.fit).toHaveBeenCalledOnce();
     expect(terminal.focus).toHaveBeenCalledOnce();
-    store.focus(null);
     store.focus('b');
-    expect(section.hidden).toBe(false);
-    expect(terminal.fit).toHaveBeenCalledTimes(2);
+    expect(window.hidden).toBe(false);
+    expect(window.querySelector('.console-window__title')?.textContent).toBe('Agent b · Console');
     click('console');
-    expect(section.hidden).toBe(true);
-    expect(panel.element.dataset.console).toBe('closed');
+    expect(window.hidden).toBe(true);
     expect(button('console').textContent).toBe('Open console');
     setLocale('pt-BR');
     expect(button('console').textContent).toBe(DICTIONARIES['pt-BR'].get('panel.console'));
+  });
+
+  it('closes the console window from its × and when the menu closes', () => {
+    const { panel, store, click } = setup();
+    store.focus('a');
+    click('console');
+    const close = panel.console.querySelector<HTMLButtonElement>('.console-window__close');
+    expect(close?.getAttribute('aria-label')).toBe('Close console');
+    close?.click();
+    expect(panel.console.hidden).toBe(true);
+    expect(panel.element.hidden).toBe(false);
+    click('console');
+    store.focus(null);
+    expect(panel.console.hidden).toBe(true);
+    store.focus('a');
+    expect(panel.console.hidden).toBe(true);
+  });
+
+  it('closes the console on Esc unless the key goes to the terminal', () => {
+    const keys = new EventTarget();
+    const { panel, store, terminal, click } = setup({ keys });
+    store.focus('a');
+    const escape = (target: EventTarget) => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'target', { value: target });
+      keys.dispatchEvent(event);
+      return event;
+    };
+    expect(escape(document.body).defaultPrevented).toBe(false);
+    click('console');
+    const inside = document.createElement('textarea');
+    terminal.element.append(inside);
+    expect(escape(inside).defaultPrevented).toBe(false);
+    expect(panel.console.hidden).toBe(false);
+    keys.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(panel.console.hidden).toBe(false);
+    expect(escape(document.body).defaultPrevented).toBe(true);
+    expect(panel.console.hidden).toBe(true);
+    expect(panel.element.hidden).toBe(false);
+    panel.destroy();
+    click('console');
+    escape(document.body);
+    expect(panel.console.hidden).toBe(false);
   });
 
   it('closes from its own button', () => {
@@ -386,10 +440,11 @@ describe('createPanel', () => {
     store.focus('b');
     const select = skinSelect();
     expect([...select.options].map((option) => option.textContent)).toEqual([
-      'Mortis',
+      'Mortis · In use',
       'Corvin',
       'Lyra',
     ]);
+    expect([...select.options].map((option) => option.disabled)).toEqual([true, false, false]);
     expect(select.value).toBe('lyra');
     expect(select.disabled).toBe(false);
     select.value = 'lyra';
@@ -398,6 +453,21 @@ describe('createPanel', () => {
     select.value = 'corvin';
     select.dispatchEvent(new Event('change'));
     expect(sent).toEqual([{ type: 'agent:setSkin', agentId: 'b', skin: 'corvin' }]);
+  });
+
+  it('disables looks other agents wear and follows their changes', () => {
+    const { store, select } = setup({ skins: ['mortis', 'lyra'] });
+    store.focus('a');
+    expect(select().disabled).toBe(true);
+    expect(select().options[0]?.disabled).toBe(false);
+    store.apply({ type: 'agent:updated', agent: agent('b', { skin: 'corvin' }) });
+    expect(select().disabled).toBe(false);
+    expect([...select().options].map((option) => option.disabled)).toEqual([false, false]);
+    setLocale('pt-BR');
+    store.apply({ type: 'agent:updated', agent: agent('b', { skin: 'lyra' }) });
+    expect(select().options[1]?.textContent).toBe(
+      `Lyra · ${DICTIONARIES['pt-BR'].get('recruit.inUse') ?? ''}`,
+    );
   });
 
   it('refreshes the skin list when the server sends new skins', () => {

@@ -246,6 +246,34 @@ describe('shipped workshop map', () => {
     }
   });
 
+  it('cuts every foreground prop out of the background pixel for pixel', () => {
+    const props = map.scenery.filter((item) => item.kind === 'image' && item.depth !== null);
+    expect(props.length).toBeGreaterThan(100);
+    const background = map.scenery.find((item) => item.kind === 'image' && item.depth === null);
+    if (background?.kind !== 'image') throw new Error('missing background');
+    const scene = decodePng(background.image);
+    const sheets = new Map<string, Png>();
+    for (const item of props) {
+      if (item.kind !== 'image') continue;
+      const sheet = sheets.get(item.image) ?? decodePng(item.image);
+      sheets.set(item.image, sheet);
+      expect(item.depth ?? 0).toBeGreaterThan(item.at.y);
+      let mismatched = 0;
+      let opaque = 0;
+      for (let y = 0; y < item.source.height; y++) {
+        for (let x = 0; x < item.source.width; x++) {
+          const from = pixel(sheet, item.source.x + x, item.source.y + y);
+          if (from[3] === 0) continue;
+          opaque++;
+          const to = pixel(scene, item.at.x + x, item.at.y + y);
+          if ([0, 1, 2].some((channel) => from[channel] !== to[channel])) mismatched++;
+        }
+      }
+      expect(opaque, JSON.stringify(item.at)).toBeGreaterThan(0);
+      expect(mismatched, JSON.stringify(item.at)).toBe(0);
+    }
+  });
+
   it('keeps embers inside the world', () => {
     for (const ember of map.embers) expect(contains(world, ember)).toBe(true);
   });

@@ -488,14 +488,7 @@
     {
       "kind": "nap",
       "at": {
-        "x": 588,
-        "y": 668
-      }
-    },
-    {
-      "kind": "nap",
-      "at": {
-        "x": 618,
+        "x": 626,
         "y": 668
       }
     },
@@ -817,6 +810,2330 @@
         "x": 0,
         "y": 0
       }
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 428,
+        "y": 161,
+        "width": 106,
+        "height": 33
+      },
+      "at": {
+        "x": 542,
+        "y": 0
+      },
+      "depth": 32.51886201084689
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 239,
+        "y": 895,
+        "width": 54,
+        "height": 33
+      },
+      "at": {
+        "x": 415,
+        "y": 0
+      },
+      "depth": 33.00905570800711
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 322,
+        "width": 106,
+        "height": 33
+      },
+      "at": {
+        "x": 156,
+        "y": 0
+      },
+      "depth": 33.23296305231538
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 311,
+        "y": 1271,
+        "width": 42,
+        "height": 32
+      },
+      "at": {
+        "x": 742,
+        "y": 2
+      },
+      "depth": 34.17191009058351
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 749,
+        "y": 0,
+        "width": 42,
+        "height": 37
+      },
+      "at": {
+        "x": 0,
+        "y": 0
+      },
+      "depth": 36.51541656855582
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 772,
+        "y": 322,
+        "width": 92,
+        "height": 38
+      },
+      "at": {
+        "x": 805,
+        "y": 0
+      },
+      "depth": 37.98450782788073
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 353,
+        "y": 1223,
+        "width": 43,
+        "height": 42
+      },
+      "at": {
+        "x": 1048,
+        "y": 0
+      },
+      "depth": 42.10497823834601
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 856,
+        "y": 0,
+        "width": 106,
+        "height": 43
+      },
+      "at": {
+        "x": 867,
+        "y": 0
+      },
+      "depth": 42.76251406341869
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 814,
+        "y": 768,
+        "width": 73,
+        "height": 43
+      },
+      "at": {
+        "x": 4,
+        "y": 0
+      },
+      "depth": 42.807284940849655
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 518,
+        "y": 641,
+        "width": 73,
+        "height": 44
+      },
+      "at": {
+        "x": 685,
+        "y": 0
+      },
+      "depth": 43.770937378742836
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 749,
+        "y": 161,
+        "width": 106,
+        "height": 45
+      },
+      "at": {
+        "x": 944,
+        "y": 0
+      },
+      "depth": 44.505489534683576
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 0,
+        "width": 106,
+        "height": 45
+      },
+      "at": {
+        "x": 89,
+        "y": 0
+      },
+      "depth": 45.445333619363645
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 888,
+        "y": 641,
+        "width": 73,
+        "height": 46
+      },
+      "at": {
+        "x": 1100,
+        "y": 0
+      },
+      "depth": 46.374954940844134
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 397,
+        "y": 1271,
+        "width": 42,
+        "height": 32
+      },
+      "at": {
+        "x": 1122,
+        "y": 15
+      },
+      "depth": 47.08867995904444
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 444,
+        "y": 641,
+        "width": 73,
+        "height": 47
+      },
+      "at": {
+        "x": 1011,
+        "y": 0
+      },
+      "depth": 47.179293246047244
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 222,
+        "y": 641,
+        "width": 73,
+        "height": 48
+      },
+      "at": {
+        "x": 289,
+        "y": 0
+      },
+      "depth": 47.88914661788111
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 220,
+        "y": 1022,
+        "width": 54,
+        "height": 50
+      },
+      "at": {
+        "x": 1183,
+        "y": 0
+      },
+      "depth": 49.57275356585957
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 148,
+        "y": 641,
+        "width": 73,
+        "height": 50
+      },
+      "at": {
+        "x": 627,
+        "y": 0
+      },
+      "depth": 49.65739530271651
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 186,
+        "y": 483,
+        "width": 92,
+        "height": 52
+      },
+      "at": {
+        "x": 485,
+        "y": 0
+      },
+      "depth": 51.74702748097744
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 514,
+        "y": 895,
+        "width": 54,
+        "height": 64
+      },
+      "at": {
+        "x": 242,
+        "y": 0
+      },
+      "depth": 64.18796766442583
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 370,
+        "y": 641,
+        "width": 73,
+        "height": 65
+      },
+      "at": {
+        "x": 361,
+        "y": 0
+      },
+      "depth": 64.51770698718292
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 768,
+        "width": 54,
+        "height": 68
+      },
+      "at": {
+        "x": 1226,
+        "y": 0
+      },
+      "depth": 68.00937948491134
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 222,
+        "y": 768,
+        "width": 73,
+        "height": 69
+      },
+      "at": {
+        "x": 437,
+        "y": 0
+      },
+      "depth": 69.03677089075029
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 214,
+        "y": 0,
+        "width": 106,
+        "height": 72
+      },
+      "at": {
+        "x": 28,
+        "y": 0
+      },
+      "depth": 71.51782367855292
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 483,
+        "width": 92,
+        "height": 75
+      },
+      "at": {
+        "x": 735,
+        "y": 0
+      },
+      "depth": 75.0310084003307
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 400,
+        "y": 322,
+        "width": 92,
+        "height": 80
+      },
+      "at": {
+        "x": 136,
+        "y": 0
+      },
+      "depth": 79.55845304579879
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 372,
+        "y": 483,
+        "width": 92,
+        "height": 83
+      },
+      "at": {
+        "x": 1048,
+        "y": 0
+      },
+      "depth": 82.55419613932435
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 107,
+        "y": 1223,
+        "width": 39,
+        "height": 46
+      },
+      "at": {
+        "x": 284,
+        "y": 37
+      },
+      "depth": 83.43248180598687
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 457,
+        "y": 1271,
+        "width": 11,
+        "height": 31
+      },
+      "at": {
+        "x": 2,
+        "y": 53
+      },
+      "depth": 83.59490745762909
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 1022,
+        "width": 54,
+        "height": 84
+      },
+      "at": {
+        "x": 582,
+        "y": 0
+      },
+      "depth": 83.71074038413269
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 679,
+        "y": 322,
+        "width": 92,
+        "height": 85
+      },
+      "at": {
+        "x": 1131,
+        "y": 0
+      },
+      "depth": 85.25772106372317
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 354,
+        "y": 1271,
+        "width": 42,
+        "height": 32
+      },
+      "at": {
+        "x": 1015,
+        "y": 56
+      },
+      "depth": 88.45624486373471
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 279,
+        "y": 483,
+        "width": 92,
+        "height": 89
+      },
+      "at": {
+        "x": 310,
+        "y": 0
+      },
+      "depth": 89.24208935367972
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 814,
+        "y": 641,
+        "width": 5,
+        "height": 90
+      },
+      "at": {
+        "x": 0,
+        "y": 0
+      },
+      "depth": 90.08291844846208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 107,
+        "y": 322,
+        "width": 106,
+        "height": 92
+      },
+      "at": {
+        "x": 507,
+        "y": 0
+      },
+      "depth": 91.6969856026657
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 865,
+        "y": 322,
+        "width": 92,
+        "height": 92
+      },
+      "at": {
+        "x": 650,
+        "y": 0
+      },
+      "depth": 91.72789813065918
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 660,
+        "y": 1022,
+        "width": 54,
+        "height": 93
+      },
+      "at": {
+        "x": 812,
+        "y": 0
+      },
+      "depth": 93.48604381653371
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 740,
+        "y": 768,
+        "width": 73,
+        "height": 96
+      },
+      "at": {
+        "x": 852,
+        "y": 0
+      },
+      "depth": 95.6985092779127
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 535,
+        "y": 161,
+        "width": 106,
+        "height": 101
+      },
+      "at": {
+        "x": 885,
+        "y": 0
+      },
+      "depth": 101.39796192654303
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 666,
+        "y": 641,
+        "width": 73,
+        "height": 107
+      },
+      "at": {
+        "x": 970,
+        "y": 0
+      },
+      "depth": 106.59003856196426
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 349,
+        "y": 895,
+        "width": 48,
+        "height": 103
+      },
+      "at": {
+        "x": 1232,
+        "y": 23
+      },
+      "depth": 125.94600365625914
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 493,
+        "y": 322,
+        "width": 78,
+        "height": 128
+      },
+      "at": {
+        "x": 0,
+        "y": 0
+      },
+      "depth": 128.01410592143924
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 744,
+        "y": 483,
+        "width": 26,
+        "height": 138
+      },
+      "at": {
+        "x": 0,
+        "y": 0
+      },
+      "depth": 138.1375921526902
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 321,
+        "y": 161,
+        "width": 39,
+        "height": 160
+      },
+      "at": {
+        "x": 1241,
+        "y": 0
+      },
+      "depth": 159.68750563900025
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 666,
+        "y": 768,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 1201,
+        "y": 57
+      },
+      "depth": 182.85497596015023
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 856,
+        "y": 161,
+        "width": 71,
+        "height": 160
+      },
+      "at": {
+        "x": 0,
+        "y": 24
+      },
+      "depth": 184.32599592792516
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 481,
+        "y": 1271,
+        "width": 96,
+        "height": 30
+      },
+      "at": {
+        "x": 240,
+        "y": 162
+      },
+      "depth": 192
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 969,
+        "y": 1223,
+        "width": 48,
+        "height": 32
+      },
+      "at": {
+        "x": 394,
+        "y": 160
+      },
+      "depth": 192
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 25,
+        "y": 1223,
+        "width": 34,
+        "height": 46
+      },
+      "at": {
+        "x": 442,
+        "y": 146
+      },
+      "depth": 192
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 514,
+        "y": 1126,
+        "width": 64,
+        "height": 60
+      },
+      "at": {
+        "x": 1098,
+        "y": 142
+      },
+      "depth": 201.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 935,
+        "y": 1022,
+        "width": 48,
+        "height": 96
+      },
+      "at": {
+        "x": 115,
+        "y": 112
+      },
+      "depth": 208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 114,
+        "y": 1126,
+        "width": 78,
+        "height": 80
+      },
+      "at": {
+        "x": 166,
+        "y": 128
+      },
+      "depth": 208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 49,
+        "y": 1126,
+        "width": 64,
+        "height": 96
+      },
+      "at": {
+        "x": 598,
+        "y": 112
+      },
+      "depth": 208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 465,
+        "y": 1126,
+        "width": 48,
+        "height": 60
+      },
+      "at": {
+        "x": 922,
+        "y": 148
+      },
+      "depth": 208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 387,
+        "y": 1126,
+        "width": 77,
+        "height": 62
+      },
+      "at": {
+        "x": 970,
+        "y": 146
+      },
+      "depth": 208
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 535,
+        "y": 0,
+        "width": 29,
+        "height": 160
+      },
+      "at": {
+        "x": 0,
+        "y": 51
+      },
+      "depth": 211.30410951324836
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 306,
+        "y": 1126,
+        "width": 80,
+        "height": 72
+      },
+      "at": {
+        "x": 747,
+        "y": 141
+      },
+      "depth": 212.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 743,
+        "y": 1126,
+        "width": 27,
+        "height": 56
+      },
+      "at": {
+        "x": 1158,
+        "y": 158
+      },
+      "depth": 214.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 444,
+        "y": 768,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 15,
+        "y": 100
+      },
+      "depth": 226.12525602066214
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 307,
+        "y": 322,
+        "width": 73,
+        "height": 157
+      },
+      "at": {
+        "x": 1207,
+        "y": 82
+      },
+      "depth": 239.29091227701218
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 659,
+        "y": 1223,
+        "width": 62,
+        "height": 40
+      },
+      "at": {
+        "x": 357,
+        "y": 216
+      },
+      "depth": 256
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 722,
+        "y": 1223,
+        "width": 64,
+        "height": 40
+      },
+      "at": {
+        "x": 421,
+        "y": 216
+      },
+      "depth": 256
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 93,
+        "y": 1223,
+        "width": 13,
+        "height": 46
+      },
+      "at": {
+        "x": 1146,
+        "y": 220
+      },
+      "depth": 265.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 804,
+        "y": 1126,
+        "width": 44,
+        "height": 52
+      },
+      "at": {
+        "x": 195,
+        "y": 220
+      },
+      "depth": 272
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 594,
+        "y": 1223,
+        "width": 64,
+        "height": 40
+      },
+      "at": {
+        "x": 250,
+        "y": 232
+      },
+      "depth": 272
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 161,
+        "width": 72,
+        "height": 160
+      },
+      "at": {
+        "x": 0,
+        "y": 114
+      },
+      "depth": 273.5339081917854
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 715,
+        "y": 1126,
+        "width": 27,
+        "height": 56
+      },
+      "at": {
+        "x": 915,
+        "y": 222
+      },
+      "depth": 278.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 679,
+        "y": 895,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1193,
+        "y": 178
+      },
+      "depth": 280.5538139330589
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 888,
+        "y": 768,
+        "width": 24,
+        "height": 126
+      },
+      "at": {
+        "x": 1256,
+        "y": 159
+      },
+      "depth": 284.96759035635097
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 1126,
+        "width": 48,
+        "height": 96
+      },
+      "at": {
+        "x": 114,
+        "y": 208
+      },
+      "depth": 304
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 586,
+        "y": 322,
+        "width": 28,
+        "height": 157
+      },
+      "at": {
+        "x": 0,
+        "y": 160
+      },
+      "depth": 316.63610837293487
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 1271,
+        "width": 14,
+        "height": 32
+      },
+      "at": {
+        "x": 654,
+        "y": 286
+      },
+      "depth": 318.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 853,
+        "y": 1223,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 115,
+        "y": 288
+      },
+      "depth": 320
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 870,
+        "y": 1223,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 150,
+        "y": 288
+      },
+      "depth": 320
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 578,
+        "y": 1271,
+        "width": 16,
+        "height": 30
+      },
+      "at": {
+        "x": 322,
+        "y": 290
+      },
+      "depth": 320
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 60,
+        "y": 1223,
+        "width": 32,
+        "height": 46
+      },
+      "at": {
+        "x": 690,
+        "y": 274
+      },
+      "depth": 320
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 771,
+        "y": 1126,
+        "width": 32,
+        "height": 54
+      },
+      "at": {
+        "x": 800,
+        "y": 266
+      },
+      "depth": 320
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 296,
+        "y": 641,
+        "width": 60,
+        "height": 126
+      },
+      "at": {
+        "x": 1220,
+        "y": 197
+      },
+      "depth": 322.54719919881364
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 635,
+        "y": 1126,
+        "width": 79,
+        "height": 56
+      },
+      "at": {
+        "x": 986,
+        "y": 283
+      },
+      "depth": 339.2
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 629,
+        "y": 1271,
+        "width": 34,
+        "height": 29
+      },
+      "at": {
+        "x": 589,
+        "y": 317
+      },
+      "depth": 345.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 296,
+        "y": 768,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 10,
+        "y": 244
+      },
+      "depth": 369.78755134183314
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 74,
+        "y": 641,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 1200,
+        "y": 250
+      },
+      "depth": 376.2162757816016
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 642,
+        "y": 0,
+        "width": 40,
+        "height": 160
+      },
+      "at": {
+        "x": 0,
+        "y": 237
+      },
+      "depth": 397.46284234975576
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 214,
+        "y": 161,
+        "width": 53,
+        "height": 160
+      },
+      "at": {
+        "x": 1227,
+        "y": 249
+      },
+      "depth": 409.1821632580786
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 887,
+        "y": 1223,
+        "width": 64,
+        "height": 32
+      },
+      "at": {
+        "x": 115,
+        "y": 384
+      },
+      "depth": 416
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 849,
+        "y": 1126,
+        "width": 60,
+        "height": 50
+      },
+      "at": {
+        "x": 179,
+        "y": 366
+      },
+      "depth": 416
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 664,
+        "y": 1271,
+        "width": 34,
+        "height": 29
+      },
+      "at": {
+        "x": 618,
+        "y": 400
+      },
+      "depth": 428.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 969,
+        "y": 1126,
+        "width": 48,
+        "height": 48
+      },
+      "at": {
+        "x": 246,
+        "y": 384
+      },
+      "depth": 432
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 397,
+        "y": 1223,
+        "width": 61,
+        "height": 42
+      },
+      "at": {
+        "x": 1123,
+        "y": 390
+      },
+      "depth": 432
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 148,
+        "y": 768,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 1206,
+        "y": 321
+      },
+      "depth": 447.0211806560133
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 465,
+        "y": 483,
+        "width": 72,
+        "height": 157
+      },
+      "at": {
+        "x": 0,
+        "y": 293
+      },
+      "depth": 449.748328467352
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 699,
+        "y": 1271,
+        "width": 48,
+        "height": 28
+      },
+      "at": {
+        "x": 766,
+        "y": 430
+      },
+      "depth": 457.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 193,
+        "y": 1126,
+        "width": 112,
+        "height": 75
+      },
+      "at": {
+        "x": 934,
+        "y": 395
+      },
+      "depth": 470.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 440,
+        "y": 1022,
+        "width": 2,
+        "height": 103
+      },
+      "at": {
+        "x": 0,
+        "y": 369
+      },
+      "depth": 471.5467027349656
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 787,
+        "y": 1223,
+        "width": 32,
+        "height": 35
+      },
+      "at": {
+        "x": 384,
+        "y": 450
+      },
+      "depth": 484.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 820,
+        "y": 1223,
+        "width": 32,
+        "height": 35
+      },
+      "at": {
+        "x": 570,
+        "y": 450
+      },
+      "depth": 484.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 440,
+        "y": 1271,
+        "width": 16,
+        "height": 31
+      },
+      "at": {
+        "x": 317,
+        "y": 462
+      },
+      "depth": 492.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 740,
+        "y": 641,
+        "width": 45,
+        "height": 126
+      },
+      "at": {
+        "x": 1235,
+        "y": 370
+      },
+      "depth": 496.32524776280087
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 770,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1192,
+        "y": 408
+      },
+      "depth": 510.9924104623905
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 930,
+        "y": 483,
+        "width": 28,
+        "height": 157
+      },
+      "at": {
+        "x": 0,
+        "y": 364
+      },
+      "depth": 520.5878973027468
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 952,
+        "y": 1223,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 195,
+        "y": 512
+      },
+      "depth": 544
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 595,
+        "y": 1271,
+        "width": 16,
+        "height": 30
+      },
+      "at": {
+        "x": 653,
+        "y": 514
+      },
+      "depth": 544
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 748,
+        "y": 1271,
+        "width": 48,
+        "height": 28
+      },
+      "at": {
+        "x": 774,
+        "y": 516
+      },
+      "depth": 544
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 651,
+        "y": 483,
+        "width": 61,
+        "height": 157
+      },
+      "at": {
+        "x": 1219,
+        "y": 388
+      },
+      "depth": 544.7184641037774
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 837,
+        "y": 483,
+        "width": 25,
+        "height": 157
+      },
+      "at": {
+        "x": 0,
+        "y": 412
+      },
+      "depth": 568.692686182287
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 825,
+        "y": 1022,
+        "width": 48,
+        "height": 103
+      },
+      "at": {
+        "x": 0,
+        "y": 503
+      },
+      "depth": 605.9448216486911
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 214,
+        "y": 322,
+        "width": 50,
+        "height": 157
+      },
+      "at": {
+        "x": 1230,
+        "y": 451
+      },
+      "depth": 608.0874666673774
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 93,
+        "y": 483,
+        "width": 29,
+        "height": 157
+      },
+      "at": {
+        "x": 0,
+        "y": 484
+      },
+      "depth": 640.8303112306547
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 129,
+        "y": 895,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1203,
+        "y": 547
+      },
+      "depth": 650.2883417482143
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 522,
+        "y": 1223,
+        "width": 71,
+        "height": 41
+      },
+      "at": {
+        "x": 1094,
+        "y": 612
+      },
+      "depth": 652.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 428,
+        "y": 0,
+        "width": 53,
+        "height": 160
+      },
+      "at": {
+        "x": 1227,
+        "y": 502
+      },
+      "depth": 662.4135288176715
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 579,
+        "y": 1126,
+        "width": 27,
+        "height": 56
+      },
+      "at": {
+        "x": 454,
+        "y": 622
+      },
+      "depth": 678.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 607,
+        "y": 1126,
+        "width": 27,
+        "height": 56
+      },
+      "at": {
+        "x": 534,
+        "y": 622
+      },
+      "depth": 678.4
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 612,
+        "y": 1271,
+        "width": 16,
+        "height": 30
+      },
+      "at": {
+        "x": 469,
+        "y": 652
+      },
+      "depth": 681.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 133,
+        "y": 1271,
+        "width": 14,
+        "height": 32
+      },
+      "at": {
+        "x": 528,
+        "y": 650
+      },
+      "depth": 681.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 895,
+        "width": 59,
+        "height": 126
+      },
+      "at": {
+        "x": 0,
+        "y": 558
+      },
+      "depth": 684.2002547884504
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 182,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 131,
+        "y": 688
+      },
+      "depth": 720
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 189,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 368,
+        "y": 688
+      },
+      "depth": 720
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 321,
+        "y": 0,
+        "width": 37,
+        "height": 160
+      },
+      "at": {
+        "x": 0,
+        "y": 570
+      },
+      "depth": 730.4729874253445
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 1223,
+        "width": 24,
+        "height": 47
+      },
+      "at": {
+        "x": 259,
+        "y": 699
+      },
+      "depth": 745.6
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 196,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 131,
+        "y": 720
+      },
+      "depth": 752
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 203,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 368,
+        "y": 720
+      },
+      "depth": 752
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 74,
+        "y": 895,
+        "width": 54,
+        "height": 109
+      },
+      "at": {
+        "x": 563,
+        "y": 646
+      },
+      "depth": 755.2
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 910,
+        "y": 1126,
+        "width": 58,
+        "height": 49
+      },
+      "at": {
+        "x": 963,
+        "y": 716
+      },
+      "depth": 764.8
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 210,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 131,
+        "y": 752
+      },
+      "depth": 784
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 217,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 368,
+        "y": 752
+      },
+      "depth": 784
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 74,
+        "y": 768,
+        "width": 39,
+        "height": 126
+      },
+      "at": {
+        "x": 0,
+        "y": 665
+      },
+      "depth": 791.4500281456179
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 148,
+        "y": 1271,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 355,
+        "y": 771
+      },
+      "depth": 803.2
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 224,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 131,
+        "y": 784
+      },
+      "depth": 816
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 231,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 368,
+        "y": 784
+      },
+      "depth": 816
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 165,
+        "y": 1271,
+        "width": 16,
+        "height": 32
+      },
+      "at": {
+        "x": 347,
+        "y": 800
+      },
+      "depth": 832
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 238,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 131,
+        "y": 816
+      },
+      "depth": 848
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 245,
+        "y": 1271,
+        "width": 6,
+        "height": 32
+      },
+      "at": {
+        "x": 368,
+        "y": 816
+      },
+      "depth": 848
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 110,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1225,
+        "y": 751
+      },
+      "depth": 853.7062474684643
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 404,
+        "y": 895,
+        "width": 22,
+        "height": 103
+      },
+      "at": {
+        "x": 0,
+        "y": 751
+      },
+      "depth": 853.8610322897574
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 880,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 64,
+        "y": 764
+      },
+      "depth": 866.5103946641299
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 385,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 532,
+        "y": 766
+      },
+      "depth": 869.3679775395834
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 495,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 625,
+        "y": 776
+      },
+      "depth": 878.5040804614724
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 294,
+        "y": 895,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1179,
+        "y": 777
+      },
+      "depth": 879.5775560828196
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 147,
+        "y": 1223,
+        "width": 39,
+        "height": 46
+      },
+      "at": {
+        "x": 1102,
+        "y": 836
+      },
+      "depth": 882.487020644379
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 715,
+        "y": 1022,
+        "width": 54,
+        "height": 103
+      },
+      "at": {
+        "x": 1019,
+        "y": 786
+      },
+      "depth": 888.84246768927
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 592,
+        "y": 768,
+        "width": 73,
+        "height": 126
+      },
+      "at": {
+        "x": 413,
+        "y": 768
+      },
+      "depth": 893.8467218961055
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 469,
+        "y": 1271,
+        "width": 11,
+        "height": 28
+      },
+      "at": {
+        "x": 705,
+        "y": 868
+      },
+      "depth": 898.9277482481561
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 370,
+        "y": 768,
+        "width": 16,
+        "height": 122
+      },
+      "at": {
+        "x": 0,
+        "y": 774
+      },
+      "depth": 900.0614688834063
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 309,
+        "y": 1223,
+        "width": 43,
+        "height": 34
+      },
+      "at": {
+        "x": 238,
+        "y": 862
+      },
+      "depth": 905.2650884750439
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 459,
+        "y": 895,
+        "width": 54,
+        "height": 89
+      },
+      "at": {
+        "x": 38,
+        "y": 807
+      },
+      "depth": 910.1451507428657
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 184,
+        "y": 895,
+        "width": 54,
+        "height": 85
+      },
+      "at": {
+        "x": 571,
+        "y": 811
+      },
+      "depth": 914.302840754542
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 558,
+        "y": 483,
+        "width": 35,
+        "height": 134
+      },
+      "at": {
+        "x": 1245,
+        "y": 762
+      },
+      "depth": 918.821254007011
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 165,
+        "y": 1022,
+        "width": 54,
+        "height": 69
+      },
+      "at": {
+        "x": 976,
+        "y": 827
+      },
+      "depth": 930.4556817958809
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 642,
+        "y": 161,
+        "width": 71,
+        "height": 122
+      },
+      "at": {
+        "x": 0,
+        "y": 774
+      },
+      "depth": 933.7805988320877
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 0,
+        "y": 641,
+        "width": 73,
+        "height": 86
+      },
+      "at": {
+        "x": 1106,
+        "y": 810
+      },
+      "depth": 936.0982565420078
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 789,
+        "y": 895,
+        "width": 54,
+        "height": 62
+      },
+      "at": {
+        "x": 1054,
+        "y": 834
+      },
+      "depth": 937.0724814204355
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 330,
+        "y": 1022,
+        "width": 54,
+        "height": 54
+      },
+      "at": {
+        "x": 613,
+        "y": 842
+      },
+      "depth": 945.3022434446968
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 734,
+        "y": 895,
+        "width": 54,
+        "height": 40
+      },
+      "at": {
+        "x": 1165,
+        "y": 856
+      },
+      "depth": 958.6876786051913
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 107,
+        "y": 161,
+        "width": 106,
+        "height": 93
+      },
+      "at": {
+        "x": 525,
+        "y": 803
+      },
+      "depth": 963.1594387187023
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 899,
+        "y": 895,
+        "width": 54,
+        "height": 35
+      },
+      "at": {
+        "x": 712,
+        "y": 861
+      },
+      "depth": 964.1643554692832
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 605,
+        "y": 1022,
+        "width": 54,
+        "height": 32
+      },
+      "at": {
+        "x": 291,
+        "y": 864
+      },
+      "depth": 967.0336945231966
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 569,
+        "y": 895,
+        "width": 54,
+        "height": 32
+      },
+      "at": {
+        "x": 809,
+        "y": 864
+      },
+      "depth": 967.4621346216637
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 844,
+        "y": 895,
+        "width": 54,
+        "height": 31
+      },
+      "at": {
+        "x": 25,
+        "y": 865
+      },
+      "depth": 967.84339993739
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 550,
+        "y": 1022,
+        "width": 54,
+        "height": 31
+      },
+      "at": {
+        "x": 223,
+        "y": 865
+      },
+      "depth": 968.2447199614312
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 55,
+        "y": 1022,
+        "width": 54,
+        "height": 30
+      },
+      "at": {
+        "x": 387,
+        "y": 866
+      },
+      "depth": 968.8831609475104
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 592,
+        "y": 641,
+        "width": 28,
+        "height": 52
+      },
+      "at": {
+        "x": 1252,
+        "y": 844
+      },
+      "depth": 970.3048115790816
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 107,
+        "y": 0,
+        "width": 106,
+        "height": 85
+      },
+      "at": {
+        "x": 982,
+        "y": 811
+      },
+      "depth": 970.8070417376132
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 954,
+        "y": 895,
+        "width": 54,
+        "height": 25
+      },
+      "at": {
+        "x": 131,
+        "y": 871
+      },
+      "depth": 974.4470904426354
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 275,
+        "y": 1022,
+        "width": 54,
+        "height": 23
+      },
+      "at": {
+        "x": 895,
+        "y": 873
+      },
+      "depth": 975.5252006271763
+    },
+    {
+      "image": "maps/tavern-guild-front.png",
+      "source": {
+        "x": 518,
+        "y": 768,
+        "width": 73,
+        "height": 46
+      },
+      "at": {
+        "x": 1202,
+        "y": 850
+      },
+      "depth": 975.9623704038496
     }
   ],
   "embers": [

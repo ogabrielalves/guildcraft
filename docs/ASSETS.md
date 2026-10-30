@@ -16,6 +16,7 @@ assets/
 ├─ stations/*.png               station sheets
 ├─ maps/workshop.json           the workshop map
 ├─ maps/tavern-guild.png        the map's background art
+├─ maps/tavern-guild-front.png  tall props cut out of the background, drawn in front of people
 ├─ ui/*.png                     nine-slice frames used by the interface
 └─ CREDITS.md
 ```
@@ -232,6 +233,8 @@ or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `fli
 ```
 
 Scenery without `depth` is drawn first, behind everyone: floors, walls, rugs. Give standing furniture a `depth`, usually the y of its feet, so it is sorted with the stations and the adventurers. Everything sorted is drawn by its feet, so someone standing behind a bookshelf is drawn behind it.
+
+Because the Tavern Guild is one flat image, its tall props (trees, the oven and hoods, shelves, counters, lantern posts, the gallows, the forges and so on) are also cut out into `maps/tavern-guild-front.png`. Each one is a scenery crop with the prop's exact silhouette, placed where it already is in the background, with the y of its foot as `depth`. Someone whose feet are above that line walks behind the prop; someone below it walks in front. The crops were made with the map's own builder, so their pixels match the background exactly (the tests check this). Benches stay out, so nappers sit on them, and so do the three stations that already have an animated sprite.
 
 ## Interface frames
 
