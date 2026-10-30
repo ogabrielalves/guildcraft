@@ -8,7 +8,7 @@ export const AGENT_STATUSES = [
 ] as const;
 export type AgentStatus = (typeof AGENT_STATUSES)[number];
 
-export const PERMISSION_MODES = ['default', 'acceptEdits', 'plan'] as const;
+export const PERMISSION_MODES = ['default', 'acceptEdits', 'auto', 'plan'] as const;
 export type PermissionMode = (typeof PERMISSION_MODES)[number];
 
 export const WAITING_REASONS = ['permission', 'question', 'trust', 'dialog', 'other'] as const;

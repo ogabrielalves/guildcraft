@@ -317,6 +317,7 @@ describe('createAddAgentDialog', () => {
     expect([...ctx.mode().options].map((option) => option.textContent)).toEqual([
       'Ask before every action',
       'Accept file edits',
+      'Automatic',
       'Plan only',
     ]);
     ctx.mode().value = 'acceptEdits';

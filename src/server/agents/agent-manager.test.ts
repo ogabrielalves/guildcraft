@@ -205,12 +205,15 @@ describe('create', () => {
     expect(ctx.manager.recentEvents()).toEqual([{ kind: 'joined', agentId: id, at: 1000 }]);
   });
 
-  it('keeps launcher args and skips the permission flag in default mode', async () => {
-    const ctx = setup({ claude: { command: 'cmd.exe', args: ['/c', 'claude.cmd'] } });
-    const { process } = await created(ctx);
-    expect(process.spec.args.slice(0, 2)).toEqual(['/c', 'claude.cmd']);
-    expect(process.spec.args).not.toContain('--permission-mode');
-  });
+  it.each(['default', 'auto'] as const)(
+    'keeps launcher args and always passes the %s permission mode',
+    async (permissionMode) => {
+      const ctx = setup({ claude: { command: 'cmd.exe', args: ['/c', 'claude.cmd'] } });
+      const { process } = await created(ctx, { permissionMode });
+      expect(process.spec.args.slice(0, 2)).toEqual(['/c', 'claude.cmd']);
+      expect(process.spec.args.slice(-2)).toEqual(['--permission-mode', permissionMode]);
+    },
+  );
 
   it.each([
     [{ cwd: '/elsewhere' }, 'INVALID_CWD'],

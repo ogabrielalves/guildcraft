@@ -82,6 +82,7 @@
     "permission": {
       "default": "Perguntar antes de cada ação",
       "acceptEdits": "Aceitar edições de arquivos",
+      "auto": "Automático",
       "plan": "Só planejar"
     }
   },

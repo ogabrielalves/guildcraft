@@ -18,6 +18,7 @@ type ErrorMessage = Extract<ServerMessage, { type: 'error' }>;
 const PERMISSION_KEYS: Record<PermissionMode, TranslationKey> = {
   default: 'recruit.permission.default',
   acceptEdits: 'recruit.permission.acceptEdits',
+  auto: 'recruit.permission.auto',
   plan: 'recruit.permission.plan',
 };
 

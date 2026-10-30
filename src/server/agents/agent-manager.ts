@@ -543,11 +543,17 @@ export class AgentManager {
 
   private spawnSpec(agent: Agent, files: AgentFilePaths): SpawnSpec {
     const { claude, baseEnv, token, port } = this.deps;
-    const mode =
-      agent.permissionMode === 'default' ? [] : ['--permission-mode', agent.permissionMode];
     return {
       command: claude.command,
-      args: [...claude.args, '--settings', files.settings, '--mcp-config', files.mcp, ...mode],
+      args: [
+        ...claude.args,
+        '--settings',
+        files.settings,
+        '--mcp-config',
+        files.mcp,
+        '--permission-mode',
+        agent.permissionMode,
+      ],
       cwd: agent.cwd,
       env: {
         ...baseEnv,

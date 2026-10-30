@@ -82,6 +82,7 @@
     "permission": {
       "default": "Ask before every action",
       "acceptEdits": "Accept file edits",
+      "auto": "Automatic",
       "plan": "Plan only"
     }
   },
