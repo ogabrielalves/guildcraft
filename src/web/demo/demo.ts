@@ -3,6 +3,7 @@ import { MAX_ACTIONS, emptyActivity } from '../../shared/activity.js';
 import type { AgentStatus, AgentTool, AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_EVENTS } from '../../shared/constants.js';
 import type { FsEntry, FsListing } from '../../shared/fs.js';
+import type { PermissionOutcome, PermissionRequestView } from '../../shared/permission.js';
 import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
 import { notify } from '../net/socket.js';
 import type { MessageListener, SocketStatus, StatusListener } from '../net/socket.js';
@@ -174,6 +175,8 @@ export class DemoSocket {
   private events: VillageEvent[] = [];
   private activities = new Map<string, AgentActivity>();
   private actionCount = 0;
+  private permissions = new Map<string, PermissionRequestView>();
+  private requestCount = 0;
   private nextId = DEMO_CREW.length + 1;
   private readonly messageListeners = new Set<MessageListener>();
   private readonly statusListeners = new Set<StatusListener>();
@@ -209,7 +212,7 @@ export class DemoSocket {
       agents: this.agents,
       events: this.events,
       skins: [...DEMO_SKINS],
-      permissions: [],
+      permissions: [...this.permissions.values()],
       activities: [...this.activities.values()],
     });
     for (const agent of this.agents) {
@@ -243,6 +246,7 @@ export class DemoSocket {
   tick(): void {
     if (this.agents.length === 0) return;
     const agent = pick(this.agents, this.random);
+    if (this.pending(agent.id)) return;
     const status = nextStatus(agent.status, this.random);
     const tool = status === 'tool' ? pick(DEMO_TOOLS, this.random) : null;
     this.update(agent.id, { status, tool });
@@ -255,7 +259,10 @@ export class DemoSocket {
       });
     }
     if (agent.status !== 'idle' && status === 'idle') this.record('finished', agent.id);
-    if (agent.status !== 'waiting' && status === 'waiting') this.record('waiting', agent.id);
+    if (agent.status !== 'waiting' && status === 'waiting') {
+      this.record('waiting', agent.id);
+      this.ask(agent.id);
+    }
     if (this.options.visit && tool?.name === 'mcp__guildcraft__send_message') this.visit(agent.id);
   }
 
@@ -287,6 +294,9 @@ export class DemoSocket {
         return;
       case 'agent:remove':
         this.remove(message.agentId);
+        return;
+      case 'permission:decide':
+        this.decide(message.requestId, message.decision.behavior);
         return;
       case 'agent:removeAll':
         for (const agent of [...this.agents]) this.remove(agent.id);
@@ -350,8 +360,75 @@ export class DemoSocket {
     this.emit({ type: 'agent:activity', activity });
   }
 
+  private pending(agentId: string): PermissionRequestView | undefined {
+    return [...this.permissions.values()].find((request) => request.agentId === agentId);
+  }
+
+  private ask(agentId: string): void {
+    this.requestCount += 1;
+    const at = this.now();
+    const question = this.requestCount % 2 === 0;
+    const request: PermissionRequestView = {
+      id: `demo-request-${String(this.requestCount)}`,
+      agentId,
+      toolName: question ? 'AskUserQuestion' : 'Bash',
+      detail: question ? 'Which database should we use?' : 'npm install --save-dev vitest',
+      input: question ? null : '{"command":"npm install --save-dev vitest"}',
+      subagent: null,
+      suggestions: question
+        ? []
+        : [{ index: 0, rules: ['Bash(npm install:*)'], destination: 'localSettings' }],
+      questions: question
+        ? [
+            {
+              index: 0,
+              question: 'Which database should we use?',
+              header: 'Database',
+              multiSelect: false,
+              options: [
+                { label: 'SQLite', description: 'A single local file' },
+                { label: 'Postgres', description: 'A real server' },
+              ],
+            },
+          ]
+        : null,
+      createdAt: at,
+      expiresAt: at + 600_000,
+    };
+    this.permissions.set(request.id, request);
+    this.update(agentId, { waitingFor: question ? 'question' : 'permission' });
+    this.emit({ type: 'permission:request', request });
+  }
+
+  private decide(requestId: string, behavior: string): void {
+    const request = this.permissions.get(requestId);
+    if (!request) {
+      this.emit({ type: 'error', code: 'PERMISSION_NOT_FOUND', source: 'permission:decide' });
+      return;
+    }
+    this.permissions.delete(requestId);
+    const outcomes: Record<string, PermissionOutcome> = {
+      allow: 'allowed',
+      deny: 'denied',
+      answer: 'answered',
+      terminal: 'terminal',
+    };
+    this.emit({
+      type: 'permission:resolved',
+      requestId,
+      agentId: request.agentId,
+      outcome: outcomes[behavior] ?? 'released',
+    });
+    if (behavior !== 'terminal') {
+      this.update(request.agentId, { status: 'thinking', waitingFor: null });
+    }
+  }
+
   private remove(agentId: string): void {
     if (!this.find(agentId)) return;
+    for (const request of this.permissions.values()) {
+      if (request.agentId === agentId) this.permissions.delete(request.id);
+    }
     this.activities.delete(agentId);
     this.agents = this.agents.filter((agent) => agent.id !== agentId);
     this.emit({ type: 'agent:removed', agentId });

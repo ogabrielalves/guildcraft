@@ -14,6 +14,8 @@ const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessage['type']>
   'agent:updated',
   'agent:removed',
   'agent:activity',
+  'permission:request',
+  'permission:resolved',
   'agent:visit',
   'message:delivered',
   'event',

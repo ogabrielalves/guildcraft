@@ -196,6 +196,61 @@ describe('DemoSocket', () => {
     expect(of('session:init').at(-1)?.activities).toEqual([]);
   });
 
+  it('asks for permission when waiting and resolves decisions', () => {
+    const { socket, of } = harness({}, sequence(0, 0.1, 0, 0.8, 0));
+    socket.connect();
+    socket.tick();
+    socket.tick();
+    const request = of('permission:request')[0]?.request;
+    expect(request).toMatchObject({ agentId: 'demo-1', toolName: 'Bash' });
+    expect(request?.suggestions).toHaveLength(1);
+    const updates = of('agent:updated').length;
+    socket.tick();
+    expect(of('agent:updated')).toHaveLength(updates);
+    socket.close();
+    socket.connect();
+    expect(of('session:init').at(-1)?.permissions).toEqual([request]);
+    socket.send({
+      type: 'permission:decide',
+      requestId: request?.id ?? '',
+      decision: { behavior: 'allow' },
+    });
+    expect(of('permission:resolved').at(-1)).toMatchObject({ outcome: 'allowed' });
+    expect(of('agent:updated').at(-1)?.agent).toMatchObject({
+      status: 'thinking',
+      waitingFor: null,
+    });
+    socket.send({
+      type: 'permission:decide',
+      requestId: request?.id ?? '',
+      decision: { behavior: 'deny' },
+    });
+    expect(of('error').at(-1)).toMatchObject({ code: 'PERMISSION_NOT_FOUND' });
+  });
+
+  it('alternates permission and question requests and clears them on remove', () => {
+    const { socket, of } = harness({}, sequence(0, 0.1, 0, 0.8, 0, 0.9, 0, 0.8));
+    socket.connect();
+    socket.tick();
+    socket.tick();
+    const first = of('permission:request')[0]?.request;
+    socket.send({
+      type: 'permission:decide',
+      requestId: first?.id ?? '',
+      decision: { behavior: 'terminal' },
+    });
+    expect(of('permission:resolved').at(-1)).toMatchObject({ outcome: 'terminal' });
+    socket.tick();
+    socket.tick();
+    const second = of('permission:request')[1]?.request;
+    expect(second?.toolName).toBe('AskUserQuestion');
+    expect(second?.questions?.[0]?.options).toHaveLength(2);
+    socket.send({ type: 'agent:remove', agentId: 'demo-1' });
+    socket.close();
+    socket.connect();
+    expect(of('session:init').at(-1)?.permissions).toEqual([]);
+  });
+
   it('records waiting transitions', () => {
     const { socket, of } = harness({}, sequence(0, 0.1, 0, 0.8));
     socket.connect();

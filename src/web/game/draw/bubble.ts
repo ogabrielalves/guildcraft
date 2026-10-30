@@ -7,6 +7,7 @@ export const BUBBLE_SIZE = { width: 13, height: 11 };
 export const NOTE_FONT = '6px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 export const NOTE_LENGTH = 28;
 export const NOTE_ICON = '✉️';
+export const ALERT_ICON = '❗';
 
 const ACTIVITY_BUBBLES: Partial<Record<Activity, string>> = {
   think: '💭',

@@ -377,6 +377,15 @@ describe('notifications', () => {
     expect(toasts.show).toHaveBeenCalledOnce();
   });
 
+  it('toasts a permission decision the server no longer knows', () => {
+    const { emit, toasts } = setup();
+    emit({ type: 'error', code: 'PERMISSION_NOT_FOUND', source: 'permission:decide' });
+    expect(toasts.show).toHaveBeenCalledWith(
+      'That request was already answered or expired.',
+      'error',
+    );
+  });
+
   it('updates the title on locale change and stops on destroy', () => {
     const { store, notifications, listeners } = setup();
     store.apply({ type: 'agent:updated', agent: agent('a', 'waiting') });

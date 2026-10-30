@@ -1,6 +1,6 @@
 import type { AgentView } from '../../shared/agent.js';
 import type { Assets, Station } from './assets.js';
-import { bubbleFor, drawBubble, drawNote } from './draw/bubble.js';
+import { ALERT_ICON, bubbleFor, drawBubble, drawNote } from './draw/bubble.js';
 import type { Emitter, Particles } from './draw/effects.js';
 import { drawNameplate } from './draw/nameplate.js';
 import type { Paint } from './draw/paint.js';
@@ -23,6 +23,7 @@ export interface Scene {
   hovered: Hover;
   time: number;
   particles?: Particles;
+  alerts?: ReadonlySet<string>;
 }
 
 export const PALETTE = {
@@ -203,7 +204,7 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
     ctx,
     villager.position,
     {
-      waiting: villager.activity === 'wait',
+      waiting: villager.activity === 'wait' || scene.alerts?.has(villager.id) === true,
       selected: scene.selected.has(villager.id),
       focused: scene.focused === villager.id,
       hovered: scene.hovered?.kind === 'villager' && scene.hovered.id === villager.id,
@@ -220,6 +221,10 @@ function drawLabels(ctx: Paint, villager: Villager, scene: Scene): void {
   const plateBottom = Math.round(villagerBounds(villager).y);
   drawNameplate(ctx, agent.name, agent.queued, villager.position.x, plateBottom);
   const bubbleBottom = plateBottom - 10;
+  if (scene.alerts?.has(villager.id) === true) {
+    drawBubble(ctx, ALERT_ICON, villager.position.x, bubbleBottom, scene.time);
+    return;
+  }
   const { note } = villager;
   if (note !== null && note !== '') {
     drawNote(ctx, note, villager.position.x, bubbleBottom, scene.time);

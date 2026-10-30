@@ -6,7 +6,9 @@ import type { TranslationKey } from '../i18n/index.js';
 import { onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store, StoreState } from '../state/store.js';
+import { pendingFor, resolvePermission } from '../state/store.js';
 import { confirmModal } from './modal.js';
+import { createPermissionCard } from './permission-card.js';
 import { PORTRAIT, drawPortrait, skinLabel } from './portrait.js';
 import type { TerminalView } from './terminal-view.js';
 
@@ -60,7 +62,7 @@ const TASK_KEYS: Record<TaskStatus, TranslationKey> = {
 
 export const REFRESH_MS = 500;
 
-export type PanelSocket = Pick<GameSocket, 'send'>;
+export type PanelSocket = Pick<GameSocket, 'send'> & Partial<Pick<GameSocket, 'onMessage'>>;
 export type PanelTerminal = Pick<TerminalView, 'element' | 'fit' | 'focus' | 'copy' | 'paste'>;
 export type Confirm = (message: string) => boolean | Promise<boolean>;
 export type Every = (callback: () => void, ms: number) => () => void;
@@ -232,6 +234,16 @@ export function createPanel(options: PanelOptions): Panel {
   const header = make('header', 'panel__header');
   header.append(portrait, identity, close);
 
+  const card = createPermissionCard({
+    decide: (requestId, decision) => {
+      socket.send({ type: 'permission:decide', requestId, decision });
+    },
+    onTerminal: () => {
+      setConsole(true);
+    },
+  });
+  let shownPermissions: StoreState['permissions'] | null = null;
+
   const details = make('dl', 'panel__details');
   const rows = DETAIL_ROWS.map((row) => {
     const wrapper = make('div', 'panel__row');
@@ -313,7 +325,7 @@ export function createPanel(options: PanelOptions): Panel {
   actions.append(toggle, interrupt, restart);
   const manage = make('div', 'panel__manage');
   manage.append(remove);
-  element.append(header, details, history, actions, manage);
+  element.append(header, card.element, details, history, actions, manage);
 
   const consoleTitle = make('h2', 'console-window__title');
   const consoleClose = make('button', 'console-window__close');
@@ -466,6 +478,11 @@ export function createPanel(options: PanelOptions): Panel {
 
   const render = (state: StoreState) => {
     const agent = focused() ?? null;
+    if (agent?.id !== shown?.id || state.permissions !== shownPermissions) {
+      shownPermissions = state.permissions;
+      const pending = agent ? pendingFor(state, agent.id) : [];
+      card.show(pending[0] ?? null, Math.max(0, pending.length - 1));
+    }
     const activity = agent ? store.activity(agent.id) : undefined;
     if (agent?.id !== shown?.id || activity !== shownActivity) {
       shownActivity = activity;
@@ -497,12 +514,23 @@ export function createPanel(options: PanelOptions): Panel {
       renderAgent(shown);
       renderHistory(shownActivity);
     }
+    card.renderTexts();
   };
 
   renderTexts();
   render(store.getState());
   const unsubscribeStore = store.subscribe(render);
   const unsubscribeLocale = onLocaleChange(renderTexts);
+  const unsubscribeSocket = socket.onMessage?.((message) => {
+    if (message.type !== 'error' || message.source !== 'permission:decide') return;
+    const requestId = card.sent();
+    if (requestId === null) return;
+    if (message.code === 'PERMISSION_NOT_FOUND') {
+      store.update((state) => resolvePermission(state, requestId));
+    } else {
+      card.retry(requestId);
+    }
+  });
 
   return {
     element,
@@ -514,6 +542,7 @@ export function createPanel(options: PanelOptions): Panel {
       keys.removeEventListener('keydown', onKey, true);
       unsubscribeStore();
       unsubscribeLocale();
+      unsubscribeSocket?.();
       element.remove();
       consoleWindow.remove();
     },

@@ -39,6 +39,25 @@
     "model": "Model",
     "effort": "Effort"
   },
+  "request": {
+    "permission": "Asks to use a tool",
+    "question": "Has a question for you",
+    "pending": "Needs your answer",
+    "more": "+{count} more",
+    "subagent": "via {name}",
+    "allow": "Allow",
+    "deny": "Deny",
+    "always": "Always allow {rules}",
+    "send": "Send answer",
+    "other": "Other answer…",
+    "terminal": "Answer in console",
+    "destination": {
+      "session": "for this session",
+      "localSettings": "in local settings",
+      "projectSettings": "in project settings",
+      "userSettings": "in your user settings"
+    }
+  },
   "history": {
     "title": "History",
     "empty": "No actions yet",

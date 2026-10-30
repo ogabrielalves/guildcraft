@@ -452,3 +452,163 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+.request {
+  display: grid;
+  flex-shrink: 0;
+  gap: 6px;
+  max-height: 46vh;
+  padding: 8px 10px;
+  overflow-y: auto;
+  background: rgb(242 201 76 / 12%);
+  border: 2px solid var(--warn);
+  scrollbar-width: thin;
+}
+
+.request[hidden] {
+  display: none;
+}
+
+.request__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.request__title {
+  margin: 0;
+  font: 400 16px/1.2 var(--font-pixel);
+  color: var(--warn);
+}
+
+.request__more {
+  flex-shrink: 0;
+  font: 12px var(--font-mono);
+  color: var(--text-muted);
+}
+
+.request__more[hidden] {
+  display: none;
+}
+
+.request__tool {
+  margin: 0;
+  font: 700 13px/1.4 var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.request__detail,
+.request__question-text {
+  margin: 0;
+  font: 13px/1.4 var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.request__input {
+  max-height: 120px;
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  font: 12px/1.4 var(--font-mono);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgb(0 0 0 / 35%);
+}
+
+.request__question {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid rgb(255 255 255 / 12%);
+}
+
+.request__question-header {
+  padding: 0 4px;
+  font: 400 13px/1.2 var(--font-pixel);
+  color: var(--text-muted);
+}
+
+.request__options,
+.request__actions,
+.request__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.request__other {
+  min-width: 0;
+  padding: 4px 6px;
+  font: 13px var(--font-mono);
+  color: var(--text);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid rgb(255 255 255 / 18%);
+}
+
+.request__button {
+  min-height: 32px;
+  padding: 0 6px;
+  font: 400 14px/1.1 var(--font-pixel);
+  color: var(--wood-text);
+  text-shadow: 1px 1px 0 #000;
+  background: none;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('/assets/ui/wood-button.png') 4 fill / 8px stretch;
+  cursor: pointer;
+}
+
+.request__button--allow,
+.request__button--send {
+  flex: 1 1 auto;
+  color: #c9f0b8;
+}
+
+.request__button--deny {
+  flex: 1 1 auto;
+  color: #ffc2b8;
+}
+
+.request__button--always {
+  max-width: 100%;
+  overflow: hidden;
+  font: 12px/1.2 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.request__button--terminal {
+  justify-self: end;
+  font-size: 13px;
+}
+
+.request__button--option[aria-pressed='true'] {
+  color: #17110d;
+  text-shadow: none;
+  filter: sepia(1) saturate(3) brightness(1.4);
+}
+
+.request__button:hover:not(:disabled) {
+  filter: brightness(1.18);
+}
+
+.request__button--option[aria-pressed='true']:hover:not(:disabled) {
+  filter: sepia(1) saturate(3) brightness(1.55);
+}
+
+.request__button:focus-visible,
+.request__other:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.request__button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.55;
+}

@@ -57,7 +57,7 @@ export function createGame(options: GameOptions): Game {
     draw(ctx, dt, time) {
       world.update(dt);
       particles.update(dt, emittersFor({ world, agents, assets }));
-      const { selected, focused } = store.getState();
+      const { selected, focused, permissions } = store.getState();
       drawScene(ctx, {
         world,
         agents,
@@ -67,6 +67,7 @@ export function createGame(options: GameOptions): Game {
         hovered,
         time,
         particles,
+        alerts: new Set(permissions.map((request) => request.agentId)),
       });
     },
   });

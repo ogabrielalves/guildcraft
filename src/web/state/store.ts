@@ -1,6 +1,7 @@
 import type { AgentActivity } from '../../shared/activity.js';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_EVENTS } from '../../shared/constants.js';
+import type { PermissionRequestView } from '../../shared/permission.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 
 export type ConnectionState = 'connecting' | 'open' | 'closed' | 'unauthorized';
@@ -11,6 +12,7 @@ export interface StoreState {
   readonly events: readonly VillageEvent[];
   readonly skins: readonly string[];
   readonly activities: Readonly<Record<string, AgentActivity>>;
+  readonly permissions: readonly PermissionRequestView[];
   readonly selected: readonly string[];
   readonly focused: string | null;
   readonly connection: ConnectionState;
@@ -23,6 +25,7 @@ export const INITIAL_STATE: StoreState = {
   events: [],
   skins: [],
   activities: {},
+  permissions: [],
   selected: [],
   focused: null,
   connection: 'connecting',
@@ -57,6 +60,7 @@ export function removeAgent(state: StoreState, agentId: string): StoreState {
     ...state,
     agents: state.agents.filter((agent) => agent.id !== agentId),
     activities,
+    permissions: state.permissions.filter((request) => request.agentId !== agentId),
     selected,
     focused: state.focused === agentId ? (selected.at(-1) ?? null) : state.focused,
   };
@@ -72,6 +76,7 @@ export function initSession(
   events: readonly VillageEvent[],
   skins: readonly string[],
   activities: readonly AgentActivity[] = [],
+  permissions: readonly PermissionRequestView[] = [],
 ): StoreState {
   const ids = new Set(agents.map((agent) => agent.id));
   return {
@@ -82,9 +87,35 @@ export function initSession(
     activities: Object.fromEntries(
       activities.filter((activity) => ids.has(activity.agentId)).map((a) => [a.agentId, a]),
     ),
+    permissions: oldestFirst(permissions.filter((request) => ids.has(request.agentId))),
     selected: state.selected.filter((id) => ids.has(id)),
     focused: state.focused !== null && ids.has(state.focused) ? state.focused : null,
   };
+}
+
+function oldestFirst(requests: readonly PermissionRequestView[]): PermissionRequestView[] {
+  return [...requests].sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export function addPermission(state: StoreState, request: PermissionRequestView): StoreState {
+  if (!state.agents.some((agent) => agent.id === request.agentId)) return state;
+  const others = state.permissions.filter((current) => current.id !== request.id);
+  return { ...state, permissions: oldestFirst([...others, request]) };
+}
+
+export function resolvePermission(state: StoreState, requestId: string): StoreState {
+  if (!state.permissions.some((request) => request.id === requestId)) return state;
+  return {
+    ...state,
+    permissions: state.permissions.filter((request) => request.id !== requestId),
+  };
+}
+
+export function pendingFor(
+  state: Pick<StoreState, 'permissions'>,
+  agentId: string,
+): PermissionRequestView[] {
+  return state.permissions.filter((request) => request.agentId === agentId);
 }
 
 export function setActivity(state: StoreState, activity: AgentActivity): StoreState {
@@ -127,13 +158,24 @@ export function setConnection(state: StoreState, connection: ConnectionState): S
 export function applyServerMessage(state: StoreState, message: ServerMessage): StoreState {
   switch (message.type) {
     case 'session:init':
-      return initSession(state, message.agents, message.events, message.skins, message.activities);
+      return initSession(
+        state,
+        message.agents,
+        message.events,
+        message.skins,
+        message.activities,
+        message.permissions,
+      );
     case 'agent:updated':
       return upsertAgent(state, message.agent);
     case 'agent:removed':
       return removeAgent(state, message.agentId);
     case 'event':
       return addEvent(state, message.event);
+    case 'permission:request':
+      return addPermission(state, message.request);
+    case 'permission:resolved':
+      return resolvePermission(state, message.requestId);
     case 'agent:activity':
       return setActivity(state, message.activity);
     default:

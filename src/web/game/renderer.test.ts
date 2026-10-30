@@ -306,6 +306,7 @@ describe('drawScene labels', () => {
   it('adds the activity bubble over the nameplate', () => {
     expect(texts(scene([agent('a', 'thinking')]))).toEqual(['A', '💭']);
     expect(texts(scene([agent('a', 'waiting')]))).toEqual(['A', '❗']);
+    expect(texts(scene([agent('a', 'thinking')], { alerts: new Set(['a']) }))).toEqual(['A', '❗']);
   });
 
   it('shows the note while visiting, or the letter icon without one', () => {

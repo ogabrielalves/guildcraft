@@ -62,6 +62,37 @@
   --ring: var(--danger);
 }
 
+.roster__avatar[data-alert='true'] {
+  --ring: var(--warn);
+  animation: roster-alert 0.9s steps(2, jump-none) infinite alternate;
+}
+
+.roster__alert {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 14px;
+  height: 14px;
+  font: 700 11px/14px var(--font-mono);
+  color: #17110d;
+  text-align: center;
+  background: var(--warn);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #17110d;
+}
+
+@keyframes roster-alert {
+  to {
+    filter: brightness(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roster__avatar[data-alert='true'] {
+    animation: none;
+  }
+}
+
 .roster__avatar[aria-pressed='true'] {
   box-shadow:
     0 0 0 1px rgb(0 0 0 / 60%),

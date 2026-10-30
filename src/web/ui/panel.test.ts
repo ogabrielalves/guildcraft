@@ -4,7 +4,8 @@ import type { AgentAction, AgentActivity } from '../../shared/activity.js';
 import { ACTION_STATES } from '../../shared/activity.js';
 import type { AgentView } from '../../shared/agent.js';
 import { AGENT_STATUSES, WAITING_REASONS } from '../../shared/agent.js';
-import type { ClientMessage } from '../../shared/protocol.js';
+import type { PermissionRequestView } from '../../shared/permission.js';
+import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
 import type { IdlePlan } from '../game/activity.js';
 import { IDLE_PLANS } from '../game/activity.js';
 import type { Assets } from '../game/assets.js';
@@ -69,6 +70,10 @@ function setup(options: SetupOptions = {}) {
     activities: options.activities ?? [],
   });
   const sent: ClientMessage[] = [];
+  const listeners = new Set<(message: ServerMessage) => void>();
+  const receive = (message: ServerMessage) => {
+    for (const listener of listeners) listener(message);
+  };
   const terminal = {
     element: document.createElement('section'),
     fit: vi.fn(),
@@ -88,6 +93,10 @@ function setup(options: SetupOptions = {}) {
       send: (message) => {
         sent.push(message);
         return true;
+      },
+      onMessage: (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
       },
     },
     terminal,
@@ -140,6 +149,8 @@ function setup(options: SetupOptions = {}) {
     store,
     panel,
     sent,
+    receive,
+    listeners,
     terminal,
     confirm,
     query,
@@ -699,5 +710,92 @@ describe('history', () => {
     setLocale('pt-BR');
     expect(query('.panel__heading').textContent).toBe(DICTIONARIES['pt-BR'].get('history.title'));
     expect(query('.panel__entry-icon').title).toBe(DICTIONARIES['pt-BR'].get('action.done'));
+  });
+});
+
+function request(id: string, agentId: string, createdAt: number): PermissionRequestView {
+  return {
+    id,
+    agentId,
+    toolName: 'Bash',
+    detail: `cmd ${id}`,
+    input: null,
+    subagent: null,
+    suggestions: [],
+    questions: null,
+    createdAt,
+    expiresAt: createdAt + 1_000,
+  };
+}
+
+describe('permission requests', () => {
+  const card = (panel: { element: HTMLElement }) => {
+    const found = panel.element.querySelector<HTMLElement>('.request');
+    if (!found) throw new Error('missing card');
+    return found;
+  };
+
+  it('shows the oldest request of the focused agent and sends the decision', () => {
+    const { store, panel, sent } = setup();
+    store.apply({ type: 'permission:request', request: request('r2', 'a', 20) });
+    store.apply({ type: 'permission:request', request: request('r1', 'a', 10) });
+    store.apply({ type: 'permission:request', request: request('rb', 'b', 5) });
+    expect(card(panel).hidden).toBe(true);
+    store.focus('a');
+    expect(card(panel).hidden).toBe(false);
+    expect(card(panel).querySelector('.request__detail')?.textContent).toBe('cmd r1');
+    expect(card(panel).querySelector('.request__more')?.textContent).toBe('+1 more');
+    card(panel).querySelector<HTMLButtonElement>('.request__button--allow')?.click();
+    expect(sent).toEqual([
+      { type: 'permission:decide', requestId: 'r1', decision: { behavior: 'allow' } },
+    ]);
+    store.apply({ type: 'permission:resolved', requestId: 'r1', agentId: 'a', outcome: 'allowed' });
+    expect(card(panel).querySelector('.request__detail')?.textContent).toBe('cmd r2');
+    store.apply({ type: 'permission:resolved', requestId: 'r2', agentId: 'a', outcome: 'denied' });
+    expect(card(panel).hidden).toBe(true);
+    store.focus('b');
+    expect(card(panel).querySelector('.request__detail')?.textContent).toBe('cmd rb');
+  });
+
+  it('opens the console when answering there', () => {
+    const { store, panel, terminal } = setup();
+    store.apply({ type: 'permission:request', request: request('r1', 'a', 10) });
+    store.focus('a');
+    card(panel).querySelector<HTMLButtonElement>('.request__button--terminal')?.click();
+    expect(panel.console.hidden).toBe(false);
+    expect(terminal.focus).toHaveBeenCalled();
+  });
+
+  it('drops a request the server no longer knows', () => {
+    const { store, panel, receive } = setup();
+    store.apply({ type: 'permission:request', request: request('r1', 'a', 10) });
+    store.focus('a');
+    card(panel).querySelector<HTMLButtonElement>('.request__button--deny')?.click();
+    receive({ type: 'error', code: 'PERMISSION_NOT_FOUND', source: 'agent:create' });
+    expect(store.getState().permissions).toHaveLength(1);
+    receive({ type: 'error', code: 'PERMISSION_NOT_FOUND', source: 'permission:decide' });
+    expect(store.getState().permissions).toHaveLength(0);
+    expect(card(panel).hidden).toBe(true);
+  });
+
+  it('unlocks the buttons after another decide error', () => {
+    const { store, panel, receive } = setup();
+    receive({ type: 'error', code: 'INVALID_MESSAGE', source: 'permission:decide' });
+    store.apply({ type: 'permission:request', request: request('r1', 'a', 10) });
+    store.focus('a');
+    const deny = () => card(panel).querySelector<HTMLButtonElement>('.request__button--deny');
+    deny()?.click();
+    expect(deny()?.disabled).toBe(true);
+    receive({ type: 'event', event: { kind: 'joined', agentId: 'a', at: 1 } });
+    receive({ type: 'error', code: 'INVALID_MESSAGE', source: 'permission:decide' });
+    expect(deny()?.disabled).toBe(false);
+    expect(store.getState().permissions).toHaveLength(1);
+  });
+
+  it('stops listening to the socket on destroy', () => {
+    const { panel, listeners } = setup();
+    expect(listeners.size).toBe(1);
+    panel.destroy();
+    expect(listeners.size).toBe(0);
   });
 });

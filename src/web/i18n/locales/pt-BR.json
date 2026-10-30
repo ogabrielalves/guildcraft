@@ -39,6 +39,25 @@
     "model": "Modelo",
     "effort": "Esforço"
   },
+  "request": {
+    "permission": "Pede para usar uma ferramenta",
+    "question": "Tem uma pergunta para você",
+    "pending": "Precisa da sua resposta",
+    "more": "+{count} na fila",
+    "subagent": "via {name}",
+    "allow": "Permitir",
+    "deny": "Negar",
+    "always": "Sempre permitir {rules}",
+    "send": "Enviar resposta",
+    "other": "Outra resposta…",
+    "terminal": "Responder no console",
+    "destination": {
+      "session": "nesta sessão",
+      "localSettings": "nas configurações locais",
+      "projectSettings": "nas configurações do projeto",
+      "userSettings": "nas suas configurações de usuário"
+    }
+  },
   "history": {
     "title": "Histórico",
     "empty": "Nenhuma ação ainda",

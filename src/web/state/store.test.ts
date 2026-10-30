@@ -1,16 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentActivity } from '../../shared/activity.js';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
+import type { PermissionRequestView } from '../../shared/permission.js';
 import { MAX_EVENTS } from '../../shared/constants.js';
 import {
   INITIAL_STATE,
   Store,
   addEvent,
+  addPermission,
   applyServerMessage,
   clearSelection,
   focusAgent,
   initSession,
+  pendingFor,
   removeAgent,
+  resolvePermission,
   selectAgent,
   setActivity,
   setConnection,
@@ -353,5 +357,83 @@ describe('activities', () => {
   it('drops the activity when the agent is removed', () => {
     const state = setActivity(upsertAgent(INITIAL_STATE, agent('a')), activity('a'));
     expect(removeAgent(state, 'a').activities).toEqual({});
+  });
+});
+
+function permission(
+  id: string,
+  agentId: string,
+  createdAt: number,
+  overrides: Partial<PermissionRequestView> = {},
+): PermissionRequestView {
+  return {
+    id,
+    agentId,
+    toolName: 'Bash',
+    detail: `cmd ${id}`,
+    input: null,
+    subagent: null,
+    suggestions: [],
+    questions: null,
+    createdAt,
+    expiresAt: createdAt + 1_000,
+    ...overrides,
+  };
+}
+
+describe('permissions', () => {
+  const base = upsertAgent(upsertAgent(INITIAL_STATE, agent('a')), agent('b'));
+
+  it('keeps known requests oldest first from session init', () => {
+    const state = applyServerMessage(INITIAL_STATE, {
+      type: 'session:init',
+      agents: [agent('a')],
+      events: [],
+      skins: [],
+      permissions: [
+        permission('2', 'a', 20),
+        permission('x', 'ghost', 1),
+        permission('1', 'a', 10),
+      ],
+      activities: [],
+    });
+    expect(state.permissions.map((request) => request.id)).toEqual(['1', '2']);
+  });
+
+  it('adds, replaces and resolves requests', () => {
+    let state = applyServerMessage(base, {
+      type: 'permission:request',
+      request: permission('2', 'a', 20),
+    });
+    state = applyServerMessage(state, {
+      type: 'permission:request',
+      request: permission('1', 'b', 10),
+    });
+    state = applyServerMessage(state, {
+      type: 'permission:request',
+      request: permission('2', 'a', 20, { detail: 'new' }),
+    });
+    expect(state.permissions.map((request) => request.id)).toEqual(['1', '2']);
+    expect(pendingFor(state, 'a').map((request) => request.detail)).toEqual(['new']);
+    state = applyServerMessage(state, {
+      type: 'permission:resolved',
+      requestId: '1',
+      agentId: 'b',
+      outcome: 'allowed',
+    });
+    expect(state.permissions.map((request) => request.id)).toEqual(['2']);
+    expect(resolvePermission(state, 'missing')).toBe(state);
+  });
+
+  it('ignores requests for unknown agents', () => {
+    expect(addPermission(base, permission('1', 'ghost', 1))).toBe(base);
+  });
+
+  it('drops requests of a removed agent', () => {
+    const state = addPermission(
+      addPermission(base, permission('1', 'a', 1)),
+      permission('2', 'b', 2),
+    );
+    expect(removeAgent(state, 'a').permissions.map((request) => request.id)).toEqual(['2']);
   });
 });

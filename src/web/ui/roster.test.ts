@@ -128,3 +128,32 @@ describe('createRoster', () => {
     expect(stop).toHaveBeenCalledOnce();
   });
 });
+
+describe('permission alerts', () => {
+  it('marks avatars with a pending request until it resolves', () => {
+    const { store, avatars } = setup([agent('a'), agent('b')]);
+    store.apply({
+      type: 'permission:request',
+      request: {
+        id: 'r1',
+        agentId: 'b',
+        toolName: 'Bash',
+        detail: 'ls',
+        input: null,
+        subagent: null,
+        suggestions: [],
+        questions: null,
+        createdAt: 1,
+        expiresAt: 2,
+      },
+    });
+    const [first, second] = avatars();
+    expect(first?.dataset.alert).toBeUndefined();
+    expect(first?.querySelector('.roster__alert')).toBeNull();
+    expect(second?.dataset.alert).toBe('true');
+    expect(second?.querySelector('.roster__alert')?.textContent).toBe('!');
+    expect(second?.title).toBe('B · Needs your answer');
+    store.apply({ type: 'permission:resolved', requestId: 'r1', agentId: 'b', outcome: 'denied' });
+    expect(avatars()[1]?.dataset.alert).toBeUndefined();
+  });
+});

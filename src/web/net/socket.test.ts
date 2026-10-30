@@ -93,6 +93,14 @@ function harness(failures = 0) {
 
 describe('decodeServerMessage', () => {
   it('accepts known message types', () => {
+    expect(
+      decodeServerMessage(
+        '{"type":"permission:resolved","requestId":"r","agentId":"a","outcome":"denied"}',
+      ),
+    ).toMatchObject({ type: 'permission:resolved' });
+    expect(decodeServerMessage('{"type":"agent:activity","activity":{}}')).toMatchObject({
+      type: 'agent:activity',
+    });
     expect(decodeServerMessage('{"type":"agent:removed","agentId":"a"}')).toEqual({
       type: 'agent:removed',
       agentId: 'a',
