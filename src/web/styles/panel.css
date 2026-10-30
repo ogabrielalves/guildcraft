@@ -1,18 +1,27 @@
 .panel {
+  --slate: #292d32;
+  --wood-text: #fbeed6;
   position: absolute;
   top: var(--hud-height);
   right: var(--gap);
-  bottom: var(--gap);
   z-index: 10;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 8px;
-  width: min(640px, calc(100% - 2 * var(--gap)));
-  padding: var(--gap);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(360px, calc(100% - 2 * var(--gap)));
+  max-height: calc(100% - var(--hud-height) - var(--gap));
+  padding: 6px 4px 4px;
+  border-style: solid;
+  border-width: 10px 12px 8px;
+  border-image: url('/assets/ui/slate-frame.png') 5 6 4 6 fill / 10px 12px 8px stretch;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 50%);
+  image-rendering: pixelated;
+}
+
+.panel[data-console='open'] {
+  bottom: var(--gap);
+  width: min(680px, calc(100% - 2 * var(--gap)));
+  max-height: none;
 }
 
 .panel[hidden] {
@@ -20,20 +29,35 @@
 }
 
 .panel__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__portrait {
+  width: 80px;
+  height: 80px;
+  image-rendering: pixelated;
+  background: radial-gradient(ellipse 34% 7% at 50% 92%, rgb(0 0 0 / 35%) 98%, transparent);
+}
+
+.panel__identity {
   min-width: 0;
 }
 
 .panel__title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .panel__name {
   margin: 0;
   overflow: hidden;
-  font-size: 16px;
+  font: 400 22px/1.1 var(--font-pixel);
   color: var(--accent);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -42,11 +66,11 @@
 .panel__status,
 .panel__queue {
   flex-shrink: 0;
-  padding: 1px 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-  background: var(--surface-raised);
-  border-radius: 999px;
+  padding: 2px 8px;
+  font: 400 13px/1.2 var(--font-pixel);
+  color: var(--text);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid rgb(255 255 255 / 12%);
 }
 
 .panel__status[data-status='idle'] {
@@ -66,7 +90,7 @@
 }
 
 .panel__cwd {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   overflow: hidden;
   font: 12px var(--font-mono);
   color: var(--text-muted);
@@ -74,11 +98,76 @@
   white-space: nowrap;
 }
 
-.panel__actions {
+.panel__close {
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: 400 18px/1 var(--font-pixel);
+  color: var(--wood-text);
+  text-shadow: 1px 1px 0 #000;
+  background: none;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('/assets/ui/wood-button.png') 4 fill / 8px stretch;
+  cursor: pointer;
+}
+
+.panel__details {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgb(0 0 0 / 22%);
+}
+
+.panel__row {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+
+.panel__row[hidden] {
+  display: none;
+}
+
+.panel__term {
+  font: 400 14px/1.3 var(--font-pixel);
+  color: var(--text-muted);
+}
+
+.panel__value {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font: 400 16px/1.3 var(--font-pixel);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.panel__row[data-row='tool'] .panel__value {
+  font: 13px/1.4 var(--font-mono);
+}
+
+.panel__row[data-row='waiting'] .panel__value {
+  color: var(--warn);
+}
+
+.panel__actions,
+.panel__manage,
+.panel__console-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+}
+
+.panel__manage {
+  padding-top: 8px;
+  border-top: 2px solid rgb(0 0 0 / 30%);
 }
 
 .panel__skin {
@@ -86,35 +175,82 @@
   align-items: center;
   gap: 6px;
   margin-right: auto;
-  font-size: 12px;
+  font: 400 14px/1.2 var(--font-pixel);
   color: var(--text-muted);
 }
 
-.panel__skin select,
-.panel__action {
-  padding: 4px 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+.panel__skin select {
+  padding: 3px 6px;
+  font: 400 14px/1.2 var(--font-pixel);
+  color: var(--text);
+  background: rgb(0 0 0 / 35%);
+  border: 1px solid rgb(255 255 255 / 15%);
   cursor: pointer;
 }
 
-.panel__action:hover:not(:disabled) {
-  border-color: var(--accent);
+.panel__action {
+  min-height: 36px;
+  padding: 0 6px;
+  font: 400 16px/1 var(--font-pixel);
+  color: var(--wood-text);
+  text-shadow: 1px 1px 0 #000;
+  background: none;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('/assets/ui/wood-button.png') 4 fill / 8px stretch;
+  cursor: pointer;
+}
+
+.panel__action--console {
+  flex: 1 1 auto;
+}
+
+.panel__action:hover:not(:disabled),
+.panel__close:hover {
+  filter: brightness(1.18);
+}
+
+.panel__action:active:not(:disabled),
+.panel__close:active {
+  transform: translateY(1px);
+}
+
+.panel__action:focus-visible,
+.panel__close:focus-visible,
+.panel__skin select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .panel__action:disabled,
 .panel__skin select:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  filter: grayscale(0.7);
+  opacity: 0.55;
 }
 
 .panel__action--remove,
 .panel__action--remove-all {
-  color: var(--danger);
+  color: #ffc2b8;
 }
 
-.panel__action--remove:hover:not(:disabled),
-.panel__action--remove-all:hover:not(:disabled) {
-  border-color: var(--danger);
+.panel__console {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  flex: 1 1 auto;
+  gap: 6px;
+  min-height: 0;
+}
+
+.panel__console[hidden] {
+  display: none;
+}
+
+.panel__console-tools {
+  justify-content: flex-end;
+}
+
+.panel__console-tools .panel__action {
+  min-height: 30px;
+  font-size: 14px;
 }

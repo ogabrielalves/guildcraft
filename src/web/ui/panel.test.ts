@@ -1,12 +1,24 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentView } from '../../shared/agent.js';
-import { AGENT_STATUSES } from '../../shared/agent.js';
+import { AGENT_STATUSES, WAITING_REASONS } from '../../shared/agent.js';
 import type { ClientMessage } from '../../shared/protocol.js';
+import type { IdlePlan } from '../game/activity.js';
+import { IDLE_PLANS } from '../game/activity.js';
+import type { Assets } from '../game/assets.js';
+import { SIDE_CHARACTER, fakeAssets } from '../game/fake-assets.js';
 import { DICTIONARIES, initI18n, setLocale } from '../i18n/index.js';
 import { Store } from '../state/store.js';
 import type { Confirm, PanelTerminal } from './panel.js';
-import { createPanel, skinChoices, skinLabel, statusKey } from './panel.js';
+import {
+  DETAIL_ROWS,
+  REFRESH_MS,
+  createPanel,
+  nowText,
+  skinChoices,
+  skinLabel,
+  statusKey,
+} from './panel.js';
 
 afterEach(() => {
   initI18n({ storage: null, languages: [] });
@@ -27,7 +39,15 @@ function agent(id: string, overrides: Partial<AgentView> = {}): AgentView {
   };
 }
 
-function setup(options: { confirm?: Confirm; agents?: AgentView[]; skins?: string[] } = {}) {
+interface SetupOptions {
+  confirm?: Confirm;
+  agents?: AgentView[];
+  skins?: string[];
+  doing?: IdlePlan | null;
+  assets?: Assets;
+}
+
+function setup(options: SetupOptions = {}) {
   const store = new Store();
   store.apply({
     type: 'session:init',
@@ -45,6 +65,9 @@ function setup(options: { confirm?: Confirm; agents?: AgentView[]; skins?: strin
     paste: vi.fn(() => Promise.resolve(true)),
   } satisfies PanelTerminal;
   const confirm = vi.fn(options.confirm ?? (() => true));
+  const ticks: (() => void)[] = [];
+  const stop = vi.fn();
+  let doing = options.doing ?? null;
   const panel = createPanel({
     store,
     socket: {
@@ -55,7 +78,17 @@ function setup(options: { confirm?: Confirm; agents?: AgentView[]; skins?: strin
     },
     terminal,
     confirm,
+    ...(options.assets ? { assets: options.assets } : {}),
+    doing: () => doing,
+    every: (callback, ms) => {
+      expect(ms).toBe(REFRESH_MS);
+      ticks.push(callback);
+      return stop;
+    },
   });
+  const setDoing = (plan: IdlePlan | null) => {
+    doing = plan;
+  };
   const query = (selector: string): HTMLElement => {
     const found = panel.element.querySelector<HTMLElement>(selector);
     if (!found) throw new Error(`missing ${selector}`);
@@ -74,7 +107,24 @@ function setup(options: { confirm?: Confirm; agents?: AgentView[]; skins?: strin
   const click = (modifier: string) => {
     button(modifier).click();
   };
-  return { store, panel, sent, terminal, confirm, query, button, select, click };
+  const row = (id: string): HTMLElement => query(`.panel__row[data-row='${id}']`);
+  const value = (id: string) => row(id).querySelector('dd');
+  return {
+    store,
+    panel,
+    sent,
+    terminal,
+    confirm,
+    query,
+    button,
+    select,
+    click,
+    row,
+    value,
+    ticks,
+    stop,
+    setDoing,
+  };
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -89,6 +139,27 @@ describe('helpers', () => {
     expect(skinLabel('')).toBe('');
   });
 
+  it.each([
+    ...WAITING_REASONS.map((reason) => `waitingFor.${reason}`),
+    ...IDLE_PLANS.map((plan) => `idle.${plan}`),
+    ...DETAIL_ROWS.map((detail) => detail.label),
+  ])('has the %s translation in every locale', (key) => {
+    expect(DICTIONARIES.en.has(key)).toBe(true);
+    expect(DICTIONARIES['pt-BR'].has(key)).toBe(true);
+  });
+
+  it('describes what the agent is doing right now', () => {
+    const tool = { name: 'Bash', detail: 'npm test' };
+    expect(nowText(agent('a', { status: 'tool', tool }), null)).toBe('npm test');
+    expect(nowText(agent('a', { status: 'tool', tool: { ...tool, detail: '' } }), null)).toBe(
+      'Bash',
+    );
+    expect(nowText(agent('a', { status: 'tool' }), null)).toBe('Working');
+    expect(nowText(agent('a'), 'hearth')).toBe('Warming up by the fire');
+    expect(nowText(agent('a'), null)).toBe('Strolling around the guild');
+    expect(nowText(agent('a', { status: 'thinking' }), 'nap')).toBe('Thinking');
+  });
+
   it('keeps the current skin selectable even when it is not listed', () => {
     expect(skinChoices(['mortis', 'lyra'], 'lyra')).toEqual(['mortis', 'lyra']);
     expect(skinChoices(['mortis'], 'ghost')).toEqual(['ghost', 'mortis']);
@@ -101,17 +172,94 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
     store.focus('a');
     expect(panel.element.hidden).toBe(false);
-    expect(terminal.fit).toHaveBeenCalledOnce();
+    expect(terminal.fit).not.toHaveBeenCalled();
     expect(terminal.focus).not.toHaveBeenCalled();
-    store.focus('b');
-    expect(terminal.fit).toHaveBeenCalledOnce();
     store.focus(null);
     expect(panel.element.hidden).toBe(true);
   });
 
-  it('contains the console', () => {
-    const { panel, terminal } = setup();
-    expect(terminal.element.parentElement).toBe(panel.element);
+  it('keeps the console closed until asked and remembers it between agents', () => {
+    const { panel, store, terminal, query, button, click } = setup();
+    const section = query('.panel__console');
+    expect(terminal.element.parentElement).toBe(section);
+    store.focus('a');
+    expect(section.hidden).toBe(true);
+    expect(button('console').textContent).toBe('Open console');
+    click('console');
+    expect(section.hidden).toBe(false);
+    expect(panel.element.dataset.console).toBe('open');
+    expect(button('console').getAttribute('aria-expanded')).toBe('true');
+    expect(button('console').textContent).toBe('Hide console');
+    expect(terminal.fit).toHaveBeenCalledOnce();
+    expect(terminal.focus).toHaveBeenCalledOnce();
+    store.focus(null);
+    store.focus('b');
+    expect(section.hidden).toBe(false);
+    expect(terminal.fit).toHaveBeenCalledTimes(2);
+    click('console');
+    expect(section.hidden).toBe(true);
+    expect(panel.element.dataset.console).toBe('closed');
+    expect(button('console').textContent).toBe('Open console');
+    setLocale('pt-BR');
+    expect(button('console').textContent).toBe(DICTIONARIES['pt-BR'].get('panel.console'));
+  });
+
+  it('closes from its own button', () => {
+    const { panel, store, query } = setup();
+    store.focus('a');
+    expect(query('.panel__close').getAttribute('aria-label')).toBe('Close');
+    query('.panel__close').click();
+    expect(store.getState().focused).toBeNull();
+    expect(panel.element.hidden).toBe(true);
+  });
+
+  it('shows the tool and the waiting reason and hides empty rows', () => {
+    const tool = { name: 'Bash', detail: 'npm test' };
+    const { store, row, value } = setup({
+      agents: [
+        agent('a', { status: 'tool', tool }),
+        agent('b', { status: 'waiting', waitingFor: 'permission' }),
+      ],
+    });
+    store.focus('a');
+    expect(value('now')?.textContent).toBe('npm test');
+    expect(value('now')?.title).toBe('npm test');
+    expect(row('tool').hidden).toBe(false);
+    expect(value('tool')?.textContent).toBe('Bash');
+    expect(row('waiting').hidden).toBe(true);
+    store.focus('b');
+    expect(value('now')?.textContent).toBe('Waiting for you');
+    expect(row('tool').hidden).toBe(true);
+    expect(row('waiting').hidden).toBe(false);
+    expect(value('waiting')?.textContent).toBe('Your approval for a tool');
+  });
+
+  it('follows the idle activity while it is shown', () => {
+    const { store, value, ticks, stop, setDoing } = setup({ doing: 'nap' });
+    expect(ticks).toHaveLength(0);
+    store.focus('a');
+    expect(value('now')?.textContent).toBe('Taking a nap');
+    expect(ticks).toHaveLength(1);
+    setDoing('chat');
+    ticks[0]?.();
+    expect(value('now')?.textContent).toBe('Chatting with a friend');
+    store.focus('b');
+    expect(ticks).toHaveLength(1);
+    store.focus(null);
+    expect(stop).toHaveBeenCalledOnce();
+    ticks[0]?.();
+    expect(value('now')?.textContent).toBe('Chatting with a friend');
+  });
+
+  it('draws the portrait of the focused character', () => {
+    const { store, query } = setup({ assets: fakeAssets({ mortis: SIDE_CHARACTER }) });
+    const canvas = query('.panel__portrait');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('missing portrait');
+    const drawImage = vi.fn();
+    const context = { clearRect: vi.fn(), drawImage } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(canvas, 'getContext').mockReturnValue(context);
+    store.focus('a');
+    expect(drawImage).toHaveBeenCalledOnce();
   });
 
   it('renders the focused agent header', () => {
@@ -188,6 +336,9 @@ describe('createPanel', () => {
       { type: 'agent:interrupt', agentId: 'a' },
       { type: 'agent:restart', agentId: 'a' },
     ]);
+    expect(terminal.focus).not.toHaveBeenCalled();
+    click('console');
+    click('interrupt');
     expect(terminal.focus).toHaveBeenCalledTimes(2);
   });
 
@@ -244,12 +395,14 @@ describe('createPanel', () => {
   });
 
   it('stops listening on destroy', () => {
-    const { store, panel, query } = setup();
+    const { store, panel, query, stop } = setup();
     document.body.append(panel.element);
-    panel.destroy();
-    expect(panel.element.isConnected).toBe(false);
     store.focus('a');
-    expect(panel.element.hidden).toBe(true);
+    panel.destroy();
+    expect(stop).toHaveBeenCalledOnce();
+    expect(panel.element.isConnected).toBe(false);
+    store.focus(null);
+    expect(panel.element.hidden).toBe(false);
     setLocale('pt-BR');
     expect(query('.panel__action--restart').textContent).toBe('Restart');
   });

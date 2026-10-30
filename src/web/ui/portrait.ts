@@ -1,9 +1,12 @@
 import type { Assets } from '../game/assets.js';
 import type { Paint } from '../game/draw/paint.js';
 import { frameAt } from '../game/sprite-sheet.js';
-import { skinLabel } from './panel.js';
 
 export const PORTRAIT = { width: 40, height: 40, floor: 38 };
+
+export function skinLabel(skin: string): string {
+  return skin.charAt(0).toUpperCase() + skin.slice(1);
+}
 
 export function characterName(assets: Assets, skin: string, locale: string): string {
   const names = assets.character(skin)?.manifest.name;

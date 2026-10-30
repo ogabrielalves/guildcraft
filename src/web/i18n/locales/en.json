@@ -30,7 +30,28 @@
     "confirmRemove": "Remove {name}? The agent will be stopped.",
     "confirmRemoveAll": "Remove all adventurers? Every agent will be stopped.",
     "copy": "Copy",
-    "paste": "Paste"
+    "paste": "Paste",
+    "now": "Right now",
+    "tool": "Tool",
+    "waitingFor": "Needs",
+    "console": "Open console",
+    "hideConsole": "Hide console",
+    "close": "Close"
+  },
+  "waitingFor": {
+    "permission": "Your approval for a tool",
+    "question": "An answer to a question",
+    "trust": "You to trust the folder",
+    "dialog": "An answer in the console",
+    "other": "A look at the console"
+  },
+  "idle": {
+    "wander": "Strolling around the guild",
+    "hearth": "Warming up by the fire",
+    "bookshelf": "Browsing the shelves",
+    "table": "Resting at a table",
+    "chat": "Chatting with a friend",
+    "nap": "Taking a nap"
   },
   "compose": {
     "placeholder": "Send a prompt to {count} selected",

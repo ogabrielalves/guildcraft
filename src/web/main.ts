@@ -10,6 +10,7 @@ import './styles/dialog.css';
 import './styles/feedback.css';
 import './styles/game.css';
 import { bindSocket, launchToken, mountShell } from './app.js';
+import type { Game } from './game/game.js';
 import { createGame } from './game/game.js';
 import { AssetLibrary } from './game/assets.js';
 import type { WorkshopMap } from './game/map.js';
@@ -75,12 +76,15 @@ if (root) {
   });
   const toasts = createToasts();
   const terminal = createTerminalView({ store, socket, createTerminal: createXterm });
+  let game: Game | null = null;
   const panel = createPanel({
     store,
     socket: reportFailedSends(socket, () => {
       toasts.show(t('connection.lost'), 'error');
     }),
     terminal,
+    assets,
+    doing: (agentId) => game?.world.villager(agentId)?.doing ?? null,
   });
   const compose = createCompose({ store, socket });
   const hud = document.createElement('div');
@@ -89,7 +93,7 @@ if (root) {
   const tooltip = createTooltip();
   mountShell(root, store, [hud, panel.element, compose.element, toasts.element, tooltip.element]);
   const startGame = (map: WorkshopMap) => {
-    const game = createGame({
+    const started = createGame({
       store,
       socket,
       map,
@@ -99,13 +103,14 @@ if (root) {
         const text = agent
           ? `${agent.name} · ${agent.tool !== null && agent.tool.detail !== '' ? agent.tool.detail : t(statusKey(agent.status))}`
           : null;
-        const bounds = game.element.getBoundingClientRect();
+        const bounds = started.element.getBoundingClientRect();
         if (text === null) tooltip.hide();
         else tooltip.show(text, clientX - bounds.left, clientY - bounds.top);
       },
     });
-    root.querySelector('.stage')?.prepend(game.element);
-    game.start();
+    root.querySelector('.stage')?.prepend(started.element);
+    started.start();
+    game = started;
   };
   loadWorkshopMap(assets.url('maps/workshop.json'), request).then(startGame, (error: unknown) => {
     console.warn('guildcraft: using the provisional workshop', error);

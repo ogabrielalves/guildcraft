@@ -250,3 +250,23 @@ describe('shipped workshop map', () => {
     for (const ember of map.embers) expect(contains(world, ember)).toBe(true);
   });
 });
+
+describe('interface frames', () => {
+  const styles = join(import.meta.dirname, '../styles');
+  const used = readdirSync(styles)
+    .filter((file) => file.endsWith('.css'))
+    .flatMap((file) => [
+      ...readFileSync(join(styles, file), 'utf8').matchAll(/url\('\/assets\/(ui\/[^']+)'\)/g),
+    ])
+    .map((match) => match[1] ?? '');
+
+  it('ships every frame the stylesheets use', () => {
+    expect(used.length).toBeGreaterThan(0);
+    for (const path of used) expect(existsSync(join(ROOT, path)), path).toBe(true);
+  });
+
+  it('keeps the nine-slice frames at their pack size', () => {
+    expect(pngSize('ui/slate-frame.png')).toEqual({ width: 28, height: 23 });
+    expect(pngSize('ui/wood-button.png')).toEqual({ width: 28, height: 20 });
+  });
+});

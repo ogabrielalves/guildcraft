@@ -11,7 +11,7 @@ Guildcraft's source code is released under the MIT License (see `LICENSE`). The 
   - Credit is not required, but appreciated.
   - The art may be modified.
   - The art may **not** be sold, or marketed as a final product, modified or not. Only the author sells it.
-- Guildcraft ships the sheets it uses unmodified, renamed as listed below, plus one map composed from the pack.
+- Guildcraft ships the sheets it uses unmodified, renamed as listed below, plus one map composed from the pack and two small crops for the interface.
 
 | File in this repository | File in the pack |
 |---|---|
@@ -23,6 +23,13 @@ Guildcraft's source code is released under the MIT License (see `LICENSE`). The 
 | `assets/characters/lyra/{idle,walk}.png` | `Entities/Npc's/Citizen_F/Peasant_A/{Idle,Walk}/*-Sheet.png` |
 
 **Tavern Guild map** (`assets/maps/tavern-guild.png`): composed from Pixel Crawler art by Anokolisa. Floor and water tiles, walls, furniture, crafting stations, trees and props from the pack (`Environment/Tilesets`, `Environment/Structures` and `Environment/Props`) were arranged on an 80 × 56 grid, with soft shadows, warm light and a darker forest edge painted on top. It is a modified work of the pack and keeps its terms: it may not be sold or marketed on its own.
+
+**Interface frames**: crops of `Environment/Structures/Buildings/Interior/Interior_Props_01.png`, unchanged otherwise, used as nine-slice frames in the side menu.
+
+| File in this repository | Crop of `Interior_Props_01.png` (x, y, width, height) |
+|---|---|
+| `assets/ui/slate-frame.png` | 194, 260, 28, 23 (the dark board in a wooden frame) |
+| `assets/ui/wood-button.png` | 402, 230, 28, 20 (the wooden cutting board) |
 
 Thanks to Anokolisa for the Pixel Crawler pack.
 

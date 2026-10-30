@@ -30,7 +30,28 @@
     "confirmRemove": "Remover {name}? O agente será encerrado.",
     "confirmRemoveAll": "Remover todos os aventureiros? Todos os agentes serão encerrados.",
     "copy": "Copiar",
-    "paste": "Colar"
+    "paste": "Colar",
+    "now": "Agora",
+    "tool": "Ferramenta",
+    "waitingFor": "Precisa de",
+    "console": "Abrir console",
+    "hideConsole": "Esconder console",
+    "close": "Fechar"
+  },
+  "waitingFor": {
+    "permission": "Sua aprovação para uma ferramenta",
+    "question": "Uma resposta a uma pergunta",
+    "trust": "Que você confie na pasta",
+    "dialog": "Uma resposta no console",
+    "other": "Que você olhe o console"
+  },
+  "idle": {
+    "wander": "Passeando pela guilda",
+    "hearth": "Se aquecendo na lareira",
+    "bookshelf": "Olhando as estantes",
+    "table": "Descansando à mesa",
+    "chat": "Conversando com um amigo",
+    "nap": "Tirando um cochilo"
   },
   "compose": {
     "placeholder": "Enviar prompt para {count} selecionados",

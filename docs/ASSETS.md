@@ -16,6 +16,7 @@ assets/
 ├─ stations/*.png               station sheets
 ├─ maps/workshop.json           the workshop map
 ├─ maps/tavern-guild.png        the map's background art
+├─ ui/*.png                     nine-slice frames used by the interface
 └─ CREDITS.md
 ```
 
@@ -220,6 +221,17 @@ or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `fli
 ```
 
 Scenery without `depth` is drawn first, behind everyone: floors, walls, rugs. Give standing furniture a `depth`, usually the y of its feet, so it is sorted with the stations and the adventurers. Everything sorted is drawn by its feet, so someone standing behind a bookshelf is drawn behind it.
+
+## Interface frames
+
+The side menu is drawn with two crops of the pack, used as CSS nine-slice frames (`border-image`) at 2×, with `image-rendering: pixelated`:
+
+| File                 | Slices (top right bottom left, px) | Used for              |
+| -------------------- | ---------------------------------- | --------------------- |
+| `ui/slate-frame.png` | 5 6 4 6                            | the side menu's board |
+| `ui/wood-button.png` | 4 4 4 4                            | the menu's buttons    |
+
+The slices keep the wooden edges and corners; the flat middle stretches. Keep new frames at integer scales so the pixels stay crisp.
 
 ## Checking your changes
 
