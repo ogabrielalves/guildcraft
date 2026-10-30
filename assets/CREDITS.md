@@ -38,14 +38,6 @@ Character sprites were composed with the [Universal LPC Spritesheet Character Ge
 Licenses in use: CC-BY 3.0, CC-BY 3.0+, CC-BY 4.0, CC-BY-SA 3.0, CC-BY-SA 3.0+, CC0, GPL 2.0, GPL 2.0+, GPL 3.0, OGA-BY 3.0, OGA-BY 3.0+, OGA-BY-3.0.
 The sheets in this repository were downscaled to 50% with nearest-neighbor sampling; no other changes were made. Each asset is available under **any one** of the licenses listed for it. Pick one per asset and follow its terms. CC-BY-SA and GPL are share-alike, so modified versions of that art must use the same license. OGA-BY and CC-BY only require attribution.
 
-**Known issue (to resolve before release):** Brom's head `head/heads/human/male_plump` has an unknown author ("??") in the generator's data, and that could not be resolved:
-- Generator `sheet_definitions/head/heads/human/heads_human_male_plump.json` and `CREDITS.csv` say: "original head by Redshrike, plump version by ??", CC-BY-SA 3.0 / GPL 3.0.
-- The PNGs were committed by bluecarrot16 (commit `66dbeea1a0`, 2024-01-06) with no credit for the plump edit.
-- JaidynReiman left it out of the OGA release (<https://opengameart.org/content/expanded-ulpc-all-heads-body-parts-extensions>): "Human Plump was not included because I cannot confirm who made the original or what license it should be under." They *think* bluecarrot16 made it, but that is unconfirmed.
-- It is not listed on <https://opengameart.org/content/lpc-folk>.
-
-**Planned fix:** regenerate Brom with `head=Human_Male_light` (`head/heads/human/male`: Redshrike, BenCreating, bluecarrot16; OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0, same head as Faelan). Then update Brom's section below.
-
 ### All LPC authors (combined)
 
 Benjamin K. Smith (BenCreating), bluecarrot16, Dr. Jamgo, Durrani, Eliza Wyatt (ElizaWy), Evert, JaidynReiman, Joe White, Johannes Sjölund (wulax), laetissima, Lanea Zimmerman (Sharm), Luke Mehl, Mandi Paugh, Manuel Riecke (MrBeast), Matthew Krohn (makrohn), Michael Whitlock (bigbeargames), MuffinElZangano, Nila122, Pierre Vigier (pvigier), Stephen Challener (Redshrike), Thane Brimhall (pennomi), thecilekli, TheraHedwig, Tuomo Untinen (reemax), Zi Ye
@@ -84,7 +76,7 @@ File: `assets/characters/brom/brom.png` · Recreate: <https://liberatedpixelcup.
 
 - **body/bodies/male** — bluecarrot16, JaidynReiman, Benjamin K. Smith (BenCreating), Evert, Eliza Wyatt (ElizaWy), TheraHedwig, MuffinElZangano, Durrani, Johannes Sjölund (wulax), Stephen Challener (Redshrike). License: OGA-BY 3.0 / CC-BY-SA 3.0 / GPL 3.0. _see details at https://opengameart.org/content/lpc-character-bases; 'Thick' Male Revised Run/Climb by JaidynReiman (based on ElizaWy's LPC Revised)_
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-medieval-fantasy-character-sprites> <https://opengameart.org/content/lpc-male-jumping-animation-by-durrani> <https://opengameart.org/content/lpc-runcycle-and-diagonal-walkcycle> <https://opengameart.org/content/lpc-revised-character-basics> <https://opengameart.org/content/lpc-be-seated> <https://opengameart.org/content/lpc-runcycle-for-male-muscular-and-pregnant-character-bases-with-modular-heads> <https://opengameart.org/content/lpc-jump-expanded> <https://opengameart.org/content/lpc-character-bases>
-- **head/heads/human/male_plump** — Stephen Challener (Redshrike), ??. License: CC-BY-SA 3.0 / GPL 3.0. _original head by Redshrike, plump version by ??_ **(UNRESOLVED: plump author unknown, see "To check" above; replace this head)**
+- **head/heads/human/male_plump** — Stephen Challener (Redshrike), unknown author (plump edit). License: CC-BY-SA 3.0 / GPL 3.0. _Original head by Redshrike; the plump edit's author is not recorded in the generator's data (likely bluecarrot16, who committed the PNGs, but unconfirmed)._
   Links: <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles> <https://opengameart.org/content/lpc-folk>
 - **hair/buzzcut/adult** — ElizaWy. License: OGA-BY 3.0.
   Links: <https://opengameart.org/content/lpc-hair>
