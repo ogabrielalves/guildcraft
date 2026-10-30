@@ -19,16 +19,15 @@
   "workshop": {
     "recruit": "+ RECRUTAR",
     "full": "A oficina está cheia ({max} aventureiros)",
-    "queue": "{count} na fila"
+    "queue": "{count} na fila",
+    "removeAll": "Remover todos",
+    "confirmRemoveAll": "Remover todos os aventureiros? Todos os agentes serão encerrados."
   },
   "panel": {
-    "changeSkin": "Trocar visual",
     "interrupt": "Esc",
     "restart": "Reiniciar",
     "remove": "Remover",
-    "removeAll": "Remover todos",
     "confirmRemove": "Remover {name}? O agente será encerrado.",
-    "confirmRemoveAll": "Remover todos os aventureiros? Todos os agentes serão encerrados.",
     "copy": "Copiar",
     "paste": "Colar",
     "now": "Agora",

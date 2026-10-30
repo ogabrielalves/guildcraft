@@ -16,9 +16,80 @@
   pointer-events: auto;
 }
 
+.roster {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  max-width: 45vw;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.roster[hidden] {
+  display: none;
+}
+
+.roster__avatar {
+  --ring: var(--text-muted);
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #4a3626, #241a13);
+  border: 3px solid var(--ring);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 60%);
+  cursor: pointer;
+}
+
+.roster__avatar[data-status='tool'],
+.roster__avatar[data-status='thinking'] {
+  --ring: var(--accent);
+}
+
+.roster__avatar[data-status='idle'] {
+  --ring: var(--ok);
+}
+
+.roster__avatar[data-status='waiting'] {
+  --ring: var(--warn);
+}
+
+.roster__avatar[data-status='offline'] {
+  --ring: var(--danger);
+}
+
+.roster__avatar[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 60%),
+    0 0 0 3px #fff1d0;
+}
+
+.roster__avatar:hover {
+  filter: brightness(1.15);
+}
+
+.roster__avatar:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.roster__face {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: -5px 0 0 -5px;
+  image-rendering: pixelated;
+}
+
 .stats {
   display: flex;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   gap: 6px;
 }
 
@@ -178,4 +249,10 @@
 
 .tooltip[hidden] {
   display: none;
+}
+
+@media (width <= 900px) {
+  .stats {
+    display: none;
+  }
 }

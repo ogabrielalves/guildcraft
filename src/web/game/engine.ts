@@ -3,6 +3,8 @@ import type { Point, Rect } from './map.js';
 export const MAX_FRAME_TIME = 0.1;
 export const MAX_ZOOM = 1.15;
 export const CAMERA_ZOOM = 3;
+export const FOCUS_ZOOM = 2;
+export const FLIGHT_SECONDS = 0.6;
 
 export interface View {
   scale: number;
@@ -84,6 +86,31 @@ export function zoomView(view: View, screen: Size, world: Size, at: Point, facto
   );
 }
 
+export function focusView(screen: Size, world: Stage, target: Point, scale: number): View {
+  return clampView(
+    { scale, x: screen.width / 2 - target.x * scale, y: screen.height / 2 - target.y * scale },
+    screen,
+    world,
+  );
+}
+
+export function blendView(from: View, to: View, ratio: number, screen: Size, world: Stage): View {
+  const middle = { x: screen.width / 2, y: screen.height / 2 };
+  const start = screenToWorld(from, middle);
+  const end = screenToWorld(to, middle);
+  const scale = from.scale + (to.scale - from.scale) * ratio;
+  const center = {
+    x: start.x + (end.x - start.x) * ratio,
+    y: start.y + (end.y - start.y) * ratio,
+  };
+  return focusView(screen, world, center, scale);
+}
+
+export function easeOut(ratio: number): number {
+  const clamped = Math.min(1, Math.max(0, ratio));
+  return 1 - (1 - clamped) ** 3;
+}
+
 export function panView(view: View, screen: Size, world: Size, dx: number, dy: number): View {
   return clampView({ ...view, x: view.x + dx, y: view.y + dy }, screen, world);
 }
@@ -93,6 +120,7 @@ export class Engine {
   private last: number | null = null;
   private viewNow: View = { scale: 1, x: 0, y: 0 };
   private camera: { zoom: number; focus: Point } | null = null;
+  private flight: { from: View; to: View; elapsed: number } | null = null;
   private readonly requestFrame: (callback: FrameRequestCallback) => number;
   private readonly cancelFrame: (handle: number) => void;
   private readonly pixelRatio: () => number;
@@ -134,12 +162,25 @@ export class Engine {
     );
   }
 
+  flyTo(target: Point): void {
+    const { canvas, world } = this.options;
+    const scale = Math.max(this.viewNow.scale, fitView(canvas, world).scale * FOCUS_ZOOM);
+    const to = focusView(canvas, world, target, scale);
+    this.flight = { from: this.viewNow, to, elapsed: 0 };
+  }
+
+  get flying(): boolean {
+    return this.flight !== null;
+  }
+
   zoomAt(clientX: number, clientY: number, factor: number): void {
+    this.flight = null;
     const { canvas, world } = this.options;
     this.moveCamera(zoomView(this.viewNow, canvas, world, this.toScreen(clientX, clientY), factor));
   }
 
   panBy(dx: number, dy: number): void {
+    this.flight = null;
     const { canvas, world } = this.options;
     const ratio = this.pixelRatio();
     this.moveCamera(panView(this.viewNow, canvas, world, dx * ratio, dy * ratio));
@@ -183,7 +224,18 @@ export class Engine {
     this.handle = this.requestFrame(this.tick);
   };
 
+  private fly(dt: number): void {
+    const flight = this.flight;
+    if (flight === null) return;
+    const { canvas, world } = this.options;
+    flight.elapsed += dt;
+    const ratio = Math.min(1, flight.elapsed / FLIGHT_SECONDS);
+    this.moveCamera(blendView(flight.from, flight.to, easeOut(ratio), canvas, world));
+    if (ratio >= 1) this.flight = null;
+  }
+
   private render(dt: number, time: number): void {
+    this.fly(dt);
     const { canvas, background } = this.options;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;

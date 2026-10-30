@@ -19,16 +19,15 @@
   "workshop": {
     "recruit": "+ RECRUIT",
     "full": "The workshop is full ({max} adventurers)",
-    "queue": "{count} queued"
+    "queue": "{count} queued",
+    "removeAll": "Remove all",
+    "confirmRemoveAll": "Remove all adventurers? Every agent will be stopped."
   },
   "panel": {
-    "changeSkin": "Change look",
     "interrupt": "Esc",
     "restart": "Restart",
     "remove": "Remove",
-    "removeAll": "Remove all",
     "confirmRemove": "Remove {name}? The agent will be stopped.",
-    "confirmRemoveAll": "Remove all adventurers? Every agent will be stopped.",
     "copy": "Copy",
     "paste": "Paste",
     "now": "Right now",

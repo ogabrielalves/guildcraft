@@ -13,6 +13,7 @@ import {
   selectAgent,
   setConnection,
   upsertAgent,
+  withDefaults,
 } from './store.js';
 import type { StoreState } from './store.js';
 
@@ -51,6 +52,28 @@ describe('upsertAgent', () => {
     const state = upsertAgent(withAgents('a', 'b'), agent('a', { status: 'thinking' }));
     expect(state.agents.map((a) => a.id)).toEqual(['a', 'b']);
     expect(state.agents[0]?.status).toBe('thinking');
+  });
+});
+
+describe('withDefaults', () => {
+  it('fills fields an older server does not send', () => {
+    const older = { id: 'a', name: 'A', cwd: '/', skin: 'brom', status: 'idle' } as AgentView;
+    expect(withDefaults(older)).toMatchObject({
+      tool: null,
+      waitingFor: null,
+      model: null,
+      effort: null,
+      queued: 0,
+    });
+    const full = agent('b', { model: 'claude-opus-5-5', effort: 'high', queued: 2 });
+    expect(withDefaults(full)).toEqual(full);
+  });
+
+  it('is applied to every agent the store receives', () => {
+    const older = { id: 'a', name: 'A', cwd: '/', skin: 'brom', status: 'idle' } as AgentView;
+    const started = initSession(INITIAL_STATE, [older], [], []);
+    expect(started.agents[0]?.effort).toBeNull();
+    expect(upsertAgent(started, { ...older, name: 'B' }).agents[0]?.waitingFor).toBeNull();
   });
 });
 
@@ -247,9 +270,10 @@ describe('Store', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('keeps notifying when a listener throws', () => {
+  it('keeps notifying when a listener throws, and reports it', () => {
     const store = new Store();
     const listener = vi.fn();
+    const report = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     store.subscribe(() => {
       throw new Error('boom');
     });
@@ -257,6 +281,8 @@ describe('Store', () => {
     store.setConnection('open');
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getState().connection).toBe('open');
+    expect(report).toHaveBeenCalledWith('guildcraft: a store listener failed', expect.any(Error));
+    report.mockRestore();
   });
 
   it('stops notifying after unsubscribe', () => {

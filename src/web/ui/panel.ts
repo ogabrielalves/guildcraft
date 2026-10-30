@@ -58,17 +58,17 @@ export const DETAIL_ROWS: readonly DetailRow[] = [
   {
     id: 'waiting',
     label: 'panel.waitingFor',
-    value: (agent) => (agent.waitingFor === null ? null : t(WAITING_KEYS[agent.waitingFor])),
+    value: (agent) => (agent.waitingFor == null ? null : t(WAITING_KEYS[agent.waitingFor])),
   },
   {
     id: 'model',
     label: 'panel.model',
-    value: (agent) => (agent.model === null ? null : modelLabel(agent.model)),
+    value: (agent) => (agent.model == null ? null : modelLabel(agent.model)),
   },
   {
     id: 'effort',
     label: 'panel.effort',
-    value: (agent) => (agent.effort === null ? null : effortLabel(agent.effort)),
+    value: (agent) => (agent.effort == null ? null : effortLabel(agent.effort)),
   },
 ];
 
@@ -94,10 +94,6 @@ export { skinLabel };
 
 export function statusKey(status: AgentStatus): TranslationKey {
   return STATUS_KEYS[status];
-}
-
-export function skinChoices(skins: readonly string[], current: string): string[] {
-  return skins.includes(current) ? [...skins] : [current, ...skins];
 }
 
 const MODEL_ID = /^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?(?:\[[^\]]*\])?$/;
@@ -156,7 +152,6 @@ export function createPanel(options: PanelOptions): Panel {
   let animation: number | null = null;
   const labels = new Map<HTMLElement, TranslationKey>();
   let shown: AgentView | null = null;
-  let shownSkins: readonly string[] | null = null;
   let shownAgents: readonly AgentView[] | null = null;
   let consoleOpen = false;
   let stopRefresh: (() => void) | null = null;
@@ -229,17 +224,6 @@ export function createPanel(options: PanelOptions): Panel {
     }
   };
 
-  const skinField = make('label', 'panel__skin');
-  const skinText = label(make('span', 'panel__skin-label'), 'panel.changeSkin');
-  const skinSelect = document.createElement('select');
-  skinSelect.addEventListener('change', () => {
-    const agent = focused();
-    if (agent && skinSelect.value !== agent.skin) {
-      socket.send({ type: 'agent:setSkin', agentId: agent.id, skin: skinSelect.value });
-    }
-  });
-  skinField.append(skinText, skinSelect);
-
   const focusConsole = () => {
     if (consoleOpen) terminal.focus();
   };
@@ -268,16 +252,11 @@ export function createPanel(options: PanelOptions): Panel {
       if (ok) socket.send({ type: 'agent:remove', agentId: agent.id });
     });
   });
-  const removeAll = button('remove-all', 'panel.removeAll', () => {
-    void confirmed(t('panel.confirmRemoveAll')).then((ok) => {
-      if (ok) socket.send({ type: 'agent:removeAll' });
-    });
-  });
 
   const actions = make('div', 'panel__actions');
   actions.append(toggle, interrupt, restart);
   const manage = make('div', 'panel__manage');
-  manage.append(skinField, remove, removeAll);
+  manage.append(remove);
   element.append(header, details, actions, manage);
 
   const consoleTitle = make('h2', 'console-window__title');
@@ -315,24 +294,6 @@ export function createPanel(options: PanelOptions): Panel {
       terminal.focus();
     }
   }
-
-  const renderSkins = (agent: AgentView, state: StoreState) => {
-    const taken = new Set(
-      state.agents.filter((other) => other.id !== agent.id).map((other) => other.skin),
-    );
-    const choices = skinChoices(state.skins, agent.skin).map((skin) => {
-      const option = document.createElement('option');
-      option.value = skin;
-      option.disabled = taken.has(skin);
-      option.textContent = option.disabled
-        ? `${skinLabel(skin)} · ${t('recruit.inUse')}`
-        : skinLabel(skin);
-      return option;
-    });
-    skinSelect.replaceChildren(...choices);
-    skinSelect.value = agent.skin;
-    skinSelect.disabled = choices.filter((option) => !option.disabled).length < 2;
-  };
 
   const renderDetails = (agent: AgentView) => {
     const plan = doing(agent.id);
@@ -386,15 +347,10 @@ export function createPanel(options: PanelOptions): Panel {
 
   const render = (state: StoreState) => {
     const agent = focused() ?? null;
-    if (agent === shown && state.skins === shownSkins && state.agents === shownAgents) return;
+    if (agent === shown && state.agents === shownAgents) return;
     const wasHidden = element.hidden;
     element.hidden = agent === null;
-    if (agent) {
-      renderAgent(agent);
-      renderSkins(agent, state);
-    }
     shown = agent;
-    shownSkins = state.skins;
     shownAgents = state.agents;
     if (agent && stopRefresh === null) stopRefresh = every(refresh, REFRESH_MS);
     if (agent && assets && animation === null) animation = frames.request(animate);
@@ -405,14 +361,12 @@ export function createPanel(options: PanelOptions): Panel {
       if (consoleOpen) setConsole(false);
     }
     if (wasHidden && agent && consoleOpen) terminal.fit();
+    if (agent) renderAgent(agent);
   };
 
   const renderTexts = () => {
     for (const [target, key] of labels) target.textContent = t(key);
-    if (shown) {
-      renderAgent(shown);
-      renderSkins(shown, store.getState());
-    }
+    if (shown) renderAgent(shown);
   };
 
   renderTexts();

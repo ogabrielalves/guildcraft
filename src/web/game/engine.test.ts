@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   CAMERA_ZOOM,
+  FLIGHT_SECONDS,
+  FOCUS_ZOOM,
+  blendView,
+  easeOut,
+  focusView,
   Engine,
   MAX_FRAME_TIME,
   MAX_ZOOM,
@@ -136,6 +141,37 @@ function setup(context: Partial<CanvasRenderingContext2D> | null = {}) {
   return { engine, canvas, ctx, draw, cancelFrame, callbacks, frame };
 }
 
+describe('camera focus', () => {
+  const screen = { width: 400, height: 200 };
+  const world = { width: 1000, height: 800 };
+
+  it('centers a point at a scale and clamps at the edges', () => {
+    expect(focusView(screen, world, { x: 500, y: 400 }, 2)).toEqual({ scale: 2, x: -800, y: -700 });
+    expect(focusView(screen, world, { x: 10, y: 10 }, 2)).toEqual({ scale: 2, x: 0, y: 0 });
+    expect(focusView(screen, world, { x: 990, y: 790 }, 2)).toEqual({
+      scale: 2,
+      x: -1600,
+      y: -1400,
+    });
+  });
+
+  it('blends the center and the scale between two views', () => {
+    const from = focusView(screen, world, { x: 300, y: 300 }, 1);
+    const to = focusView(screen, world, { x: 500, y: 400 }, 2);
+    expect(blendView(from, to, 0, screen, world)).toEqual(from);
+    expect(blendView(from, to, 1, screen, world)).toEqual(to);
+    expect(blendView(from, to, 0.5, screen, world)).toEqual(
+      focusView(screen, world, { x: 400, y: 350 }, 1.5),
+    );
+  });
+
+  it('eases out and clamps the ratio', () => {
+    expect([easeOut(-1), easeOut(0), easeOut(0.5), easeOut(1), easeOut(2)]).toEqual([
+      0, 0, 0.875, 1, 1,
+    ]);
+  });
+});
+
 describe('Engine', () => {
   it('sizes the canvas in device pixels on start', () => {
     const { engine, canvas } = setup();
@@ -207,5 +243,34 @@ describe('Engine', () => {
     expect(engine.view.scale).toBeCloseTo(2.3);
     expect(engine.view.x).toBe(-83);
     expect(engine.view.y).toBe(0);
+  });
+
+  it('flies the camera to a point, zooming in, then stops', () => {
+    const { engine, frame } = setup();
+    engine.start();
+    const fit = engine.view.scale;
+    engine.flyTo({ x: 230, y: 140 });
+    expect(engine.flying).toBe(true);
+    frame(0);
+    frame(100);
+    expect(engine.view.scale).toBeGreaterThan(fit);
+    expect(engine.flying).toBe(true);
+    for (let time = 200; time <= FLIGHT_SECONDS * 1000 + 100; time += 100) frame(time);
+    expect(engine.flying).toBe(false);
+    expect(engine.view.scale).toBeCloseTo(fit * FOCUS_ZOOM);
+    const center = engine.toWorld(10 + 250, 20 + 150);
+    expect(center.x).toBeCloseTo(230, 0);
+    expect(center.y).toBeCloseTo(140, 0);
+  });
+
+  it('stops a flight when the user pans or zooms', () => {
+    const { engine } = setup();
+    engine.start();
+    engine.flyTo({ x: 400, y: 250 });
+    engine.panBy(5, 0);
+    expect(engine.flying).toBe(false);
+    engine.flyTo({ x: 400, y: 250 });
+    engine.zoomAt(100, 100, 1.1);
+    expect(engine.flying).toBe(false);
   });
 });

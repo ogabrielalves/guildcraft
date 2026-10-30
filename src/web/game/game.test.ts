@@ -77,6 +77,18 @@ afterEach(() => {
 });
 
 describe('createGame', () => {
+  it('flies the camera to a villager on request', () => {
+    const { game } = setup([agent('a')]);
+    const fly = vi.spyOn(game.engine, 'flyTo');
+    expect(game.focusVillager('a')).toBe(true);
+    const villager = game.world.villager('a');
+    expect(fly).toHaveBeenCalledWith({
+      x: villager?.position.x,
+      y: (villager?.position.y ?? 0) - 15,
+    });
+    expect(game.focusVillager('nobody')).toBe(false);
+  });
+
   it('creates villagers for the agents already in the store', () => {
     const { game } = setup([agent('a'), agent('b')]);
     expect(game.element.tagName).toBe('CANVAS');

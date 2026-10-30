@@ -25,7 +25,20 @@ export const INITIAL_STATE: StoreState = {
   connection: 'connecting',
 };
 
-export function upsertAgent(state: StoreState, agent: AgentView): StoreState {
+export function withDefaults(agent: AgentView): AgentView {
+  const partial: Partial<AgentView> = agent;
+  return {
+    ...agent,
+    tool: partial.tool ?? null,
+    waitingFor: partial.waitingFor ?? null,
+    model: partial.model ?? null,
+    effort: partial.effort ?? null,
+    queued: partial.queued ?? 0,
+  };
+}
+
+export function upsertAgent(state: StoreState, update: AgentView): StoreState {
+  const agent = withDefaults(update);
   const index = state.agents.findIndex((current) => current.id === agent.id);
   const agents =
     index === -1 ? [...state.agents, agent] : state.agents.map((a, i) => (i === index ? agent : a));
@@ -55,7 +68,7 @@ export function initSession(
   const ids = new Set(agents.map((agent) => agent.id));
   return {
     ...state,
-    agents: [...agents],
+    agents: agents.map(withDefaults),
     events: events.slice(-MAX_EVENTS),
     skins: [...skins],
     selected: state.selected.filter((id) => ids.has(id)),
@@ -139,8 +152,8 @@ export class Store {
     for (const listener of this.listeners) {
       try {
         listener(next, previous);
-      } catch {
-        continue;
+      } catch (error) {
+        console.error('guildcraft: a store listener failed', error);
       }
     }
   }

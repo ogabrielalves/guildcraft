@@ -8,7 +8,7 @@ import { Engine } from './engine.js';
 import { bindInput, hitTest } from './input.js';
 import type { WorkshopMap } from './map.js';
 import type { Hover } from './renderer.js';
-import { drawScene, emittersFor } from './renderer.js';
+import { BODY, drawScene, emittersFor } from './renderer.js';
 import { World } from './world.js';
 
 export const STAGE_BACKGROUND = '#17110d';
@@ -28,6 +28,7 @@ export interface Game {
   readonly element: HTMLCanvasElement;
   readonly world: World;
   readonly engine: Engine;
+  focusVillager(agentId: string): boolean;
   start(): void;
   destroy(): void;
 }
@@ -113,6 +114,12 @@ export function createGame(options: GameOptions): Game {
     element: canvas,
     world,
     engine,
+    focusVillager(agentId) {
+      const villager = world.villager(agentId);
+      if (!villager) return false;
+      engine.flyTo({ x: villager.position.x, y: villager.position.y - BODY.height / 2 });
+      return true;
+    },
     start() {
       observer?.observe(canvas);
       engine.start();

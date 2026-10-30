@@ -13,6 +13,11 @@
   cursor: pointer;
 }
 
+.recruit-button--danger {
+  color: #fff1d0;
+  background: var(--danger);
+}
+
 .recruit-button:hover:not(:disabled) {
   filter: brightness(1.08);
 }

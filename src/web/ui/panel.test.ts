@@ -17,7 +17,6 @@ import {
   effortLabel,
   modelLabel,
   nowText,
-  skinChoices,
   skinLabel,
   statusKey,
 } from './panel.js';
@@ -124,11 +123,6 @@ function setup(options: SetupOptions = {}) {
     if (!(found instanceof HTMLButtonElement)) throw new Error(`missing ${modifier} button`);
     return found;
   };
-  const select = (): HTMLSelectElement => {
-    const found = query('select');
-    if (!(found instanceof HTMLSelectElement)) throw new Error('missing skin select');
-    return found;
-  };
   const click = (modifier: string) => {
     button(modifier).click();
   };
@@ -142,7 +136,6 @@ function setup(options: SetupOptions = {}) {
     confirm,
     query,
     button,
-    select,
     click,
     row,
     value,
@@ -212,11 +205,6 @@ describe('helpers', () => {
     expect(nowText(agent('a'), 'hearth')).toBe('Warming up by the fire');
     expect(nowText(agent('a'), null)).toBe('Strolling around the guild');
     expect(nowText(agent('a', { status: 'thinking' }), 'nap')).toBe('Thinking');
-  });
-
-  it('keeps the current skin selectable even when it is not listed', () => {
-    expect(skinChoices(['mortis', 'lyra'], 'lyra')).toEqual(['mortis', 'lyra']);
-    expect(skinChoices(['mortis'], 'ghost')).toEqual(['ghost', 'mortis']);
   });
 });
 
@@ -306,6 +294,44 @@ describe('createPanel', () => {
     click('console');
     escape(document.body);
     expect(panel.console.hidden).toBe(false);
+  });
+
+  it('has no look picker or remove-all button anymore', () => {
+    const { panel, store } = setup();
+    store.focus('a');
+    expect(panel.element.querySelector('select')).toBeNull();
+    expect(panel.element.querySelector('.panel__action--remove-all')).toBeNull();
+    expect(panel.element.querySelector('.panel__action--remove')).not.toBeNull();
+  });
+
+  it('stays usable with agents from an older server that lack newer fields', () => {
+    const older = {
+      id: 'a',
+      name: 'Old',
+      cwd: '/old',
+      skin: 'mortis',
+      status: 'idle',
+      permissionMode: 'default',
+      tool: null,
+      queued: 0,
+    } as unknown as AgentView;
+    const { panel, store, row, query, nextFrame } = setup({
+      agents: [older],
+      assets: fakeAssets({ mortis: SIDE_CHARACTER }),
+    });
+    const canvas = query('.panel__portrait');
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('missing portrait');
+    const drawImage = vi.fn();
+    const context = { clearRect: vi.fn(), drawImage } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(canvas, 'getContext').mockReturnValue(context);
+    store.focus('a');
+    nextFrame(16);
+    expect(drawImage).toHaveBeenCalled();
+    expect(row('waiting').hidden).toBe(true);
+    expect(row('model').hidden).toBe(true);
+    expect(row('effort').hidden).toBe(true);
+    query('.panel__close').click();
+    expect(panel.element.hidden).toBe(true);
   });
 
   it('closes from its own button', () => {
@@ -436,56 +462,6 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
   });
 
-  it('lists skins and sends agent:setSkin on change', () => {
-    const { store, sent, select: skinSelect } = setup();
-    store.focus('b');
-    const select = skinSelect();
-    expect([...select.options].map((option) => option.textContent)).toEqual([
-      'Mortis · In use',
-      'Corvin',
-      'Lyra',
-    ]);
-    expect([...select.options].map((option) => option.disabled)).toEqual([true, false, false]);
-    expect(select.value).toBe('lyra');
-    expect(select.disabled).toBe(false);
-    select.value = 'lyra';
-    select.dispatchEvent(new Event('change'));
-    expect(sent).toEqual([]);
-    select.value = 'corvin';
-    select.dispatchEvent(new Event('change'));
-    expect(sent).toEqual([{ type: 'agent:setSkin', agentId: 'b', skin: 'corvin' }]);
-  });
-
-  it('disables looks other agents wear and follows their changes', () => {
-    const { store, select } = setup({ skins: ['mortis', 'lyra'] });
-    store.focus('a');
-    expect(select().disabled).toBe(true);
-    expect(select().options[0]?.disabled).toBe(false);
-    store.apply({ type: 'agent:updated', agent: agent('b', { skin: 'corvin' }) });
-    expect(select().disabled).toBe(false);
-    expect([...select().options].map((option) => option.disabled)).toEqual([false, false]);
-    setLocale('pt-BR');
-    store.apply({ type: 'agent:updated', agent: agent('b', { skin: 'lyra' }) });
-    expect(select().options[1]?.textContent).toBe(
-      `Lyra · ${DICTIONARIES['pt-BR'].get('recruit.inUse') ?? ''}`,
-    );
-  });
-
-  it('refreshes the skin list when the server sends new skins', () => {
-    const { store, select } = setup({ skins: ['mortis'] });
-    store.focus('a');
-    expect(select().disabled).toBe(true);
-    store.apply({
-      type: 'session:init',
-      agents: [agent('a')],
-      events: [],
-      skins: ['mortis', 'corvin'],
-      permissions: [],
-      activities: [],
-    });
-    expect(select().options).toHaveLength(2);
-  });
-
   it('interrupts and restarts the focused agent', () => {
     const { store, sent, terminal, click } = setup();
     click('interrupt');
@@ -525,15 +501,6 @@ describe('createPanel', () => {
     await flush();
     expect(confirm).toHaveBeenCalledWith('Remove Agent a? The agent will be stopped.');
     expect(sent).toEqual([{ type: 'agent:remove', agentId: 'a' }]);
-  });
-
-  it('removes everyone only after confirmation', async () => {
-    const { store, sent, confirm, click } = setup({ confirm: () => Promise.resolve(true) });
-    store.focus('a');
-    click('remove-all');
-    await flush();
-    expect(confirm).toHaveBeenCalledWith('Remove all adventurers? Every agent will be stopped.');
-    expect(sent).toEqual([{ type: 'agent:removeAll' }]);
   });
 
   it('treats a failing confirmation as a no', async () => {

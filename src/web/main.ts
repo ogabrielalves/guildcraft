@@ -27,6 +27,8 @@ import { createCompose } from './ui/compose.js';
 import { createFeed } from './ui/feed.js';
 import { createNotifications, reportFailedSends } from './ui/notifications.js';
 import { createPanel, statusKey } from './ui/panel.js';
+import { createRemoveAllButton } from './ui/remove-all.js';
+import { createRoster } from './ui/roster.js';
 import { createShortcuts } from './ui/shortcuts.js';
 import { createStats } from './ui/stats.js';
 import { createTerminalView } from './ui/terminal-view.js';
@@ -89,7 +91,22 @@ if (root) {
   const compose = createCompose({ store, socket });
   const hud = document.createElement('div');
   hud.className = 'hud';
-  hud.append(recruit.element, createStats(store).element, createFeed(store).element);
+  const removeAll = createRemoveAllButton({ store, socket });
+  const roster = createRoster({
+    store,
+    assets,
+    onPick: (agentId) => {
+      store.select(agentId);
+      game?.focusVillager(agentId);
+    },
+  });
+  hud.append(
+    recruit.element,
+    removeAll.element,
+    roster.element,
+    createStats(store).element,
+    createFeed(store).element,
+  );
   const tooltip = createTooltip();
   mountShell(root, store, [
     hud,
