@@ -11,7 +11,11 @@ const ENTRY: SessionEntry = {
 };
 
 function setup(read = vi.fn(() => Promise.resolve([ENTRY]))) {
-  const manager = { syncSessions: vi.fn(), sweepPermissions: vi.fn(() => Promise.resolve()) };
+  const manager = {
+    syncSessions: vi.fn(),
+    sweepPermissions: vi.fn(() => Promise.resolve()),
+    syncActivity: vi.fn(() => Promise.resolve()),
+  };
   const log = vi.fn();
   const monitor = new SessionMonitor({ manager, read, log, intervalMs: 1_000 });
   return { manager, log, monitor, read };
@@ -22,11 +26,12 @@ afterEach(() => {
 });
 
 describe('SessionMonitor', () => {
-  it('syncs the registry and sweeps permissions on each tick', async () => {
+  it('syncs the registry, sweeps permissions and tails transcripts on each tick', async () => {
     const { manager, monitor } = setup();
     await monitor.tick();
     expect(manager.syncSessions).toHaveBeenCalledWith([ENTRY]);
     expect(manager.sweepPermissions).toHaveBeenCalledOnce();
+    expect(manager.syncActivity).toHaveBeenCalledOnce();
   });
 
   it('never overlaps two polls', async () => {

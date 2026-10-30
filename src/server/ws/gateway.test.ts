@@ -28,6 +28,7 @@ const VIEW: AgentView = {
 
 const EVENT: VillageEvent = { kind: 'joined', agentId: 'a1', at: 1 };
 
+const ACTIVITY = { agentId: 'a1', title: 'Fix login', actions: [], tasks: [] };
 let server: Server;
 let port: number;
 let gateway: Gateway;
@@ -37,6 +38,7 @@ let manager: {
   recentEvents: ReturnType<typeof vi.fn>;
   snapshot: ReturnType<typeof vi.fn>;
   permissions: ReturnType<typeof vi.fn>;
+  activities: ReturnType<typeof vi.fn>;
   decidePermission: ReturnType<typeof vi.fn>;
   input: ReturnType<typeof vi.fn>;
   resize: ReturnType<typeof vi.fn>;
@@ -120,6 +122,7 @@ beforeEach(() => {
     recentEvents: vi.fn(() => [EVENT]),
     snapshot: vi.fn(() => Promise.resolve('screen')),
     permissions: vi.fn(() => []),
+    activities: vi.fn(() => [ACTIVITY]),
     decidePermission: vi.fn(() => ok),
     input: vi.fn(() => ok),
     resize: vi.fn(() => ok),
@@ -149,6 +152,7 @@ describe('gateway handshake', () => {
         events: [EVENT],
         skins: ['mortis', 'lyra'],
         permissions: [],
+        activities: [ACTIVITY],
       },
       { type: 'term:snapshot', agentId: 'a1', data: 'screen' },
     ]);

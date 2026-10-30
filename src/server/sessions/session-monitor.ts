@@ -3,7 +3,10 @@ import type { SessionEntry } from './session-registry.js';
 
 export const SESSION_POLL_MS = 1_000;
 
-export type MonitorTarget = Pick<AgentManager, 'syncSessions' | 'sweepPermissions'>;
+export type MonitorTarget = Pick<
+  AgentManager,
+  'syncSessions' | 'sweepPermissions' | 'syncActivity'
+>;
 
 export interface MonitorDeps {
   manager: MonitorTarget;
@@ -43,6 +46,7 @@ export class SessionMonitor {
     try {
       this.deps.manager.syncSessions(await this.deps.read());
       await this.deps.manager.sweepPermissions();
+      await this.deps.manager.syncActivity();
     } catch (error) {
       this.deps.log?.(`sessions: poll failed: ${String(error)}`);
     }

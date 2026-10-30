@@ -60,6 +60,7 @@ function setup(options: SetupOptions = {}) {
     events: [],
     skins: options.skins ?? ['mortis', 'corvin', 'lyra'],
     permissions: [],
+    activities: [],
   });
   const sent: ClientMessage[] = [];
   const terminal = {
@@ -480,6 +481,7 @@ describe('createPanel', () => {
       events: [],
       skins: ['mortis', 'corvin'],
       permissions: [],
+      activities: [],
     });
     expect(select().options).toHaveLength(2);
   });

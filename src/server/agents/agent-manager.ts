@@ -1,3 +1,4 @@
+import type { AgentActivity } from '../../shared/activity.js';
 import type {
   AgentView,
   PermissionMode,
@@ -25,6 +26,7 @@ import type { OpenResult, WaitResult } from '../permissions/permission-broker.js
 import { PermissionBroker } from '../permissions/permission-broker.js';
 import { QUESTION_TOOL } from '../permissions/request.js';
 import { readTailLines } from '../permissions/tool-call.js';
+import { ActivityTracker } from '../sessions/activity-tracker.js';
 import type { SessionEntry } from '../sessions/session-registry.js';
 import { reconcileSession } from '../sessions/session-sync.js';
 import type { ModelInfo } from '../sessions/transcript-model.js';
@@ -78,6 +80,7 @@ export interface ManagerDeps {
   emit: (message: ServerMessage) => void;
   hasViewers?: () => boolean;
   readLines?: (path: string) => Promise<string[]>;
+  activity?: ActivityTracker;
   now?: () => number;
 }
 
@@ -164,9 +167,11 @@ export class AgentManager {
   private readonly now: () => number;
   private readonly broker: PermissionBroker;
   private readonly readLines: (path: string) => Promise<string[]>;
+  private readonly activity: ActivityTracker;
 
   constructor(private readonly deps: ManagerDeps) {
     this.now = deps.now ?? Date.now;
+    this.activity = deps.activity ?? new ActivityTracker();
     this.readLines = deps.readLines ?? ((path) => readTailLines(path));
     this.broker = new PermissionBroker({
       emit: deps.emit,
@@ -189,6 +194,10 @@ export class AgentManager {
 
   recentEvents(): VillageEvent[] {
     return [...this.events];
+  }
+
+  activities(): AgentActivity[] {
+    return this.deps.registry.list().map((agent) => this.activity.get(agent.id));
   }
 
   async snapshot(id: string): Promise<string> {
@@ -224,6 +233,7 @@ export class AgentManager {
     if (!agent) return fail('AGENT_NOT_FOUND');
     await this.teardown(id);
     this.deps.registry.remove(id);
+    this.activity.remove(id);
     await this.persist();
     this.record('left', id);
     this.deps.emit({ type: 'agent:removed', agentId: id });
@@ -413,6 +423,18 @@ export class AgentManager {
       const wasWaiting = agent.status === 'waiting';
       this.update(agent, next.status, null, next.waitingFor);
       if (next.status === 'waiting' && !wasWaiting) this.record('waiting', id);
+    }
+  }
+
+  async syncActivity(): Promise<void> {
+    const targets = [...this.runtimes].flatMap(([id, runtime]) =>
+      runtime.transcriptPath ? [[id, runtime.transcriptPath] as const] : [],
+    );
+    const changed = await Promise.all(targets.map(([id, path]) => this.activity.poll(id, path)));
+    for (const activity of changed) {
+      if (activity && this.deps.registry.get(activity.agentId)) {
+        this.deps.emit({ type: 'agent:activity', activity });
+      }
     }
   }
 

@@ -125,6 +125,7 @@ describe('startServer', () => {
       events: [],
       skins: ['oren'],
       permissions: [],
+      activities: [],
     });
     socket.close();
   });

@@ -20,6 +20,16 @@ describe('describeTool', () => {
     expect(describeTool('Bash', { command: 'npm   test\n  -- --run' })).toBe('npm test -- --run');
   });
 
+  it('shows the PowerShell command', () => {
+    expect(describeTool('PowerShell', { command: 'Get-ChildItem  src' })).toBe('Get-ChildItem src');
+  });
+
+  it('masks secrets in commands', () => {
+    expect(describeTool('Bash', { command: 'GITHUB_TOKEN=abc123 gh pr list' })).toBe(
+      'GITHUB_TOKEN=*** gh pr list',
+    );
+  });
+
   it.each(['Grep', 'Glob'])('shows the pattern for %s', (tool) => {
     expect(describeTool(tool, { pattern: '**/*.ts' })).toBe('**/*.ts');
   });

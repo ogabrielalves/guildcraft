@@ -198,6 +198,7 @@ describe('applyServerMessage', () => {
       events: [],
       skins: ['corvin'],
       permissions: [],
+      activities: [],
     });
     expect(state.agents).toHaveLength(1);
     expect(state.skins).toEqual(['corvin']);

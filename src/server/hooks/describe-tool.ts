@@ -1,17 +1,21 @@
+import { maskSecrets } from './mask-secrets.js';
+
 export const MAX_DESCRIPTION_LENGTH = 40;
+const MAX_SCANNED_LENGTH = 4_000;
 
 const FILE_TOOLS = new Set(['Read', 'Edit', 'MultiEdit', 'Write']);
 const PATTERN_TOOLS = new Set(['Grep', 'Glob']);
+const SHELL_TOOLS = new Set(['Bash', 'PowerShell']);
 
 export function describeTool(toolName: string, toolInput: unknown): string {
-  return truncate(describe(toolName, toolInput) ?? fallbackName(toolName));
+  return truncate(maskSecrets(describe(toolName, toolInput) ?? fallbackName(toolName)));
 }
 
 function describe(toolName: string, toolInput: unknown): string | null {
   if (FILE_TOOLS.has(toolName)) return mapField(toolInput, 'file_path', baseName);
   if (toolName === 'NotebookEdit') return mapField(toolInput, 'notebook_path', baseName);
   if (PATTERN_TOOLS.has(toolName)) return mapField(toolInput, 'pattern', collapseWhitespace);
-  if (toolName === 'Bash') return mapField(toolInput, 'command', collapseWhitespace);
+  if (SHELL_TOOLS.has(toolName)) return mapField(toolInput, 'command', collapseWhitespace);
   if (toolName === 'WebFetch') return mapField(toolInput, 'url', hostOf);
   if (toolName === 'WebSearch') return mapField(toolInput, 'query', collapseWhitespace);
   return null;
@@ -36,7 +40,7 @@ function baseName(path: string): string {
 }
 
 function collapseWhitespace(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
+  return text.slice(0, MAX_SCANNED_LENGTH).replace(/\s+/g, ' ').trim();
 }
 
 function hostOf(url: string): string {

@@ -1,3 +1,4 @@
+import { ActivityTracker } from '../sessions/activity-tracker.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ServerMessage } from '../../shared/protocol.js';
 import type { StoredAgent } from '../store/agent-store.js';
@@ -1207,6 +1208,71 @@ describe('model', () => {
     finish([line('claude-opus-5-5', 'medium')]);
     await vi.advanceTimersByTimeAsync(0);
     expect(ctx.manager.views()[0]?.model).toBeNull();
+  });
+});
+
+describe('activity', () => {
+  const call = (id: string) =>
+    `${JSON.stringify({
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command: 'ls' } }] },
+    })}
+`;
+
+  function transcript(text: string) {
+    const file = { text };
+    const tracker = new ActivityTracker(() =>
+      Promise.resolve({
+        size: () => Promise.resolve(Buffer.byteLength(file.text)),
+        read: (start: number, length: number) =>
+          Promise.resolve(Buffer.from(file.text).subarray(start, start + length)),
+        close: () => Promise.resolve(),
+      }),
+    );
+    return { file, tracker };
+  }
+
+  it('tails each transcript and broadcasts changes', async () => {
+    const { file, tracker } = transcript(call('t1'));
+    const ctx = setup({ activity: tracker });
+    const { id } = await ready(ctx);
+    const idle = await created(ctx, { name: 'Lyra', skin: 'lyra' });
+    expect(ctx.manager.activities()).toEqual([
+      { agentId: id, title: null, actions: [], tasks: [] },
+      { agentId: idle.id, title: null, actions: [], tasks: [] },
+    ]);
+    await ctx.manager.syncActivity();
+    const sent = ctx.ofType('agent:activity');
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.activity).toMatchObject({
+      agentId: id,
+      actions: [{ id: 't1', tool: 'Bash', detail: 'ls', state: 'running' }],
+    });
+    expect(ctx.manager.activities()[0]).toBe(sent[0]?.activity);
+    await ctx.manager.syncActivity();
+    expect(ctx.ofType('agent:activity')).toHaveLength(1);
+    file.text += call('t2');
+    await ctx.manager.syncActivity();
+    expect(ctx.ofType('agent:activity')).toHaveLength(2);
+  });
+
+  it('forgets the history of a removed agent', async () => {
+    const { tracker } = transcript(call('t1'));
+    const ctx = setup({ activity: tracker });
+    const { id } = await ready(ctx);
+    await ctx.manager.syncActivity();
+    await ctx.manager.remove(id);
+    expect(tracker.get(id).actions).toEqual([]);
+  });
+
+  it('drops a change for an agent removed while reading', async () => {
+    const { tracker } = transcript(call('t1'));
+    const ctx = setup({ activity: tracker });
+    const { id } = await ready(ctx);
+    const sync = ctx.manager.syncActivity();
+    ctx.deps.registry.remove(id);
+    await sync;
+    expect(ctx.ofType('agent:activity')).toHaveLength(0);
   });
 });
 

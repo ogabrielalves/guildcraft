@@ -84,6 +84,7 @@ function setup(options: { clipboard?: ClipboardPort | null; connected?: boolean 
     events: [],
     skins: [],
     permissions: [],
+    activities: [],
   });
   const listeners = new Set<MessageListener>();
   const sent: ClientMessage[] = [];
@@ -253,6 +254,7 @@ describe('createTerminalView', () => {
       events: [],
       skins: [],
       permissions: [],
+      activities: [],
     });
     expect(sent).toHaveLength(2);
   });
@@ -297,7 +299,14 @@ describe('createTerminalView', () => {
     expect(terminals[0]?.disposed).toBe(true);
     expect(terminals[0]?.dataListener).toBeNull();
     expect(view.element.querySelector('[data-agent-id="a"]')).toBeNull();
-    emit({ type: 'session:init', agents: [agent('c')], events: [], skins: [], permissions: [] });
+    emit({
+      type: 'session:init',
+      agents: [agent('c')],
+      events: [],
+      skins: [],
+      permissions: [],
+      activities: [],
+    });
     expect(terminals[1]?.disposed).toBe(true);
     expect(view.element.children).toHaveLength(0);
   });

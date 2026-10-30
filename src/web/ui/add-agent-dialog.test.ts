@@ -54,6 +54,7 @@ function setup(agents: AgentView[] = [], connected = true) {
     events: [],
     skins: ['mortis', 'corvin', 'lyra'],
     permissions: [],
+    activities: [],
   });
   const listeners = new Set<MessageListener>();
   const sent: ClientMessage[] = [];
@@ -182,13 +183,21 @@ describe('createRecruitButton', () => {
       events: [],
       skins: [],
       permissions: [],
+      activities: [],
     });
     expect(button.element.disabled).toBe(true);
     expect(button.element.title).toBe(`The workshop is full (${MAX_AGENTS} adventurers)`);
     setLocale('pt-BR');
     expect(button.element.textContent).toBe(DICTIONARIES['pt-BR'].get('workshop.recruit'));
     button.destroy();
-    store.apply({ type: 'session:init', agents: [], events: [], skins: [], permissions: [] });
+    store.apply({
+      type: 'session:init',
+      agents: [],
+      events: [],
+      skins: [],
+      permissions: [],
+      activities: [],
+    });
     expect(button.element.disabled).toBe(true);
   });
 });
@@ -325,7 +334,14 @@ describe('createAddAgentDialog', () => {
 
   it('cannot continue without characters', async () => {
     const ctx = setup();
-    ctx.store.apply({ type: 'session:init', agents: [], events: [], skins: [], permissions: [] });
+    ctx.store.apply({
+      type: 'session:init',
+      agents: [],
+      events: [],
+      skins: [],
+      permissions: [],
+      activities: [],
+    });
     await openAt(ctx, 'web');
     expect(ctx.characters()).toHaveLength(0);
     expect(ctx.buttonByText('Next').disabled).toBe(true);

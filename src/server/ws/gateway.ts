@@ -17,7 +17,7 @@ export const MAX_BUFFERED_BYTES = 8 * 1024 * 1024;
 export const INTERNAL_ERROR_CLOSE_CODE = 1011;
 
 export type GatewayTarget = CommandTarget &
-  Pick<AgentManager, 'views' | 'recentEvents' | 'snapshot' | 'permissions'>;
+  Pick<AgentManager, 'views' | 'recentEvents' | 'snapshot' | 'permissions' | 'activities'>;
 
 export interface GatewayOptions {
   server: Server;
@@ -141,6 +141,7 @@ export class Gateway {
       events: manager.recentEvents(),
       skins: skins(),
       permissions: manager.permissions(),
+      activities: manager.activities(),
     });
     for (const [index, agent] of agents.entries()) {
       const data = await snapshots[index];

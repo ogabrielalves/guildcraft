@@ -35,6 +35,7 @@ function setup(connected = true) {
     events: [],
     skins: [],
     permissions: [],
+    activities: [],
   });
   store.setConnection('open');
   const sent: ClientMessage[] = [];

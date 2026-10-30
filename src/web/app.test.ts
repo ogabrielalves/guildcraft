@@ -62,6 +62,7 @@ describe('bindSocket', () => {
       events: [],
       skins: ['mortis'],
       permissions: [],
+      activities: [],
     });
     expect(store.getState().skins).toEqual(['mortis']);
   });

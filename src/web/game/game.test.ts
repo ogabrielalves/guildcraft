@@ -28,7 +28,14 @@ function agent(id: string, status: AgentView['status'] = 'thinking'): AgentView 
 
 function setup(agents: AgentView[] = []) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents, events: [], skins: ['brom'], permissions: [] });
+  store.apply({
+    type: 'session:init',
+    agents,
+    events: [],
+    skins: ['brom'],
+    permissions: [],
+    activities: [],
+  });
   const callbacks: FrameRequestCallback[] = [];
   const onHover = vi.fn();
   const listeners = new Set<(message: ServerMessage) => void>();

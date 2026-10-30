@@ -1,3 +1,4 @@
+import type { AgentActivity } from './activity.js';
 import type { AgentView, PermissionMode, VillageEvent } from './agent.js';
 import { isPermissionMode } from './agent.js';
 import {
@@ -38,11 +39,13 @@ export type ServerMessage =
       events: VillageEvent[];
       skins: string[];
       permissions: PermissionRequestView[];
+      activities: AgentActivity[];
     }
   | { type: 'term:snapshot' | 'term:output'; agentId: string; data: string }
   | { type: 'term:reset'; agentId: string }
   | { type: 'agent:updated'; agent: AgentView }
   | { type: 'agent:removed'; agentId: string }
+  | { type: 'agent:activity'; activity: AgentActivity }
   | { type: 'agent:visit'; fromId: string; toId: string; preview: string }
   | { type: 'message:delivered'; fromId: string; toId: string }
   | { type: 'event'; event: VillageEvent }

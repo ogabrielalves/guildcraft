@@ -37,7 +37,7 @@ function agent(id: string, status: AgentStatus = 'idle'): AgentView {
 
 function storeWith(agents: AgentView[], events: VillageEvent[] = []) {
   const store = new Store();
-  store.apply({ type: 'session:init', agents, events, skins: [], permissions: [] });
+  store.apply({ type: 'session:init', agents, events, skins: [], permissions: [], activities: [] });
   return store;
 }
 

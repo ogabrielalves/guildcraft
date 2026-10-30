@@ -48,6 +48,7 @@ function setup(blocked = false) {
     events: [],
     skins: [],
     permissions: [],
+    activities: [],
   });
   const focusCompose = vi.fn();
   const shortcuts = createShortcuts({ store, focusCompose, isBlocked: () => blocked });

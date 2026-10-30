@@ -206,6 +206,7 @@ export class DemoSocket {
       events: this.events,
       skins: [...DEMO_SKINS],
       permissions: [],
+      activities: [],
     });
     for (const agent of this.agents) {
       this.emit({ type: 'term:snapshot', agentId: agent.id, data: banner(agent) });
