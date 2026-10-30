@@ -7,7 +7,7 @@ import { pointAlong, routeLength } from './pathing.js';
 import type { Direction, Pose } from './sprite-sheet.js';
 import { directionTo } from './sprite-sheet.js';
 
-export const WALK_SPEED = 40;
+export const WALK_SPEED = 56;
 export const VISIT_LINGER = 3;
 export const VISIT_GAP = 18;
 export const CHEER_TIME = 1.5;
@@ -15,6 +15,7 @@ export const CHEER_TIME = 1.5;
 interface Target {
   point: Point;
   facing: Direction | null;
+  via?: readonly Point[];
 }
 
 type Visit = {
@@ -59,11 +60,13 @@ export class Villager {
     private activityNow: Activity,
     private readonly random: () => number = Math.random,
     private readonly peers: () => readonly Villager[] = () => [],
+    spawn: Point | null = null,
   ) {
     const start = this.homeTarget();
-    this.position = { ...start.point };
+    this.position = { ...(spawn ?? start.point) };
     this.destination = start;
-    if (start.facing !== null) this.face(start.facing);
+    if (spawn !== null) this.walkTo(start);
+    else if (start.facing !== null) this.face(start.facing);
   }
 
   get side(): 'east' | 'west' {
@@ -229,11 +232,21 @@ export class Villager {
   }
 
   private wanderTarget(): Target {
-    return { point: this.layout.nav.randomPoint(this.random), facing: null };
+    const { nav, map } = this.layout;
+    const choice = Math.floor(this.random() * (map.wander.length + map.routes.length));
+    const route = map.routes[choice - map.wander.length]?.map((point) => nav.nearest(point));
+    const point = map.wander[choice] ?? route?.at(-1);
+    if (point === undefined) return { point: nav.randomPoint(this.random), facing: null };
+    return { point: nav.nearest(point), facing: null, via: route?.slice(0, -1) ?? [] };
   }
 
   private walkTo(target: Target): void {
-    this.path = this.layout.nav.route(this.position, target.point);
+    let from = this.position;
+    this.path = [from];
+    for (const stop of [...(target.via ?? []), target.point]) {
+      this.path.push(...this.layout.nav.route(from, stop).slice(1));
+      from = stop;
+    }
     this.travelled = 0;
     this.length = routeLength(this.path);
     this.destination = target;

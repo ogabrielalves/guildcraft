@@ -2,7 +2,7 @@
 
 Everything the workshop draws comes from `assets/`. The code never hardcodes a sprite, a station or a map coordinate. Add or change art by editing the files described here.
 
-The world is 640 × 352 px at 1×, built on the 16 px grid of the Pixel Crawler pack. Characters stand about 30 px tall.
+The world is the Tavern Guild, a 1280 × 896 px compound at 1× (80 × 56 tiles of 16 px) composed from the Pixel Crawler pack. Characters stand about 30 px tall.
 
 Every asset needs an entry in [`assets/CREDITS.md`](../assets/CREDITS.md) with its author, link and license.
 
@@ -14,8 +14,8 @@ assets/
 ├─ characters/<id>/*.png        sheets used by that manifest
 ├─ stations/<id>.json           station manifest
 ├─ stations/*.png               station sheets
-├─ tiles/*.png                  sheets used by the map scenery
 ├─ maps/workshop.json           the workshop map
+├─ maps/tavern-guild.png        the map's background art
 └─ CREDITS.md
 ```
 
@@ -111,43 +111,67 @@ Crop stations tightly: the `frame` box is what the map has to make room for. For
 
 Stations are furniture of the map, not of a character. Each agent takes a random free station when it joins. The station shows frame 0 while nobody works there. It animates and emits particles only while its agent works at it.
 
+When the map's background already shows a station, a manifest is only needed to animate it. Its frame 0 must match the background pixel for pixel at the station's place, so the animation plays on top of the drawing without a seam. The tests check this.
+
 ## Workshop map
 
 `assets/maps/workshop.json` holds the geometry and the scenery. All coordinates are world pixels.
 
 ```jsonc
 {
-  "width": 640,
-  "height": 352,
+  "width": 1280,
+  "height": 896,
   "tileSize": 16,
-  "floor": "#6b4a2f", // fallback color under the scenery
+  "floor": "#2f4a26", // fallback color under the scenery
+  "view": { "x": 96, "y": 96, "width": 752, "height": 608 }, // what the camera frames first
+  "entrance": { "x": 496, "y": 840 }, // where new recruits walk in from
+  "collision": ["....##.." /* one string per row of tiles */],
+  "obstacles": [/* extra rectangles nobody walks through */],
   "stations": [/* at least 8, one per agent */],
-  "obstacles": [/* rectangles nobody walks through */],
   "spots": [/* where agents read, nap and spend idle time */],
+  "wander": [/* points idle agents stroll to */],
+  "routes": [/* paths idle agents walk along */],
   "scenery": [/* drawn in order */],
-  "embers": [{ "x": 320, "y": 72 }], // points that always emit embers (the fireplace)
+  "embers": [{ "x": 630, "y": 192 }], // points that always emit embers (the fireplaces)
 }
 ```
 
-Each station places a station manifest in the room:
+| Field       | Default       | Meaning                                                                                 |
+| ----------- | ------------- | --------------------------------------------------------------------------------------- |
+| `view`      | the whole map | area the camera fits to the screen on load; wheel zoom and drag pan stay inside the map |
+| `entrance`  | none          | an agent that is still starting appears here and walks to its place                     |
+| `collision` | none          | the walking grid, see below                                                             |
+| `wander`    | `[]`          | points an idle agent picks when it goes for a walk                                      |
+| `routes`    | `[]`          | lists of at least two points; an idle agent may walk one from start to end              |
+
+Each station is either a manifest placed in the map or a station already drawn into the background:
 
 ```json
-{ "id": "anvil", "at": { "x": 64, "y": 150 }, "work": { "x": 106, "y": 148 } }
+{ "id": "anvil", "at": { "x": 1007, "y": 280 }, "work": { "x": 1007, "y": 300 } }
 ```
 
-| Field  | Meaning                                                         |
-| ------ | --------------------------------------------------------------- |
-| `id`   | the station manifest, `assets/stations/<id>.json`               |
-| `at`   | where the manifest's `anchor` is placed                         |
-| `work` | where the agent stands while it works there, facing the station |
+```json
+{ "effect": "embers", "at": { "x": 946, "y": 186 }, "work": { "x": 946, "y": 228 } }
+```
 
-The same id can appear more than once. Add an obstacle under the bottom of every station so people walk around it instead of through it.
+| Field    | Meaning                                                                           |
+| -------- | --------------------------------------------------------------------------------- |
+| `id`     | the station manifest, `assets/stations/<id>.json`; its `anchor` is placed on `at` |
+| `effect` | for a station drawn into the background: its particles, which come out of `at`    |
+| `at`     | where the station is; the agent faces it while it works                           |
+| `work`   | where the agent stands while it works there                                       |
 
-### Obstacles and walking
+A station needs `id`, `effect` or both; `effect` overrides the manifest's. The same id can appear more than once.
 
-Agents walk on a grid of 8 px cells. A cell is blocked when any rectangle in `obstacles` touches it, so cover the walls, the edges of the room, the stations and the feet of the furniture. Leave the rest free: agents wander over every open cell when they are idle, and find their way around the blocked ones.
+### Collision and walking
 
-Keep `work` points and spots on open cells. A spot may sit on a bed or a rug that is not an obstacle; the agent walks to the nearest open cell and steps onto it.
+`collision` has one string per row of tiles: `height / tileSize` rows of `width / tileSize` characters, where `#` is blocked and `.` is free. Each blocked tile becomes an obstacle, and `obstacles` can add more rectangles on top.
+
+Agents walk on a grid of 8 px cells. A cell is blocked when any obstacle touches it. Open cells that can't be reached from the largest open area are closed too, so nobody gets stuck in a pocket between trees. Cover the walls, the water, the feet of the furniture and the stations, so people walk around them.
+
+Keep `work` points on open cells. Spots, wander points and route points may sit on a bench, a stump or a bed: the agent walks to the nearest open cell and steps onto it.
+
+The Tavern Guild's grid came with the map and was checked against the image: the forest border, the top rows and the tiles behind the kitchen oven were closed by hand.
 
 ### Spots
 
@@ -162,11 +186,21 @@ Keep `work` points and spots on open cells. A spot may sit on a bed or a rug tha
 | `hearth` | an idle agent warms up by the fire                                   |
 | `table`  | an idle agent sits at the table                                      |
 
-An idle agent keeps busy on its own: it wanders, visits the hearth, a bookshelf or the table, naps, or walks over to chat with another idle agent. The choice is weighted and avoids repeating the last plan; plans whose spots are all taken are skipped.
+An idle agent keeps busy on its own: it strolls to a `wander` point or along a `route`, visits the hearth, a bookshelf or the table, naps, or walks over to chat with another idle agent. The choice is weighted and avoids repeating the last plan; plans whose spots are all taken are skipped.
 
 `facing` is `north`, `west`, `south` or `east` (default `south`). Each spot holds one agent. When all `read` or `nap` spots are taken, a busy agent stays at its station.
 
 ### Scenery
+
+The Tavern Guild is one image drawn behind everything:
+
+```json
+{
+  "image": "maps/tavern-guild.png",
+  "source": { "x": 0, "y": 0, "width": 1280, "height": 896 },
+  "at": { "x": 0, "y": 0 }
+}
+```
 
 Scenery items are either a color fill:
 
@@ -178,7 +212,7 @@ or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `fli
 
 ```json
 {
-  "image": "tiles/interior-walls.png",
+  "image": "maps/walls.png",
   "source": { "x": 320, "y": 96, "width": 16, "height": 48 },
   "at": { "x": 0, "y": 32 },
   "repeat": { "width": 640, "height": 48 }
@@ -193,8 +227,11 @@ Scenery without `depth` is drawn first, behind everyone: floors, walls, rugs. Gi
 
 - every character and station manifest is valid;
 - every referenced sheet exists and every frame fits inside it;
-- the map has a known station for every agent, each inside the world and on its own obstacle;
-- every `work` point and spot can be reached from every station;
+- the map has a station for every agent, each inside the world with an open `work` point; manifest stations stand on their own obstacle;
+- every `work` point, spot, wander point, route point and the entrance can be reached from every station;
+- the background image has the map's size and the collision grid covers it;
+- every station manifest's frame 0 matches the background where it is placed;
+- the start view is inside the map;
 - every scenery crop fits its sheet.
 
 To see the result, run `npm run dev` and open the page with `?demo` to get a workshop full of fake adventurers.

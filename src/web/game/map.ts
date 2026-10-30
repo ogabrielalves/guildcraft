@@ -18,6 +18,8 @@ import {
 } from './parse.js';
 import type { Direction } from './sprite-sheet.js';
 import { DIRECTIONS } from './sprite-sheet.js';
+import type { Effect } from './stations.js';
+import { EFFECTS } from './stations.js';
 
 export type { Point, Rect, Size } from './parse.js';
 
@@ -25,7 +27,8 @@ export const SPOT_KINDS = ['read', 'nap', 'hearth', 'table'] as const;
 export type SpotKind = (typeof SPOT_KINDS)[number];
 
 export interface StationPlace {
-  id: string;
+  id: string | null;
+  effect: Effect | null;
   at: Point;
   work: Point;
 }
@@ -49,11 +52,16 @@ export interface WorkshopMap {
   stations: StationPlace[];
   obstacles: Rect[];
   spots: Spot[];
+  wander: Point[];
+  routes: Point[][];
+  entrance: Point | null;
+  view: Rect;
   scenery: Scenery[];
   embers: Point[];
 }
 
 export const DEFAULT_FLOOR = '#6b4a2f';
+const COLLISION_ROW = /^[#.]+$/;
 
 export function contains(area: Rect, target: Point): boolean {
   return (
@@ -101,11 +109,33 @@ function parseScenery(value: unknown, path: string): Scenery {
 
 function parseStation(value: unknown, path: string): StationPlace {
   const raw = fields(value, path);
-  return {
-    id: text(raw.id, `${path}.id`),
-    at: point(raw.at, `${path}.at`),
-    work: point(raw.work, `${path}.work`),
-  };
+  const id = optional<string | null>(raw.id, text, `${path}.id`, null);
+  const effect = optional<Effect | null>(raw.effect, oneOf(EFFECTS), `${path}.effect`, null);
+  if (id === null && effect === null) throw new AssetError(`${path}.id`);
+  return { id, effect, at: point(raw.at, `${path}.at`), work: point(raw.work, `${path}.work`) };
+}
+
+function parseRoute(value: unknown, path: string): Point[] {
+  const route = each(value, path, point);
+  if (route.length < 2) throw new AssetError(path);
+  return route;
+}
+
+function parseCollision(value: unknown, columns: number, rows: number, tile: number): Rect[] {
+  const lines = list(value, '$.collision');
+  if (lines.length !== rows) throw new AssetError('$.collision');
+  return lines.flatMap((line, row) => {
+    const path = `$.collision[${String(row)}]`;
+    if (typeof line !== 'string' || !COLLISION_ROW.test(line) || line.length !== columns) {
+      throw new AssetError(path);
+    }
+    return [...line.matchAll(/#+/g)].map((run) => ({
+      x: run.index * tile,
+      y: row * tile,
+      width: run[0].length * tile,
+      height: tile,
+    }));
+  });
 }
 
 function parseSpot(value: unknown, path: string): Spot {
@@ -139,14 +169,43 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
   spots.forEach(({ at }, index) => {
     inside(at, `$.spots[${String(index)}].at`);
   });
+  const wander = each(raw.wander, '$.wander', point);
+  wander.forEach((at, index) => {
+    inside(at, `$.wander[${String(index)}]`);
+  });
+  const routes = each(raw.routes, '$.routes', parseRoute);
+  routes.forEach((route, index) => {
+    route.forEach((at, step) => {
+      inside(at, `$.routes[${String(index)}][${String(step)}]`);
+    });
+  });
+  const entrance = optional<Point | null>(raw.entrance, point, '$.entrance', null);
+  if (entrance !== null) inside(entrance, '$.entrance');
+  const view = optional(raw.view, rect, '$.view', bounds);
+  inside(view, '$.view');
+  inside({ x: view.x + view.width, y: view.y + view.height }, '$.view');
+  const tileSize = positive(raw.tileSize, '$.tileSize');
+  const collision =
+    raw.collision === undefined
+      ? []
+      : parseCollision(
+          raw.collision,
+          Math.ceil(width / tileSize),
+          Math.ceil(height / tileSize),
+          tileSize,
+        );
   return {
     width,
     height,
-    tileSize: positive(raw.tileSize, '$.tileSize'),
+    tileSize,
     floor: optional(raw.floor, color, '$.floor', DEFAULT_FLOOR),
     stations,
-    obstacles: each(raw.obstacles, '$.obstacles', rect),
+    obstacles: [...each(raw.obstacles, '$.obstacles', rect), ...collision],
     spots,
+    wander,
+    routes,
+    entrance,
+    view,
     scenery: each(raw.scenery, '$.scenery', parseScenery),
     embers: each(raw.embers, '$.embers', point),
   };

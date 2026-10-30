@@ -19,7 +19,7 @@ describe('parseWorkshopMap', () => {
     const map = parseWorkshopMap(raw);
     expect(map).toMatchObject({ width: 480, height: 352, tileSize: 16 });
     expect(map.stations).toHaveLength(10);
-    expect(map.stations[6]).toEqual(raw.stations[6]);
+    expect(map.stations[6]).toEqual({ ...raw.stations[6], effect: null });
     expect(map.obstacles).toEqual(raw.obstacles);
     expect(map.spots[0]).toEqual({ kind: 'read', at: { x: 440, y: 120 }, facing: 'north' });
     expect(map.spots[1]?.facing).toBe('south');
@@ -72,6 +72,104 @@ describe('parseWorkshopMap', () => {
     const spots: unknown[] = [...raw.spots];
     spots[1] = { ...raw.spots[1], ...overrides };
     expect(invalidAt({ ...raw, spots })).toBe(path);
+  });
+
+  it('reads stations drawn into the scenery by their effect', () => {
+    const raw = provisionalWorkshop();
+    const stations = [{ effect: 'sparks', at: { x: 10, y: 10 }, work: { x: 10, y: 30 } }];
+    const map = parseWorkshopMap({ ...raw, stations: [...stations, ...raw.stations] });
+    expect(map.stations[0]).toEqual({ id: null, effect: 'sparks', ...stations[0] });
+  });
+
+  it.each([
+    [{ id: undefined }, '$.stations[2].id'],
+    [{ effect: 'fireworks' }, '$.stations[2].effect'],
+  ])('rejects station effect %j', (overrides, path) => {
+    const raw = provisionalWorkshop();
+    const stations: unknown[] = [...raw.stations];
+    stations[2] = { ...raw.stations[2], ...overrides };
+    expect(invalidAt({ ...raw, stations })).toBe(path);
+  });
+
+  const open = '.'.repeat(30);
+  const grid = (...top: string[]) => [
+    ...top.map((row) => row.padEnd(30, '.')),
+    ...Array<string>(22 - top.length).fill(open),
+  ];
+
+  it('turns the collision grid into obstacles', () => {
+    const raw = { ...provisionalWorkshop(), obstacles: [] };
+    const map = parseWorkshopMap({ ...raw, collision: grid('#..#', '.##.') });
+    expect(map.obstacles).toEqual([
+      { x: 0, y: 0, width: 16, height: 16 },
+      { x: 48, y: 0, width: 16, height: 16 },
+      { x: 16, y: 16, width: 32, height: 16 },
+    ]);
+  });
+
+  it.each([
+    [{}, '$.collision'],
+    [[open, open], '$.collision'],
+    [[open, '...', ...grid().slice(2)], '$.collision[1]'],
+    [grid(open, '..x'), '$.collision[1]'],
+    [grid(open, `${open}.`), '$.collision[1]'],
+    [[open, 4, ...grid().slice(2)], '$.collision[1]'],
+  ])('rejects collision %#', (collision, path) => {
+    expect(invalidAt({ ...provisionalWorkshop(), collision })).toBe(path);
+  });
+
+  it('reads wander points, routes, the entrance and the start view', () => {
+    const raw = provisionalWorkshop();
+    const map = parseWorkshopMap({
+      ...raw,
+      wander: [{ x: 1, y: 2 }],
+      routes: [
+        [
+          { x: 3, y: 4 },
+          { x: 5, y: 6 },
+        ],
+      ],
+      entrance: { x: 7, y: 8 },
+      view: { x: 10, y: 20, width: 100, height: 50 },
+    });
+    expect(map).toMatchObject({
+      wander: [{ x: 1, y: 2 }],
+      routes: [
+        [
+          { x: 3, y: 4 },
+          { x: 5, y: 6 },
+        ],
+      ],
+      entrance: { x: 7, y: 8 },
+      view: { x: 10, y: 20, width: 100, height: 50 },
+    });
+    expect(parseWorkshopMap(raw)).toMatchObject({
+      wander: [],
+      routes: [],
+      entrance: null,
+      view: { x: 0, y: 0, width: 480, height: 352 },
+    });
+  });
+
+  it.each([
+    [{ wander: [{ x: -1, y: 0 }] }, '$.wander[0]'],
+    [{ routes: [[{ x: 1, y: 1 }]] }, '$.routes[0]'],
+    [
+      {
+        routes: [
+          [
+            { x: 1, y: 1 },
+            { x: 1, y: 900 },
+          ],
+        ],
+      },
+      '$.routes[0][1]',
+    ],
+    [{ entrance: { x: 999, y: 1 } }, '$.entrance'],
+    [{ view: { x: 400, y: 0, width: 100, height: 10 } }, '$.view'],
+    [{ view: { x: -1, y: 0, width: 100, height: 10 } }, '$.view'],
+  ])('rejects %j', (overrides, path) => {
+    expect(invalidAt({ ...provisionalWorkshop(), ...overrides })).toBe(path);
   });
 
   it('rejects an obstacle with an empty size', () => {

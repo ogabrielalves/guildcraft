@@ -54,9 +54,18 @@ export class World {
       }
       const station = this.pickStation();
       if (station === null) continue;
+      const spawn = agent.status === 'starting' ? this.map.entrance : null;
       this.villagers.set(
         agent.id,
-        new Villager(agent.id, station, this.layout, activity, this.random, () => this.all()),
+        new Villager(
+          agent.id,
+          station,
+          this.layout,
+          activity,
+          this.random,
+          () => this.all(),
+          spawn,
+        ),
       );
     }
   }

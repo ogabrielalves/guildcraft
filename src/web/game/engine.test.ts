@@ -13,12 +13,19 @@ import {
 } from './engine.js';
 
 describe('fitView', () => {
-  it('fills the screen and crops the top of a taller world', () => {
+  it('fills the screen and crops a taller world evenly', () => {
     expect(fitView({ width: 960, height: 480 }, { width: 480, height: 272 })).toEqual({
       scale: 2,
       x: 0,
-      y: -64,
+      y: -32,
     });
+  });
+
+  it('frames the start view and keeps the world on screen', () => {
+    const world = { width: 1280, height: 896, view: { x: 320, y: 160, width: 480, height: 270 } };
+    expect(fitView({ width: 960, height: 540 }, world)).toEqual({ scale: 2, x: -640, y: -320 });
+    const corner = { ...world, view: { x: 0, y: 0, width: 480, height: 270 } };
+    expect(fitView({ width: 960, height: 540 }, corner)).toEqual({ scale: 2, x: 0, y: 0 });
   });
 
   it('crops at most a little and letterboxes the rest', () => {
@@ -39,7 +46,7 @@ describe('fitView', () => {
     expect(fitView({ width: 200, height: 100 }, { width: 480, height: 272 })).toEqual({
       scale: 1,
       x: -140,
-      y: -172,
+      y: -86,
     });
   });
 });

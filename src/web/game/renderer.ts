@@ -77,13 +77,13 @@ export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): 
   for (const villager of scene.world.all()) {
     const place = map.stations[villager.station];
     if (!villager.atStation || place === undefined) continue;
-    const station = scene.assets.station(place.id);
+    const station = place.id === null ? null : scene.assets.station(place.id);
     const box = stationBox(place, station);
     const emit = station?.manifest.emit ?? { x: box.width / 2, y: 0 };
     emitters.push({
       key: `station:${String(villager.station)}`,
-      kind: station?.manifest.effect ?? DEFAULT_EFFECT,
-      at: { x: box.x + emit.x, y: box.y + emit.y },
+      kind: place.effect ?? station?.manifest.effect ?? DEFAULT_EFFECT,
+      at: place.id === null ? place.at : { x: box.x + emit.x, y: box.y + emit.y },
       rate: STATION_RATE,
     });
   }
@@ -141,7 +141,12 @@ function drawFloor(ctx: Paint, map: WorkshopMap, assets: Assets): void {
   }
 }
 
-function drawStation(ctx: Paint, place: StationPlace, active: boolean, scene: Scene): void {
+function drawStation(
+  ctx: Paint,
+  place: StationPlace & { id: string },
+  active: boolean,
+  scene: Scene,
+): void {
   const station = scene.assets.station(place.id);
   const box = stationBox(place, station);
   const image = station ? scene.assets.image(station.base + station.manifest.image) : null;
@@ -242,12 +247,18 @@ export function drawScene(ctx: Paint, scene: Scene): void {
             },
           ],
     ),
-    ...map.stations.map((place, index) => ({
-      depth: place.at.y,
-      draw: () => {
-        drawStation(ctx, place, world.owner(index)?.atStation ?? false, scene);
-      },
-    })),
+    ...map.stations.flatMap(({ id, ...place }, index) =>
+      id === null
+        ? []
+        : [
+            {
+              depth: place.at.y,
+              draw: () => {
+                drawStation(ctx, { ...place, id }, world.owner(index)?.atStation ?? false, scene);
+              },
+            },
+          ],
+    ),
     ...scene.world.all().map((villager) => ({
       depth: villager.position.y,
       draw: () => {

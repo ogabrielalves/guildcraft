@@ -25,6 +25,15 @@ function event(kind: VillageEvent['kind'], agentId: string, targetId?: string): 
 }
 
 describe('World', () => {
+  it('walks freshly recruited agents in from the entrance', () => {
+    const entrance = { x: 240, y: 340 };
+    const world = new World(parseWorkshopMap({ ...provisionalWorkshop(), entrance }), () => 0.5);
+    world.sync([agent('a', 'starting'), agent('b')]);
+    expect(world.villager('a')?.position).toEqual(entrance);
+    expect(world.villager('a')?.moving).toBe(true);
+    expect(world.villager('b')?.position).not.toEqual(entrance);
+  });
+
   it('gives each agent a random free station', () => {
     const world = new World(map, () => 0.5);
     world.sync([agent('a'), agent('b'), agent('c')]);

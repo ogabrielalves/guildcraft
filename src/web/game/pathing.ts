@@ -1,4 +1,4 @@
-import type { Point, Rect, WorkshopMap } from './map.js';
+import type { Point, WorkshopMap } from './map.js';
 
 export const NAV_CELL = 8;
 const DIAGONAL = Math.SQRT2;
@@ -20,10 +20,6 @@ function withoutRepeats(points: Point[]): Point[] {
     if (last?.x !== point.x || last.y !== point.y) kept.push(point);
   }
   return kept;
-}
-
-function overlaps(a: Rect, b: Rect): boolean {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
 class Heap {
@@ -84,14 +80,16 @@ export class NavGrid {
     this.columns = Math.ceil(map.width / cell);
     this.rows = Math.ceil(map.height / cell);
     this.blocked = new Uint8Array(this.columns * this.rows);
-    for (let row = 0; row < this.rows; row++) {
-      for (let column = 0; column < this.columns; column++) {
-        const area = { x: column * cell, y: row * cell, width: cell, height: cell };
-        if (map.obstacles.some((obstacle) => overlaps(obstacle, area))) {
-          this.blocked[row * this.columns + column] = 1;
-        }
+    for (const { x, y, width, height } of map.obstacles) {
+      const left = Math.max(0, Math.floor(x / cell));
+      const right = Math.min(this.columns, Math.ceil((x + width) / cell));
+      const top = Math.max(0, Math.floor(y / cell));
+      const bottom = Math.min(this.rows, Math.ceil((y + height) / cell));
+      for (let row = top; row < bottom; row++) {
+        this.blocked.fill(1, row * this.columns + left, row * this.columns + right);
       }
     }
+    this.keepLargestArea();
   }
 
   open(column: number, row: number): boolean {
@@ -154,6 +152,35 @@ export class NavGrid {
     if (cells === null) return withoutRepeats([from, to]);
     const inner = this.smooth([start, ...cells.slice(1, -1), goal]);
     return withoutRepeats([from, ...inner, to]);
+  }
+
+  private keepLargestArea(): void {
+    const area = new Int32Array(this.blocked.length).fill(-1);
+    const sizes: number[] = [];
+    this.blocked.forEach((value, start) => {
+      if (value === 1 || area[start] !== -1) return;
+      const id = sizes.length;
+      const stack = [start];
+      area[start] = id;
+      let size = 0;
+      for (let cell = stack.pop(); cell !== undefined; cell = stack.pop()) {
+        size++;
+        const column = cell % this.columns;
+        const row = Math.floor(cell / this.columns);
+        for (const [dx, dy] of STEPS.slice(0, 4)) {
+          const next = (row + dy) * this.columns + column + dx;
+          if (this.open(column + dx, row + dy) && area[next] === -1) {
+            area[next] = id;
+            stack.push(next);
+          }
+        }
+      }
+      sizes.push(size);
+    });
+    const largest = sizes.indexOf(Math.max(...sizes));
+    area.forEach((id, cell) => {
+      if (id !== -1 && id !== largest) this.blocked[cell] = 1;
+    });
   }
 
   private center(column: number, row: number): Point {

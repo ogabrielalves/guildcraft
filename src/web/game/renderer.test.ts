@@ -338,6 +338,28 @@ describe('emittersFor', () => {
   });
 });
 
+describe('stations drawn into the scenery', () => {
+  const baked = parseWorkshopMap({
+    ...raw,
+    stations: raw.stations.map(({ at, work }) => ({ effect: 'sparks', at, work })),
+  });
+
+  it('draws no sprite and emits from the station point while working', () => {
+    const world = new World(baked, () => 0);
+    const agents = [agent('a', 'tool')];
+    world.sync(agents);
+    const target = scene(agents, { world });
+    const villager = world.villager('a');
+    expect(drawnImages(target).some((url) => url.includes('stove'))).toBe(false);
+    expect(emittersFor(target).at(-1)).toEqual({
+      key: `station:${String(villager?.station)}`,
+      kind: 'sparks',
+      at: stationAt(baked, villager?.station ?? 0).at,
+      rate: STATION_RATE,
+    });
+  });
+});
+
 describe('geometry', () => {
   it('uses a fixed body box over the feet', () => {
     const world = new World(map, () => 0);

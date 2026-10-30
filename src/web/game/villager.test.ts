@@ -83,6 +83,45 @@ describe('Villager', () => {
     expect(shared.nav.walkable(villager.position)).toBe(true);
   });
 
+  it('wanders to the map wander points and along its routes', () => {
+    const wander = [{ x: 240, y: 200 }];
+    const routes = [
+      [
+        { x: 40, y: 330 },
+        { x: 460, y: 330 },
+      ],
+    ];
+    const guided = new Layout(parseWorkshopMap({ ...provisionalWorkshop(), wander, routes }));
+    const toPoint = new Villager('a', 0, guided, 'idle', () => 0);
+    expect(toPoint.position).toEqual({ x: 240, y: 200 });
+    const patrol = new Villager(
+      'b',
+      0,
+      guided,
+      'idle',
+      () => 0.9,
+      () => [],
+      { x: 440, y: 340 },
+    );
+    let west = patrol.position.x;
+    for (let i = 0; i < 4000 && patrol.moving; i += 1) {
+      patrol.update(0.05);
+      west = Math.min(west, patrol.position.x);
+    }
+    expect(west).toBeLessThan(42);
+    expect(patrol.position).toEqual({ x: 460, y: 330 });
+  });
+
+  it('walks in from the entrance when it spawns there', () => {
+    const shared = layout();
+    const villager = new Villager('a', 0, shared, 'write', first, () => [], { x: 240, y: 340 });
+    expect(villager.position).toEqual({ x: 240, y: 340 });
+    expect(villager.moving).toBe(true);
+    settle(villager);
+    expect(villager.position).toEqual(stationAt(map, 0).work);
+    expect(villager.facing).toBe('west');
+  });
+
   it('pauses between wander walks', () => {
     let next = 0;
     const values = [0.1, 0.9, 0.5];

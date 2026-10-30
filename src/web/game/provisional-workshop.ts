@@ -7,7 +7,7 @@ export function provisionalWorkshop() {
     height: 352,
     tileSize: 16,
     stations: STATION_ROWS.flatMap((y) =>
-      STATION_COLUMNS.map((x) => ({ id: 'workbench', at: { x, y }, work: { x: x + 28, y } })),
+      STATION_COLUMNS.map((x) => ({ id: 'anvil', at: { x, y }, work: { x: x + 28, y } })),
     ),
     obstacles: [
       { x: 0, y: 0, width: 480, height: 80 },

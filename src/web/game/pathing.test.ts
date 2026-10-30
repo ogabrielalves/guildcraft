@@ -55,12 +55,42 @@ describe('NavGrid', () => {
     expect(blocked(grid, path.slice(1, -1))).toBe(false);
   });
 
-  it('walks straight when the goal cannot be reached', () => {
-    const grid = new NavGrid({ width: 80, height: 16, obstacles: [{ ...wall, height: 16 }] });
+  it('walks straight when nothing is walkable', () => {
+    const grid = new NavGrid({
+      width: 80,
+      height: 16,
+      obstacles: [{ x: 0, y: 0, width: 80, height: 16 }],
+    });
     expect(grid.route({ x: 4, y: 4 }, { x: 76, y: 4 })).toEqual([
       { x: 4, y: 4 },
       { x: 76, y: 4 },
     ]);
+  });
+
+  it('closes pockets cut off from the largest open area', () => {
+    const grid = new NavGrid({
+      width: 80,
+      height: 16,
+      obstacles: [{ x: 48, y: 0, width: 8, height: 16 }],
+    });
+    expect(grid.walkable({ x: 20, y: 4 })).toBe(true);
+    expect(grid.walkable({ x: 70, y: 4 })).toBe(false);
+    expect(grid.nearest({ x: 76, y: 4 })).toEqual({ x: 44, y: 4 });
+  });
+
+  it('blocks partial cells and ignores obstacles outside the world', () => {
+    const grid = new NavGrid({
+      width: 80,
+      height: 80,
+      obstacles: [
+        { x: 10, y: 10, width: 3, height: 3 },
+        { x: -40, y: -40, width: 20, height: 20 },
+        { x: 100, y: 100, width: 20, height: 20 },
+      ],
+    });
+    expect(grid.walkable({ x: 12, y: 12 })).toBe(false);
+    expect(grid.walkable({ x: 4, y: 4 })).toBe(true);
+    expect(grid.walkable({ x: 76, y: 76 })).toBe(true);
   });
 
   it('finds the nearest walkable point', () => {

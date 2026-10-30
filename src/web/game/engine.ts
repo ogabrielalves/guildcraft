@@ -1,4 +1,4 @@
-import type { Point } from './map.js';
+import type { Point, Rect } from './map.js';
 
 export const MAX_FRAME_TIME = 0.1;
 export const MAX_ZOOM = 1.15;
@@ -15,9 +15,13 @@ export interface Size {
   height: number;
 }
 
+export interface Stage extends Size {
+  view?: Rect;
+}
+
 export interface EngineOptions {
   canvas: HTMLCanvasElement;
-  world: Size;
+  world: Stage;
   background: string;
   draw(ctx: CanvasRenderingContext2D, dt: number, time: number): void;
   requestFrame?: (callback: FrameRequestCallback) => number;
@@ -25,16 +29,22 @@ export interface EngineOptions {
   pixelRatio?: () => number;
 }
 
-export function fitView(screen: Size, world: Size): View {
-  const ratios = [screen.width / world.width, screen.height / world.height];
-  const contain = Math.min(...ratios);
-  const cover = Math.max(...ratios);
-  const scale = Math.max(1, Math.min(cover, contain * MAX_ZOOM));
-  const height = world.height * scale;
+export function fitView(screen: Size, world: Stage): View {
+  const area = world.view ?? { x: 0, y: 0, width: world.width, height: world.height };
+  const ratios = [screen.width / area.width, screen.height / area.height];
+  const scale = Math.max(1, Math.min(Math.max(...ratios), Math.min(...ratios) * MAX_ZOOM));
   return {
     scale,
-    x: Math.floor((screen.width - world.width * scale) / 2),
-    y: Math.floor(height > screen.height ? screen.height - height : (screen.height - height) / 2),
+    x: axis(
+      screen.width / 2 - (area.x + area.width / 2) * scale,
+      screen.width,
+      world.width * scale,
+    ),
+    y: axis(
+      screen.height / 2 - (area.y + area.height / 2) * scale,
+      screen.height,
+      world.height * scale,
+    ),
   };
 }
 

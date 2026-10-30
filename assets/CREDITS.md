@@ -11,23 +11,18 @@ Guildcraft's source code is released under the MIT License (see `LICENSE`). The 
   - Credit is not required, but appreciated.
   - The art may be modified.
   - The art may **not** be sold, or marketed as a final product, modified or not. Only the author sells it.
-- Guildcraft ships only the sheets it uses, unmodified, renamed as listed below.
+- Guildcraft ships the sheets it uses unmodified, renamed as listed below, plus one map composed from the pack.
 
 | File in this repository | File in the pack |
 |---|---|
-| `assets/tiles/interior-walls.png` | `Environment/Structures/Buildings/Interior/Interior_Walls_01.png` |
-| `assets/tiles/interior-props.png` | `Environment/Structures/Buildings/Interior/Interior_Props_01.png` |
-| `assets/stations/alchemy-small.png` | `Environment/Structures/Stations/Alchemy/Alchemy_Table_01-Sheet.png` |
 | `assets/stations/alchemy-large.png` | `Environment/Structures/Stations/Alchemy/Alchemy_Table_02-Sheet.png` |
 | `assets/stations/anvil.png` | `Environment/Structures/Stations/Anvil/Anvil_01-Sheet.png` |
-| `assets/stations/cauldron.png` | `Environment/Structures/Stations/Cooking Station/Cooker/Cooker_03-Sheet.png` |
-| `assets/stations/grill.png` | `Environment/Structures/Stations/Cooking Station/Grill/Grill_01-Sheet.png` |
-| `assets/stations/workbench.png` | `Environment/Structures/Stations/Workbench/Workbench.png` |
-| `assets/stations/furnace.png` | `Environment/Structures/Stations/Furnace/Furnace.png` |
 | `assets/stations/sawmill.png` | `Environment/Structures/Stations/Sawmill/Base.png` |
 | `assets/characters/mortis/{idle,run,death}.png` | `Entities/Mobs/Skeleton Crew/Skeleton - Mage/{Idle,Run,Death}/*-Sheet.png` |
 | `assets/characters/corvin/{idle,run,death}.png` | `Entities/Npc's/Rogue/{Idle,Run,Death}/*-Sheet.png` |
 | `assets/characters/lyra/{idle,walk}.png` | `Entities/Npc's/Citizen_F/Peasant_A/{Idle,Walk}/*-Sheet.png` |
+
+**Tavern Guild map** (`assets/maps/tavern-guild.png`): composed from Pixel Crawler art by Anokolisa. Floor and water tiles, walls, furniture, crafting stations, trees and props from the pack (`Environment/Tilesets`, `Environment/Structures` and `Environment/Props`) were arranged on an 80 × 56 grid, with soft shadows, warm light and a darker forest edge painted on top. It is a modified work of the pack and keeps its terms: it may not be sold or marketed on its own.
 
 Thanks to Anokolisa for the Pixel Crawler pack.
 
