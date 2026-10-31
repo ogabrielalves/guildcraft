@@ -387,6 +387,13 @@
 
 .panel__action--console {
   flex: 1 1 auto;
+  color: #d6e8ff;
+  background: rgb(40 90 170 / 35%);
+  filter: sepia(1) saturate(3) hue-rotate(165deg) brightness(0.9);
+}
+
+.panel__action--console:hover:not(:disabled) {
+  filter: sepia(1) saturate(3.5) hue-rotate(165deg) brightness(1.1);
 }
 
 .panel__action:hover:not(:disabled),
