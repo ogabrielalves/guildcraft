@@ -2,6 +2,12 @@
 
 [English](README.md) | **Português (BR)** | [Русский](README.ru.md)
 
+[![CI](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange.svg)](LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933?logo=nodedotjs&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
 Uma oficina de guilda em pixel art onde cada aventureiro é um agente Claude Code de verdade. 🏰
 
 Você recruta um aventureiro por pasta de projeto, e cada um deles é um processo `claude` real rodando naquela pasta. Eles ficam nas suas estações, andam pela oficina e mudam de pose conforme o que o agente está fazendo de fato. Clica em um e abre o console dele. Pede para um falar com outro e vê a mensagem atravessar a sala.
@@ -76,11 +82,11 @@ O nome não é injetado no prompt do modelo: o agente descobre os outros por `li
 
 ## Plataformas suportadas
 
-| Plataforma | Status            |
-| ---------- | ----------------- |
-| Windows 11 | Testado, funciona |
-| Linux      | Teste pendente    |
-| macOS      | Teste pendente    |
+| Plataforma | Status               |
+| ---------- | -------------------- |
+| Windows 11 | ✅ Testado, funciona |
+| Linux      | ⏳ Teste pendente    |
+| macOS      | ⏳ Teste pendente    |
 
 O CI compila e roda a suíte de testes nos três, mas o app em si só foi usado manualmente no Windows 11 até agora.
 
@@ -114,4 +120,4 @@ Contribuições são bem-vindas. Veja o [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licença
 
-O código é [MIT](LICENSE). Os assets de arte mantêm as próprias licenças, listadas em `assets/CREDITS.md`.
+O Guildcraft é source-available (código disponível) e gratuito para todo mundo usar, estudar, modificar e compartilhar, desde que não seja para fins comerciais. Não é permitido vendê-lo nem usá-lo comercialmente. O código está sob a [PolyForm Noncommercial License 1.0.0](LICENSE). Os assets de arte mantêm as próprias licenças, listadas em `assets/CREDITS.md`.

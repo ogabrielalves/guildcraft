@@ -2,6 +2,12 @@
 
 [English](README.md) | [Português (BR)](README.pt-BR.md) | **Русский**
 
+[![CI](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange.svg)](LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933?logo=nodedotjs&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
 Пиксельная мастерская гильдии, где каждый авантюрист это настоящий агент Claude Code. 🏰
 
 Вы нанимаете по одному авантюристу на каждую папку проекта, и каждый из них это реальный процесс `claude`, запущенный в этой папке. Они сидят у своих станций, ходят по мастерской и меняют позу в зависимости от того, что агент делает на самом деле. Кликните по любому, и откроется его консоль. Попросите одного написать другому, и вы увидите, как сообщение идёт через всю комнату.
@@ -76,11 +82,11 @@
 
 ## Поддерживаемые платформы
 
-| Платформа  | Статус                    |
-| ---------- | ------------------------- |
-| Windows 11 | Проверено, работает       |
-| Linux      | Проверка ещё не выполнена |
-| macOS      | Проверка ещё не выполнена |
+| Платформа  | Статус                       |
+| ---------- | ---------------------------- |
+| Windows 11 | ✅ Проверено, работает       |
+| Linux      | ⏳ Проверка ещё не выполнена |
+| macOS      | ⏳ Проверка ещё не выполнена |
 
 CI собирает проект и запускает тесты на всех трёх, но само приложение пока проверялось вручную только на Windows 11.
 
@@ -114,4 +120,4 @@ npm run dev
 
 ## Лицензия
 
-Код распространяется под лицензией [MIT](LICENSE). Графические ресурсы сохраняют собственные лицензии, они перечислены в `assets/CREDITS.md`.
+Guildcraft — проект с доступным исходным кодом (source-available), бесплатный для всех: его можно использовать, изучать, изменять и распространять, но не в коммерческих целях. Продавать его или использовать коммерчески нельзя. Код распространяется под лицензией [PolyForm Noncommercial License 1.0.0](LICENSE). Графические ресурсы сохраняют собственные лицензии, они перечислены в `assets/CREDITS.md`.

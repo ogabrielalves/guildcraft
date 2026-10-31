@@ -1,6 +1,6 @@
 # Credits
 
-Guildcraft's source code is released under the MIT License (see `LICENSE`). The art in `assets/` is **not** covered by the MIT License: each asset keeps the license chosen by its authors, listed below.
+Guildcraft's source code is released under the PolyForm Noncommercial License 1.0.0 (see `LICENSE`). The art in `assets/` is **not** covered by that license: each asset keeps the license chosen by its authors, listed below.
 
 ## Workshop and stations — Pixel Crawler (Free Pack 2.11)
 

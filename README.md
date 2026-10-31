@@ -2,6 +2,12 @@
 
 **English** | [Português (BR)](README.pt-BR.md) | [Русский](README.ru.md)
 
+[![CI](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml/badge.svg)](https://github.com/ogabrielalves/guildcraft/actions/workflows/ci.yml)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange.svg)](LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933?logo=nodedotjs&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
 A pixel-art guild workshop where every adventurer is a live Claude Code agent. 🏰
 
 You recruit one adventurer per project folder, and each of them is a real `claude` process running in that folder. They sit at their stations, pace around the workshop, and change pose depending on what the agent is actually doing. Click one and you get its console. Ask one to talk to another and you can watch the message walk across the room.
@@ -76,11 +82,11 @@ The name is not injected into the model's prompt: an agent learns its peers from
 
 ## Platform support
 
-| Platform   | Status         |
-| ---------- | -------------- |
-| Windows 11 | Tested, works  |
-| Linux      | Not tested yet |
-| macOS      | Not tested yet |
+| Platform   | Status            |
+| ---------- | ----------------- |
+| Windows 11 | ✅ Tested, works  |
+| Linux      | ⏳ Not tested yet |
+| macOS      | ⏳ Not tested yet |
 
 CI builds and runs the test suite on all three, but the app itself has only been exercised by hand on Windows 11 so far.
 
@@ -114,4 +120,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Code is [MIT](LICENSE). Art assets keep their own licenses, listed in `assets/CREDITS.md`.
+Guildcraft is source-available and free for everyone to use, study, modify and share, as long as it is not for commercial use. You may not sell it or use it commercially. The code is under the [PolyForm Noncommercial License 1.0.0](LICENSE). Art assets keep their own licenses, listed in `assets/CREDITS.md`.
