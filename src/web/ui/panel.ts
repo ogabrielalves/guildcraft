@@ -79,6 +79,8 @@ export interface DetailRow {
   value(agent: AgentView, doing: IdlePlan | null): string | null;
 }
 
+const EMPTY_VALUE = '—';
+
 export const DETAIL_ROWS: readonly DetailRow[] = [
   { id: 'now', label: 'panel.now', value: nowText },
   { id: 'tool', label: 'panel.tool', value: (agent) => agent.tool?.name ?? null },
@@ -258,7 +260,11 @@ export function createPanel(options: PanelOptions): Panel {
   });
 
   const history = make('section', 'panel__history');
-  const historyTitle = label(make('h3', 'panel__heading'), 'history.title');
+  const historyTitle = make('h3', 'panel__heading');
+  const historyToggle = label(make('button', 'panel__toggle'), 'history.title');
+  historyToggle.type = 'button';
+  historyToggle.setAttribute('aria-expanded', 'true');
+  historyTitle.append(historyToggle);
   const sessionRow = make('p', 'panel__session');
   const sessionLabel = label(make('span', 'panel__session-label'), 'history.session');
   const sessionTitle = make('span', 'panel__session-title');
@@ -270,6 +276,17 @@ export function createPanel(options: PanelOptions): Panel {
   const log = make('ol', 'panel__log');
   const empty = label(make('p', 'panel__empty'), 'history.empty');
   history.append(historyTitle, sessionRow, tasksBlock, log, empty);
+
+  let logOpen = true;
+  const syncLog = () => {
+    historyToggle.setAttribute('aria-expanded', String(logOpen));
+    log.hidden = !logOpen;
+    empty.hidden = !logOpen || log.childElementCount > 0;
+  };
+  historyToggle.addEventListener('click', () => {
+    logOpen = !logOpen;
+    syncLog();
+  });
 
   const focused = () => {
     const id = store.getState().focused;
@@ -369,9 +386,10 @@ export function createPanel(options: PanelOptions): Panel {
     const plan = doing(agent.id);
     for (const { row, wrapper, value } of rows) {
       const text = row.value(agent, plan);
-      wrapper.hidden = text === null;
-      if (value.textContent !== (text ?? '')) {
-        value.textContent = text ?? '';
+      const shownText = text ?? EMPTY_VALUE;
+      wrapper.dataset.empty = String(text === null);
+      if (value.textContent !== shownText) {
+        value.textContent = shownText;
         value.title = text ?? '';
       }
     }
@@ -434,7 +452,7 @@ export function createPanel(options: PanelOptions): Panel {
     times.clear();
     const actionList = newestFirst(activity?.actions ?? []).slice(0, RECENT_ACTIONS);
     log.replaceChildren(...actionList.map(renderAction));
-    empty.hidden = actionList.length > 0;
+    syncLog();
     renderTimes();
   };
 

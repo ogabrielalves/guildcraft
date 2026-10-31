@@ -347,9 +347,9 @@ describe('createPanel', () => {
     store.focus('a');
     nextFrame(16);
     expect(drawImage).toHaveBeenCalled();
-    expect(row('waiting').hidden).toBe(true);
-    expect(row('model').hidden).toBe(true);
-    expect(row('effort').hidden).toBe(true);
+    expect(row('waiting').dataset.empty).toBe('true');
+    expect(row('model').dataset.empty).toBe('true');
+    expect(row('effort').dataset.empty).toBe('true');
     query('.panel__close').click();
     expect(panel.element.hidden).toBe(true);
   });
@@ -363,7 +363,7 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
   });
 
-  it('shows the tool and the waiting reason and hides empty rows', () => {
+  it('shows the tool and the waiting reason and keeps empty rows with a dash', () => {
     const tool = { name: 'Bash', detail: 'npm test' };
     const { store, row, value } = setup({
       agents: [
@@ -374,13 +374,14 @@ describe('createPanel', () => {
     store.focus('a');
     expect(value('now')?.textContent).toBe('npm test');
     expect(value('now')?.title).toBe('npm test');
-    expect(row('tool').hidden).toBe(false);
+    expect(row('tool').dataset.empty).toBe('false');
     expect(value('tool')?.textContent).toBe('Bash');
-    expect(row('waiting').hidden).toBe(true);
+    expect(row('waiting').hidden).toBe(false);
+    expect(value('waiting')?.textContent).toBe('—');
     store.focus('b');
     expect(value('now')?.textContent).toBe('Waiting for you');
-    expect(row('tool').hidden).toBe(true);
-    expect(row('waiting').hidden).toBe(false);
+    expect(row('tool').dataset.empty).toBe('true');
+    expect(value('tool')?.textContent).toBe('—');
     expect(value('waiting')?.textContent).toBe('Your approval for a tool');
   });
 
@@ -439,12 +440,12 @@ describe('createPanel', () => {
   });
 
   it('shows the model and effort once the agent reports them', () => {
-    const { store, row, value } = setup({
+    const { store, value } = setup({
       agents: [agent('a'), agent('b', { model: 'claude-opus-5-5', effort: 'high' })],
     });
     store.focus('a');
-    expect(row('model').hidden).toBe(true);
-    expect(row('effort').hidden).toBe(true);
+    expect(value('model')?.textContent).toBe('—');
+    expect(value('effort')?.textContent).toBe('—');
     store.focus('b');
     expect(value('model')?.textContent).toBe('Opus 5.5');
     expect(value('effort')?.textContent).toBe('High');
@@ -622,6 +623,23 @@ describe('history', () => {
     expect(query('.panel__session').hidden).toBe(true);
     expect(query('.panel__tasks-block').hidden).toBe(true);
     expect(query('.panel__heading').textContent).toBe('Recent commands');
+  });
+
+  it('collapses the command list like an accordion', () => {
+    const { store, panel, query } = setup({
+      activities: [activity('a', { actions: [action('1')] })],
+    });
+    store.focus('a');
+    const toggle = query('.panel__toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(query('.panel__log').hidden).toBe(false);
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(query('.panel__log').hidden).toBe(true);
+    expect(query('.panel__empty').hidden).toBe(true);
+    toggle.click();
+    expect(query('.panel__log').hidden).toBe(false);
+    expect(entries(panel)).toHaveLength(1);
   });
 
   it('lists actions newest first with state, detail, result and time', () => {
