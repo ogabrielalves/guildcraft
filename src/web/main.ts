@@ -111,6 +111,7 @@ if (root) {
       socket,
       map,
       assets,
+      session: token,
       onHover: (hover, clientX, clientY) => {
         const agent = hover?.kind === 'villager' ? store.agent(hover.id) : undefined;
         const text = agent

@@ -31,7 +31,10 @@ export const PALETTE = {
   station: '#8a6a45',
   stationTop: '#a88456',
   stationActive: '#ffd76a',
+  outside: '#060a1c',
 };
+
+export const OUTSIDE_DIM = 0.3;
 
 export const STATION_RATE = 8;
 export const HEARTH_RATE = 5;
@@ -143,6 +146,20 @@ function drawFloor(ctx: Paint, map: WorkshopMap, assets: Assets): void {
   }
 }
 
+function dimOutside(ctx: Paint, map: WorkshopMap): void {
+  const { house } = map;
+  if (house === null) return;
+  const right = house.x + house.width;
+  const bottom = house.y + house.height;
+  ctx.globalAlpha = OUTSIDE_DIM;
+  ctx.fillStyle = PALETTE.outside;
+  ctx.fillRect(0, 0, map.width, house.y);
+  ctx.fillRect(0, bottom, map.width, map.height - bottom);
+  ctx.fillRect(0, house.y, house.x, house.height);
+  ctx.fillRect(right, house.y, map.width - right, house.height);
+  ctx.globalAlpha = 1;
+}
+
 function drawStation(
   ctx: Paint,
   place: StationPlace & { id: string },
@@ -218,19 +235,21 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
 
 const TAG_GAP = 4;
 
-function drawStationTags(ctx: Paint, scene: Scene): void {
+function drawZoneTags(ctx: Paint, scene: Scene): void {
   const drawn = new Set<string>();
+  const { map } = scene.world;
   for (const villager of scene.world.all()) {
-    const place = scene.world.map.stations[villager.station];
     const cwd = scene.agents.get(villager.id)?.cwd;
     const folder = cwd === undefined ? '' : folderName(cwd);
-    if (place === undefined || folder === '') continue;
-    if (villager.zone !== null) {
-      const key = `${villager.zone}/${folder}`;
-      if (drawn.has(key)) continue;
-      drawn.add(key);
-    }
-    drawFolderTag(ctx, folder, place.work.x, Math.round(place.work.y + TAG_GAP));
+    if (folder === '') continue;
+    const sign = map.zones.find((zone) => zone.id === villager.zone)?.sign;
+    const place = sign ?? map.stations[villager.station]?.work;
+    if (place === undefined) continue;
+    const top = sign ? sign.y : Math.round(place.y + TAG_GAP);
+    const key = `${villager.zone ?? `${String(place.x)}/${String(top)}`}/${folder}`;
+    if (drawn.has(key)) continue;
+    drawn.add(key);
+    drawFolderTag(ctx, folder, place.x, top);
   }
 }
 
@@ -291,8 +310,9 @@ export function drawScene(ctx: Paint, scene: Scene): void {
     })),
   ].sort((a, b) => a.depth - b.depth);
   for (const layer of layers) layer.draw();
+  dimOutside(ctx, map);
   scene.particles?.draw(ctx);
-  drawStationTags(ctx, scene);
+  drawZoneTags(ctx, scene);
   for (const villager of scene.world.byDepth()) drawLabels(ctx, villager, scene);
   ctx.restore();
 }

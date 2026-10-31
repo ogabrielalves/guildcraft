@@ -45,15 +45,17 @@ export class World {
 
   sync(agents: readonly AgentView[]): void {
     const ids = new Set(agents.map((agent) => agent.id));
-    const left = new Set<string>();
     for (const [id, villager] of this.villagers) {
       if (ids.has(id)) continue;
-      left.add(this.projects.get(id) ?? '');
       villager.leave();
       this.villagers.delete(id);
       this.projects.delete(id);
     }
-    this.releaseZones(left);
+    const demand = new Map<string, number>();
+    for (const { cwd } of agents) {
+      const project = projectOf(cwd);
+      demand.set(project, (demand.get(project) ?? 0) + 1);
+    }
     for (const agent of agents) {
       const activity = activityOf(agent);
       const existing = this.villagers.get(agent.id);
@@ -62,7 +64,7 @@ export class World {
         continue;
       }
       const project = projectOf(agent.cwd);
-      const station = this.pickStation(project);
+      const station = this.pickStation(project, demand.get(project) ?? 1);
       if (station === null) continue;
       this.projects.set(agent.id, project);
       const spawn = agent.status === 'starting' ? this.map.entrance : null;
@@ -95,34 +97,31 @@ export class World {
     for (const villager of this.villagers.values()) villager.update(dt);
   }
 
-  private releaseZones(left: ReadonlySet<string>): void {
-    const active = new Set(this.projects.values());
-    let changed = false;
-    for (const project of left) {
-      if (active.has(project) || !this.zones.has(project)) continue;
-      this.zones.delete(project);
-      changed = true;
-    }
-    if (changed) this.memory.save(Object.fromEntries(this.zones));
-  }
-
   private stationZone(station: number): string | null {
     return this.layout.zoneOf(stationAt(this.map, station).work);
   }
 
-  private zoneFor(project: string): string | null {
+  private zoneFor(project: string, demand: number): string | null {
     const active = new Set(this.projects.values());
     const usedBy = (zone: string) =>
       [...this.zones].some(([other, id]) => id === zone && other !== project && active.has(other));
     const remembered = this.zones.get(project);
-    if (remembered !== undefined && !usedBy(remembered)) return remembered;
+    if (remembered !== undefined && !usedBy(remembered) && active.has(project)) return remembered;
     const capacity = new Map<string, number>();
     for (let station = 0; station < this.map.stations.length; station++) {
       const zone = this.stationZone(station);
       if (zone !== null) capacity.set(zone, (capacity.get(zone) ?? 0) + 1);
     }
     const open = [...capacity].filter(([zone]) => !usedBy(zone));
-    open.sort((a, b) => b[1] - a[1]);
+    const fits = ([zone, size]: [string, number]) => size >= demand || zone === remembered;
+    const claimed = new Set(this.zones.values());
+    const score = (entry: [string, number]) =>
+      (entry[0] === remembered && fits(entry)
+        ? -Infinity
+        : fits(entry)
+          ? entry[1]
+          : 1000 - entry[1]) + (claimed.has(entry[0]) ? 10_000 : 0);
+    open.sort((a, b) => score(a) - score(b));
     const zone = open[0]?.[0] ?? null;
     if (zone !== null) {
       this.zones.set(project, zone);
@@ -131,9 +130,9 @@ export class World {
     return zone;
   }
 
-  private pickStation(project: string): number | null {
+  private pickStation(project: string, demand: number): number | null {
     const free = this.freeStations();
-    const zone = this.zoneFor(project);
+    const zone = this.zoneFor(project, demand);
     const home = free.filter((station) => this.stationZone(station) === zone);
     const claimed = new Set(this.zones.values());
     const open = free.filter((station) => !claimed.has(this.stationZone(station) ?? ''));
@@ -151,13 +150,17 @@ function memoryOnly(): ZoneMemory {
   return { load: () => ({}), save: () => undefined };
 }
 
-export function browserZoneMemory(key = 'guildcraft.zones'): ZoneMemory {
+export function browserZoneMemory(session: string | null, key = 'guildcraft.zones'): ZoneMemory {
   return {
     load() {
       try {
-        const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '{}');
-        return typeof parsed === 'object' && parsed !== null
-          ? (parsed as Record<string, string>)
+        const parsed = JSON.parse(localStorage.getItem(key) ?? '{}') as {
+          session?: unknown;
+          zones?: unknown;
+        };
+        const { zones } = parsed;
+        return parsed.session === session && typeof zones === 'object' && zones !== null
+          ? (zones as Record<string, string>)
           : {};
       } catch {
         return {};
@@ -165,7 +168,7 @@ export function browserZoneMemory(key = 'guildcraft.zones'): ZoneMemory {
     },
     save(zones) {
       try {
-        localStorage.setItem(key, JSON.stringify(zones));
+        localStorage.setItem(key, JSON.stringify({ session, zones }));
       } catch {
         // storage unavailable; zones just won't survive a reload
       }
@@ -174,5 +177,6 @@ export function browserZoneMemory(key = 'guildcraft.zones'): ZoneMemory {
 }
 
 export function projectOf(cwd: string): string {
-  return cwd.replace(/[\\/]+/g, '/').replace(/\/$/, '');
+  const path = cwd.replace(/[\\/]+/g, '/').replace(/\/$/, '');
+  return /^[a-z]:/i.test(path) ? path.toLowerCase() : path;
 }

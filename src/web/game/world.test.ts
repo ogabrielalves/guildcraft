@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { AgentStatus, AgentView, VillageEvent } from '../../shared/agent.js';
 import { parseWorkshopMap } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
-import { EVENT_FRESHNESS_MS, World, projectOf } from './world.js';
+import { EVENT_FRESHNESS_MS, World, browserZoneMemory, projectOf } from './world.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
 
@@ -59,6 +59,20 @@ describe('World', () => {
     expect(world.villager('d')?.station).toBe(1);
   });
 
+  describe('browserZoneMemory', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+    });
+
+    it('survives a reload but resets for a new server session', () => {
+      browserZoneMemory('one').save({ '/p/web': 'left' });
+      expect(browserZoneMemory('one').load()).toEqual({ '/p/web': 'left' });
+      expect(browserZoneMemory('two').load()).toEqual({});
+    });
+  });
+
   describe('projects', () => {
     const zoned = parseWorkshopMap({
       ...provisionalWorkshop(),
@@ -80,7 +94,7 @@ describe('World', () => {
       expect(zone('b')).not.toBe(zone('a'));
     });
 
-    it('keeps the project zone while it has agents, and frees it afterwards', () => {
+    it('keeps the project zone even after its agents leave', () => {
       const world = new World(zoned, () => 0);
       world.sync([at('a', '/p/web'), at('b', '/p/api')]);
       const web = world.villager('a')?.zone;
@@ -88,7 +102,9 @@ describe('World', () => {
       expect(world.villager('c')?.zone).toBe(web);
       world.sync([at('b', '/p/api')]);
       world.sync([at('b', '/p/api'), at('d', '/p/docs')]);
-      expect(world.villager('d')?.zone).toBe(web);
+      expect(world.villager('d')?.zone).not.toBe(web);
+      world.sync([at('b', '/p/api'), at('d', '/p/docs'), at('e', '/p/web')]);
+      expect(world.villager('e')?.zone).toBe(web);
     });
 
     it('restores the project zones after a reload', () => {
@@ -105,6 +121,20 @@ describe('World', () => {
       expect(zonesOf(reloaded)).toEqual([...before].reverse());
     });
 
+    it('treats Windows paths that differ only in case as one project', () => {
+      const world = new World(zoned, () => 0);
+      world.sync([at('a', 'C:\\Code\\Web'), at('b', 'c:\\code\\web\\')]);
+      expect(world.villager('a')?.zone).toBe(world.villager('b')?.zone);
+    });
+
+    it('puts a project in a zone with room for all of its agents', () => {
+      const world = new World(zoned, () => 0);
+      world.sync([at('a', '/p/api'), at('b', '/p/web'), at('c', '/p/web'), at('d', '/p/web')]);
+      const zone = (id: string) => world.villager(id)?.zone;
+      expect(zone('b')).toBe(zone('c'));
+      expect(zone('b')).toBe(zone('d'));
+    });
+
     it('falls back to a free station elsewhere once the zone is full', () => {
       const world = new World(zoned, () => 0);
       world.sync(Array.from({ length: 5 }, (_, i) => at(`w${String(i)}`, '/p/web')));
@@ -113,7 +143,7 @@ describe('World', () => {
   });
 
   it('normalizes project paths', () => {
-    expect(projectOf('C:\\code\\web\\')).toBe('C:/code/web');
+    expect(projectOf('C:\\code\\web\\')).toBe('c:/code/web');
     expect(projectOf('/code//web/')).toBe('/code/web');
   });
 

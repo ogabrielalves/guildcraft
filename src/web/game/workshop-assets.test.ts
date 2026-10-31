@@ -312,6 +312,31 @@ describe('shipped workshop zones', () => {
     return path.slice(1).every((point, index) => nav.clear(path[index] ?? point, point));
   }
 
+  it('keeps every work point, spot, wander point, route and zone inside the house', () => {
+    const { house } = map;
+    expect(house).not.toBeNull();
+    if (house === null) return;
+    for (const place of places) expect(contains(house, place), JSON.stringify(place)).toBe(true);
+    for (const { areas } of map.zones) {
+      for (const { x, y, width, height } of areas) {
+        expect(contains(house, { x, y }) && contains(house, { x: x + width, y: y + height })).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it('gives every zone a sign point inside the zone', () => {
+    for (const { id, areas, sign } of map.zones) {
+      expect(sign, id).not.toBeNull();
+      if (sign === null) continue;
+      expect(
+        areas.some((area) => contains(area, sign)),
+        id,
+      ).toBe(true);
+    }
+  });
+
   it('puts every work point, spot, wander point and route inside one zone', () => {
     expect(map.zones.length).toBeGreaterThan(1);
     for (const place of places) expect(zoneAt(map, place), JSON.stringify(place)).not.toBeNull();

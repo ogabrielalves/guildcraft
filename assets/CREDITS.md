@@ -22,7 +22,7 @@ Guildcraft's source code is released under the MIT License (see `LICENSE`). The 
 | `assets/characters/corvin/{idle,run,death}.png` | `Entities/Npc's/Rogue/{Idle,Run,Death}/*-Sheet.png` |
 | `assets/characters/lyra/{idle,walk}.png` | `Entities/Npc's/Citizen_F/Peasant_A/{Idle,Walk}/*-Sheet.png` |
 
-**Tavern Guild map** (`assets/maps/tavern-guild.png`): composed from Pixel Crawler art by Anokolisa. Floor and water tiles, walls, furniture, crafting stations, trees and props from the pack (`Environment/Tilesets`, `Environment/Structures` and `Environment/Props`) were arranged on an 80 × 56 grid, with soft shadows, warm light and a darker forest edge painted on top. It is a modified work of the pack and keeps its terms: it may not be sold or marketed on its own. `assets/maps/tavern-guild-front.png` holds the map's tall props cut out of that same image, under the same terms.
+**Tavern Guild map** (`assets/maps/tavern-guild.png`): composed from Pixel Crawler art by Anokolisa. Floor tiles, walls, furniture, crafting stations, trees and props from the pack (`Environment/Tilesets`, `Environment/Structures` and `Environment/Props`) were arranged on an 80 × 56 grid, with soft shadows, warm light and a darker forest edge painted on top. It is a modified work of the pack and keeps its terms: it may not be sold or marketed on its own. `assets/maps/tavern-guild-front.png` holds the map's tall props cut out of that same image, under the same terms.
 
 **Interface frames**: crops of `Environment/Structures/Buildings/Interior/Interior_Props_01.png`, unchanged otherwise, used as nine-slice frames in the side menu.
 

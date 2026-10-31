@@ -6,9 +6,19 @@ export const NAME_FONT = '600 7px system-ui, sans-serif';
 export const BADGE_FONT = '700 6px system-ui, sans-serif';
 export const PLATE_HEIGHT = 9;
 export const MAX_BADGE = 99;
-export const TAG_COLORS = { plate: '#e8d3a8', edge: '#6b4a2b', text: '#2a1c12' };
-export const TAG_FONT = '600 6px system-ui, sans-serif';
-export const TAG_HEIGHT = 9;
+export const TAG_COLORS = {
+  chain: '#2b2622',
+  frame: '#2a170b',
+  wood: '#7b5330',
+  light: '#a07245',
+  shade: '#573719',
+  rivet: '#e3b24c',
+  text: '#f7e6b8',
+  shadow: '#1a0e06',
+};
+export const TAG_FONT = '700 7px system-ui, sans-serif';
+export const TAG_HEIGHT = 12;
+export const TAG_CHAIN = 4;
 export const MAX_TAG = 16;
 
 export function tagText(folder: string): string {
@@ -20,14 +30,30 @@ export function drawFolderTag(ctx: Paint, folder: string, centerX: number, top: 
   ctx.font = TAG_FONT;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const width = Math.ceil(ctx.measureText(text).width) + 6;
+  const width = Math.ceil(ctx.measureText(text).width) + 14;
   const left = Math.round(centerX - width / 2);
-  ctx.fillStyle = TAG_COLORS.edge;
-  ctx.fillRect(left - 1, top - 1, width + 2, TAG_HEIGHT + 2);
-  ctx.fillStyle = TAG_COLORS.plate;
-  ctx.fillRect(left, top, width, TAG_HEIGHT);
+  const right = left + width;
+  const plank = top + TAG_CHAIN;
+  ctx.fillStyle = TAG_COLORS.chain;
+  ctx.fillRect(left + 3, top, 1, TAG_CHAIN);
+  ctx.fillRect(right - 4, top, 1, TAG_CHAIN);
+  ctx.fillStyle = TAG_COLORS.frame;
+  ctx.fillRect(left - 1, plank - 1, width + 2, TAG_HEIGHT + 2);
+  ctx.fillStyle = TAG_COLORS.wood;
+  ctx.fillRect(left, plank, width, TAG_HEIGHT);
+  ctx.fillStyle = TAG_COLORS.light;
+  ctx.fillRect(left, plank, width, 1);
+  ctx.fillStyle = TAG_COLORS.shade;
+  ctx.fillRect(left, plank + TAG_HEIGHT - 1, width, 1);
+  ctx.fillStyle = TAG_COLORS.rivet;
+  ctx.fillRect(left + 2, plank + TAG_HEIGHT / 2 - 1, 2, 2);
+  ctx.fillRect(right - 4, plank + TAG_HEIGHT / 2 - 1, 2, 2);
+  const x = Math.round(centerX);
+  const y = plank + TAG_HEIGHT / 2 + 0.5;
+  ctx.fillStyle = TAG_COLORS.shadow;
+  ctx.fillText(text, x, y + 1);
   ctx.fillStyle = TAG_COLORS.text;
-  ctx.fillText(text, Math.round(centerX), top + TAG_HEIGHT / 2 + 0.5);
+  ctx.fillText(text, x, y);
 }
 
 export function badgeText(queued: number): string | null {

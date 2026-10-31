@@ -10,6 +10,7 @@ import type { Scene } from './renderer.js';
 import {
   BODY,
   HEARTH_RATE,
+  OUTSIDE_DIM,
   PALETTE,
   STATION_RATE,
   drawScene,
@@ -192,6 +193,33 @@ describe('foreground props', () => {
   });
 });
 
+describe('drawScene outside the house', () => {
+  const house = { x: 40, y: 30, width: 200, height: 100 };
+
+  it('dims the four bands around the house after the scenery', () => {
+    const dim = (ctx: ReturnType<typeof render>) =>
+      ctx.named('fillRect').filter((c) => c.fillStyle === PALETTE.outside);
+    const ctx = render({ ...scene([]), world: new World({ ...map, house }, () => 0) });
+    expect(dim(ctx).map((c) => c.args)).toEqual([
+      [0, 0, 480, 30],
+      [0, 130, 480, 222],
+      [0, 30, 40, 100],
+      [240, 30, 240, 100],
+    ]);
+    expect(ctx.named('fillRect').find((c) => c.fillStyle === PALETTE.outside)).toMatchObject({
+      globalAlpha: OUTSIDE_DIM,
+    });
+  });
+
+  it('leaves the map as is without a house', () => {
+    expect(
+      render(scene([]))
+        .named('fillRect')
+        .some((c) => c.fillStyle === PALETTE.outside),
+    ).toBe(false);
+  });
+});
+
 describe('drawScene villagers and stations', () => {
   it('draws the station frame and the character sprite', () => {
     const urls = drawnImages(scene([agent('a', 'thinking')]));
@@ -318,17 +346,39 @@ describe('drawScene labels', () => {
     expect(texts(silent)).toContain('✉️');
   });
 
-  it('tags the station with the project folder, under the nameplates', () => {
+  it('tags the station with the project folder when the map has no zones', () => {
     const target = scene([{ ...agent('a', 'idle'), cwd: 'C:\\code\\guildcraft\\' }]);
     const villager = target.world.villager('a');
     if (!villager) throw new Error('missing villager');
     villager.position = { x: 0, y: 0 };
-    const ctx = render(target);
     const { work } = stationAt(map, villager.station);
-    expect(ctx.named('fillText').map((call) => call.args)).toEqual([
-      ['guildcraft', work.x, work.y + 9],
-      ['A', 0, -31],
-    ]);
+    const calls = render(target)
+      .named('fillText')
+      .map((call) => call.args);
+    expect(calls).toContainEqual(['guildcraft', work.x, work.y + 14.5]);
+    expect(calls.at(-1)).toEqual(['A', 0, -31]);
+  });
+
+  it('pins the tag to the sign of the zone, wherever the villager stands', () => {
+    const zoned = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [
+        { id: 'all', sign: { x: 200, y: 20 }, areas: [{ x: 0, y: 0, width: 480, height: 352 }] },
+      ],
+    });
+    const world = new World(zoned, () => 0);
+    const agents = [{ ...agent('a', 'idle'), cwd: '/code/guildcraft' }];
+    world.sync(agents);
+    const villager = world.villager('a');
+    if (!villager) throw new Error('missing villager');
+    const tagAt = () =>
+      render({ ...scene(agents), world })
+        .named('fillText')
+        .find((call) => call.args[0] === 'guildcraft')?.args;
+    const first = tagAt();
+    villager.position = { x: 300, y: 300 };
+    expect(tagAt()).toEqual(first);
+    expect(first?.[1]).toBe(200);
   });
 
   it('draws a single folder tag per zone when agents share a project', () => {
@@ -344,7 +394,8 @@ describe('drawScene labels', () => {
     ];
     world.sync(agents);
     const target = { ...scene(agents), world };
-    expect(texts(target).filter((text) => text === 'guildcraft')).toHaveLength(1);
+    // each tag engraves its text twice: shadow, then lettering
+    expect(texts(target).filter((text) => text === 'guildcraft')).toHaveLength(2);
   });
 
   it('shows the queue on the nameplate', () => {

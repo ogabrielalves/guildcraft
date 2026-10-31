@@ -127,7 +127,7 @@ describe('parseWorkshopMap', () => {
 
   it('reads zones and finds the zone of a point', () => {
     const zones = [
-      { id: 'west', areas: [{ x: 0, y: 0, width: 240, height: 352 }] },
+      { id: 'west', areas: [{ x: 0, y: 0, width: 240, height: 352 }], sign: { x: 120, y: 8 } },
       {
         id: 'east',
         areas: [
@@ -137,7 +137,7 @@ describe('parseWorkshopMap', () => {
       },
     ];
     const map = parseWorkshopMap({ ...provisionalWorkshop(), zones });
-    expect(map.zones).toEqual(zones);
+    expect(map.zones).toEqual(zones.map((zone) => ({ sign: null, ...zone })));
     expect(zoneAt(map, { x: 10, y: 10 })).toBe('west');
     expect(zoneAt(map, { x: 400, y: 300 })).toBe('east');
     expect(zoneAt(map, { x: 260, y: 200 })).toBeNull();
@@ -146,6 +146,12 @@ describe('parseWorkshopMap', () => {
 
   it.each([
     [{ zones: {} }, '$.zones'],
+    [
+      {
+        zones: [{ id: 'a', areas: [{ x: 0, y: 0, width: 1, height: 1 }], sign: { x: 900, y: 0 } }],
+      },
+      '$.zones[0].sign',
+    ],
     [{ zones: [{ id: '', areas: [{ x: 0, y: 0, width: 1, height: 1 }] }] }, '$.zones[0].id'],
     [{ zones: [{ id: 'a', areas: [] }] }, '$.zones[0].areas'],
     [
@@ -163,6 +169,36 @@ describe('parseWorkshopMap', () => {
     ],
   ])('rejects zones %j', (overrides, path) => {
     expect(invalidAt({ ...provisionalWorkshop(), ...overrides })).toBe(path);
+  });
+
+  it('reads the house and rejects one outside the world', () => {
+    const raw = provisionalWorkshop();
+    const house = { x: 0, y: 0, width: 480, height: 352 };
+    expect(parseWorkshopMap({ ...raw, house }).house).toEqual(house);
+    expect(parseWorkshopMap(raw).house).toBeNull();
+    expect(invalidAt({ ...raw, house: { x: 400, y: 0, width: 100, height: 10 } })).toBe('$.house');
+    expect(invalidAt({ ...raw, house: { x: 0, y: 0, width: 100 } })).toBe('$.house.height');
+  });
+
+  it('rejects stations, spots, wander points, routes and zones outside the house', () => {
+    const raw = provisionalWorkshop();
+    const house = { x: 0, y: 0, width: 480, height: 352 };
+    const outside = { x: 470, y: 345 };
+    const tight = { x: 0, y: 0, width: 460, height: 340 };
+    const small = { x: 0, y: 0, width: 10, height: 10 };
+    expect(invalidAt({ ...raw, house: small })?.startsWith('$.stations[')).toBe(true);
+    expect(invalidAt({ ...raw, house, wander: [outside], zones: [] })).toBeUndefined();
+    expect(invalidAt({ ...raw, house: tight, wander: [outside] })).toBe('$.wander[0]');
+    expect(invalidAt({ ...raw, house: tight, routes: [[{ x: 1, y: 1 }, outside]] })).toBe(
+      '$.routes[0][1]',
+    );
+    expect(
+      invalidAt({
+        ...raw,
+        house: tight,
+        zones: [{ id: 'z', areas: [{ x: 450, y: 0, width: 20, height: 10 }] }],
+      }),
+    ).toBe('$.zones[0].areas[0]');
   });
 
   it('reads wander points, routes, the entrance and the start view', () => {

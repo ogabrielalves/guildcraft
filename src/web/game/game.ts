@@ -18,6 +18,7 @@ export interface GameOptions {
   socket: Pick<GameSocket, 'onMessage'>;
   map: WorkshopMap;
   assets: Assets;
+  session?: string | null;
   onHover?(hover: Hover, clientX: number, clientY: number): void;
   now?: () => number;
   random?: () => number;
@@ -38,7 +39,7 @@ export function createGame(options: GameOptions): Game {
   const now = options.now ?? (() => Date.now());
   const canvas = document.createElement('canvas');
   canvas.className = 'game';
-  const world = new World(map, options.random, browserZoneMemory());
+  const world = new World(map, options.random, browserZoneMemory(options.session ?? null));
   let agents = new Map<string, AgentView>();
   let hovered: Hover = null;
   const particles = new Particles(options.random);

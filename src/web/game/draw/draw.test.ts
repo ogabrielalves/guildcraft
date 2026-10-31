@@ -97,15 +97,22 @@ describe('folder tag', () => {
     expect(long.endsWith('…')).toBe(true);
   });
 
-  it('draws the folder on an edged plate', () => {
+  it('hangs a wooden sign from two chains', () => {
     const ctx = recordingPaint();
     drawFolderTag(ctx, 'web', 50, 40);
-    expect(ctx.named('fillRect').map((call) => call.fillStyle)).toEqual([
-      TAG_COLORS.edge,
-      TAG_COLORS.plate,
-    ]);
+    const fills = ctx.named('fillRect').map((call) => call.fillStyle);
+    expect(fills.slice(0, 2)).toEqual([TAG_COLORS.chain, TAG_COLORS.chain]);
+    expect(fills).toContain(TAG_COLORS.frame);
+    expect(fills.filter((fill) => fill === TAG_COLORS.rivet)).toHaveLength(2);
+    expect(ctx.named('fillRect')[0]?.args[1]).toBe(40);
+  });
+
+  it('engraves the folder over its shadow', () => {
+    const ctx = recordingPaint();
+    drawFolderTag(ctx, 'web', 50, 40);
     expect(ctx.named('fillText')).toEqual([
-      expect.objectContaining({ args: ['web', 50, 45], fillStyle: TAG_COLORS.text }),
+      expect.objectContaining({ args: ['web', 50, 51.5], fillStyle: TAG_COLORS.shadow }),
+      expect.objectContaining({ args: ['web', 50, 50.5], fillStyle: TAG_COLORS.text }),
     ]);
   });
 });

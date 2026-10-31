@@ -47,6 +47,7 @@ export type Scenery = (
 export interface Zone {
   id: string;
   areas: Rect[];
+  sign: Point | null;
 }
 
 export interface WorkshopMap {
@@ -61,6 +62,7 @@ export interface WorkshopMap {
   routes: Point[][];
   entrance: Point | null;
   view: Rect;
+  house: Rect | null;
   zones: Zone[];
   scenery: Scenery[];
   embers: Point[];
@@ -125,7 +127,8 @@ function parseZone(value: unknown, path: string): Zone {
   const raw = fields(value, path);
   const areas = each(raw.areas, `${path}.areas`, rect);
   if (areas.length === 0) throw new AssetError(`${path}.areas`);
-  return { id: text(raw.id, `${path}.id`), areas };
+  const sign = optional<Point | null>(raw.sign, point, `${path}.sign`, null);
+  return { id: text(raw.id, `${path}.id`), areas, sign };
 }
 
 function parseRoute(value: unknown, path: string): Point[] {
@@ -197,8 +200,13 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
   const view = optional(raw.view, rect, '$.view', bounds);
   inside(view, '$.view');
   inside({ x: view.x + view.width, y: view.y + view.height }, '$.view');
+  const house = optional<Rect | null>(raw.house, rect, '$.house', null);
+  if (house !== null) {
+    inside(house, '$.house');
+    inside({ x: house.x + house.width, y: house.y + house.height }, '$.house');
+  }
   const zones = each(raw.zones, '$.zones', parseZone);
-  zones.forEach(({ id, areas }, index) => {
+  zones.forEach(({ id, areas, sign }, index) => {
     const path = `$.zones[${String(index)}]`;
     if (zones.findIndex((zone) => zone.id === id) !== index) throw new AssetError(`${path}.id`);
     areas.forEach((area, step) => {
@@ -206,7 +214,35 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
       inside(area, at);
       inside({ x: area.x + area.width, y: area.y + area.height }, at);
     });
+    if (sign !== null) inside(sign, `${path}.sign`);
   });
+  if (house !== null) {
+    const indoors = (target: Point, path: string) => {
+      if (!contains(house, target)) throw new AssetError(path);
+    };
+    stations.forEach(({ at, work }, index) => {
+      indoors(at, `$.stations[${String(index)}].at`);
+      indoors(work, `$.stations[${String(index)}].work`);
+    });
+    spots.forEach(({ at }, index) => {
+      indoors(at, `$.spots[${String(index)}].at`);
+    });
+    wander.forEach((at, index) => {
+      indoors(at, `$.wander[${String(index)}]`);
+    });
+    routes.forEach((route, index) => {
+      route.forEach((at, step) => {
+        indoors(at, `$.routes[${String(index)}][${String(step)}]`);
+      });
+    });
+    zones.forEach(({ areas }, index) => {
+      areas.forEach(({ x, y, width: w, height: h }, step) => {
+        const path = `$.zones[${String(index)}].areas[${String(step)}]`;
+        indoors({ x, y }, path);
+        indoors({ x: x + w, y: y + h }, path);
+      });
+    });
+  }
   const tileSize = positive(raw.tileSize, '$.tileSize');
   const collision =
     raw.collision === undefined
@@ -229,6 +265,7 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
     routes,
     entrance,
     view,
+    house,
     zones,
     scenery: each(raw.scenery, '$.scenery', parseScenery),
     embers: each(raw.embers, '$.embers', point),

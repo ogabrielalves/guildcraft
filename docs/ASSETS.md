@@ -2,7 +2,7 @@
 
 Everything the workshop draws comes from `assets/`. The code never hardcodes a sprite, a station or a map coordinate. Add or change art by editing the files described here.
 
-The world is the Tavern Guild, a 1280 × 896 px compound at 1× (80 × 56 tiles of 16 px) composed from the Pixel Crawler pack. Characters stand about 30 px tall.
+The world is the Tavern Guild, a 944 × 768 px compound at 1× (59 × 48 tiles of 16 px) composed from the Pixel Crawler pack. Characters stand about 30 px tall.
 
 Every asset needs an entry in [`assets/CREDITS.md`](../assets/CREDITS.md) with its author, link and license.
 
@@ -121,11 +121,12 @@ When the map's background already shows a station, a manifest is only needed to 
 
 ```jsonc
 {
-  "width": 1280,
-  "height": 896,
+  "width": 944,
+  "height": 768,
   "tileSize": 16,
   "floor": "#2f4a26", // fallback color under the scenery
-  "view": { "x": 96, "y": 96, "width": 752, "height": 608 }, // what the camera frames first
+  "view": { "x": 64, "y": 64, "width": 816, "height": 656 }, // what the camera frames first
+  "house": { "x": 104, "y": 104, "width": 736, "height": 448 }, // the building floor; everything outside is drawn slightly darker, and stations, spots, wander points, routes and zones must all sit inside it (the entrance may not)
   "entrance": { "x": 496, "y": 840 }, // where new recruits walk in from
   "collision": ["....##.." /* one string per row of tiles */],
   "obstacles": [/* extra rectangles nobody walks through */],
@@ -184,7 +185,7 @@ The Tavern Guild's grid came with the map and was checked against the image: the
 
 A zone is a named union of rectangles. A station, spot, wander point or route belongs to the first zone that contains it (a station by its `work` point, a route by its first point). A villager lives in the zone of its station: it walks, idles, wanders, patrols, naps and chats only inside it, on a walking grid cut to the zone's areas. It may leave its zone only to walk in from the `entrance` the first time, and to visit another agent that sent it a message; then it walks straight back home.
 
-The Tavern Guild has eleven zones, one per area of the original NPC points: `kitchen`, `storage`, `hall`, `alchemy`, `guild`, `forge`, `sawmill`, `camp`, `garden`, `pier` and `yard` (the porch and the road). The kitchen and the storage room are separate zones because a shelf blocks the passage between them in the art. Without `zones`, villagers walk the whole map.
+The Tavern Guild has five zones: `kitchen`, `storage`, `hall`, `alchemy` and `guild`, all inside the house, and the loader rejects any station, spot, wander point, route or zone outside it. Villagers never stay outside: they only cross the porch to walk in from the `entrance`. The kitchen and the storage room are separate zones because a shelf blocks the passage between them in the art. Without `zones`, villagers walk the whole map. Each zone also has a `sign` point, the fixed spot where the wooden sign with the project folder name hangs while a project lives there (the top-center of the sign; it never moves with the villagers). Without a `sign`, the sign falls back to the station.
 
 ### Spots
 
@@ -210,7 +211,7 @@ The Tavern Guild is one image drawn behind everything:
 ```json
 {
   "image": "maps/tavern-guild.png",
-  "source": { "x": 0, "y": 0, "width": 1280, "height": 896 },
+  "source": { "x": 0, "y": 0, "width": 944, "height": 768 },
   "at": { "x": 0, "y": 0 }
 }
 ```
@@ -234,7 +235,7 @@ or a crop of a sheet in `assets/`. Use `repeat` to tile it over an area and `fli
 
 Scenery without `depth` is drawn first, behind everyone: floors, walls, rugs. Give standing furniture a `depth`, usually the y of its feet, so it is sorted with the stations and the adventurers. Everything sorted is drawn by its feet, so someone standing behind a bookshelf is drawn behind it.
 
-Because the Tavern Guild is one flat image, its tall props (trees, the oven and hoods, shelves, counters, lantern posts, the gallows, the forges and so on) are also cut out into `maps/tavern-guild-front.png`. Each one is a scenery crop with the prop's exact silhouette, placed where it already is in the background, with the y of its foot as `depth`. Someone whose feet are above that line walks behind the prop; someone below it walks in front. The crops were made with the map's own builder, so their pixels match the background exactly (the tests check this). Benches stay out, so nappers sit on them, and so do the three stations that already have an animated sprite.
+Because the Tavern Guild is one flat image, its tall props (trees, the oven and hoods, shelves, counters, lantern posts, the gallows and so on) are also cut out into `maps/tavern-guild-front.png`. Each one is a scenery crop with the prop's exact silhouette, placed where it already is in the background, with the y of its foot as `depth`. Someone whose feet are above that line walks behind the prop; someone below it walks in front. The crops were made with the map's own builder, so their pixels match the background exactly (the tests check this). Benches stay out, so nappers sit on them, and so do the three stations that already have an animated sprite.
 
 ## Interface frames
 
