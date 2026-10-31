@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/ogabrielalves/guildcraft/compare/v1.2.0...v1.3.0) (2026-10-31)
+
+
+### Features
+
+* **agents:** resume agent sessions after restart ([a615917](https://github.com/ogabrielalves/guildcraft/commit/a6159179f2106c7678bcc640b0980f625531a002))
+
+
+### Bug Fixes
+
+* **game:** keep working villagers in their own zone when idle ([70c1efd](https://github.com/ogabrielalves/guildcraft/commit/70c1efd7d51f9a81c6435ed4598eec2fb1488368))
+
 ## [1.2.0](https://github.com/ogabrielalves/guildcraft/compare/v1.1.0...v1.2.0) (2026-10-31)
 
 
