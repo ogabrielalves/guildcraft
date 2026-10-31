@@ -100,12 +100,13 @@ describe('startServer', () => {
     expect(url).toBe(`http://127.0.0.1:${port}/?token=${encodeURIComponent(token)}`);
     const page = await fetch(`http://127.0.0.1:${port}/`);
     expect(await page.text()).toBe('<p>workshop</p>');
-    const denied = await fetch(`http://127.0.0.1:${port}/api/fs`);
+    const denied = await fetch(`http://127.0.0.1:${port}/api/fs/pick`, { method: 'POST' });
     expect(denied.status).toBe(401);
-    const allowed = await fetch(`http://127.0.0.1:${port}/api/fs`, {
+    const allowed = await fetch(`http://127.0.0.1:${port}/api/unknown`, {
+      method: 'POST',
       headers: { [TOKEN_HEADER]: token },
     });
-    expect(allowed.status).toBe(200);
+    expect(allowed.status).toBe(404);
     expect(logs[0]).toContain('hook.js is missing');
   });
 

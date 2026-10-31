@@ -9,8 +9,6 @@ import type { TranslationKey } from '../i18n/index.js';
 import { getLocale, onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store } from '../state/store.js';
-import type { FolderBrowser, ListFolders } from './folder-browser.js';
-import { createFolderBrowser } from './folder-browser.js';
 import { PORTRAIT, characterName, drawPortrait } from './portrait.js';
 
 type ErrorMessage = Extract<ServerMessage, { type: 'error' }>;
@@ -25,13 +23,14 @@ const PERMISSION_KEYS: Record<PermissionMode, TranslationKey> = {
 const NAME_CHARS = /[^\p{L}\p{N} _.-]+/gu;
 const LEADING_SYMBOLS = /^[^\p{L}\p{N}]+/u;
 
+export type PickFolder = (initial: string | null) => Promise<string | null>;
 export type AddAgentSocket = Pick<GameSocket, 'send' | 'onMessage'>;
 export type Step = 'details' | 'trust';
 
 export interface AddAgentDialogOptions {
   store: Store;
   socket: AddAgentSocket;
-  listFolders: ListFolders;
+  pickFolder: PickFolder;
   assets?: Assets;
 }
 
@@ -109,7 +108,7 @@ export function createRecruitButton(store: Store, onClick: () => void): RecruitB
 }
 
 export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDialog {
-  const { store, socket, listFolders } = options;
+  const { store, socket, pickFolder } = options;
   const assets = options.assets ?? NO_ASSETS;
   const labels = new Map<HTMLElement, TranslationKey>();
   let step: Step = 'details';
@@ -117,7 +116,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   let lastCwd: string | null = null;
   let skin: string | null = null;
   let pending: string | null = null;
-  let browser: FolderBrowser | null = null;
+  let picking = false;
   let frame: number | null = null;
   let error: { key: string; params?: Record<string, string> | undefined } | null = null;
 
@@ -186,16 +185,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   const footer = make('footer', 'dialog__footer');
   footer.append(cancel, back, next, confirm);
 
-  const picker = make('dialog', 'dialog folder-picker');
-  const pickerHeader = make('header', 'dialog__header');
-  const pickerClose = make('button', 'dialog__close');
-  pickerClose.type = 'button';
-  pickerClose.textContent = '×';
-  pickerHeader.append(label(make('h2', 'dialog__title'), 'folders.title'), pickerClose);
-  const pickerBody = make('div', 'folder-picker__body');
-  picker.append(pickerHeader, pickerBody);
-
-  element.append(title, full, allUsed, details, trust, errorBox, footer, picker);
+  element.append(title, full, allUsed, details, trust, errorBox, footer);
 
   const agents = () => store.getState().agents;
   const agentName = () =>
@@ -290,6 +280,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     folderPath.textContent = cwd ?? '';
     folderPath.hidden = cwd === null;
     folderButton.title = cwd ?? '';
+    folderButton.disabled = picking;
     warning.textContent = t('recruit.trustWarning', { name: agentName(), path: cwd ?? '' });
     errorBox.hidden = error === null;
     errorBox.textContent = error ? t(error.key, error.params) : '';
@@ -305,27 +296,23 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     else folderButton.focus();
   };
 
-  const closePicker = () => {
-    browser?.destroy();
-    browser = null;
-    if (picker.open) picker.close();
-  };
-
-  const openPicker = () => {
-    if (picker.open) return;
-    browser = createFolderBrowser({
-      listFolders,
-      initialPath: cwd ?? lastCwd,
-      onSelect: (path) => {
+  const openPicker = async () => {
+    if (picking) return;
+    picking = true;
+    error = null;
+    render();
+    try {
+      const path = await pickFolder(cwd ?? lastCwd);
+      if (path !== null) {
         cwd = path;
         lastCwd = path;
-        closePicker();
-        render();
-        folderButton.focus();
-      },
-    });
-    pickerBody.replaceChildren(browser.element);
-    picker.showModal();
+      }
+    } catch {
+      error = { key: 'recruit.pickFailed' };
+    }
+    picking = false;
+    render();
+    folderButton.focus();
   };
 
   const showError = (code: ErrorCode | null, params?: Record<string, string>) => {
@@ -351,6 +338,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   const reset = () => {
     step = 'details';
     cwd = null;
+    picking = false;
     pending = null;
     error = null;
     modeSelect.value = 'default';
@@ -368,18 +356,13 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   };
 
   const close = () => {
-    closePicker();
     stopAnimation();
     pending = null;
     if (element.open) element.close();
   };
 
-  folderButton.addEventListener('click', openPicker);
-  pickerClose.addEventListener('click', closePicker);
-  picker.addEventListener('cancel', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    closePicker();
+  folderButton.addEventListener('click', () => {
+    void openPicker();
   });
   element.addEventListener('cancel', (event) => {
     event.preventDefault();
@@ -404,7 +387,6 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   });
   const renderTexts = () => {
     for (const [target, key] of labels) target.textContent = t(key);
-    pickerClose.setAttribute('aria-label', t('modal.dismiss'));
     render();
   };
   const unsubscribeLocale = onLocaleChange(renderTexts);

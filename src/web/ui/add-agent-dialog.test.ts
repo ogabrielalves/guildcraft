@@ -3,11 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentView } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_NAME_LENGTH } from '../../shared/constants.js';
 import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
-import { demoListFolders } from '../demo/demo.js';
 import { SIDE_CHARACTER, fakeAssets } from '../game/fake-assets.js';
 import { DICTIONARIES, initI18n, setLocale } from '../i18n/index.js';
 import type { MessageListener } from '../net/socket.js';
 import { Store } from '../state/store.js';
+import type { PickFolder } from './add-agent-dialog.js';
 import {
   createAddAgentDialog,
   createRecruitButton,
@@ -58,6 +58,7 @@ function setup(agents: AgentView[] = [], connected = true) {
   });
   const listeners = new Set<MessageListener>();
   const sent: ClientMessage[] = [];
+  const pick = vi.fn<PickFolder>(() => Promise.resolve(null));
   const link = { connected };
   const dialog = createAddAgentDialog({
     store,
@@ -71,7 +72,7 @@ function setup(agents: AgentView[] = [], connected = true) {
         return () => listeners.delete(listener);
       },
     },
-    listFolders: demoListFolders,
+    pickFolder: pick,
     assets: fakeAssets({ mortis: SIDE_CHARACTER }),
   });
   const emit = (message: ServerMessage) => {
@@ -95,7 +96,7 @@ function setup(agents: AgentView[] = [], connected = true) {
     return found;
   };
   const mode = () => typed('.recruit__mode', HTMLSelectElement);
-  const picker = () => typed('.folder-picker', HTMLDialogElement);
+  const folder = () => typed('.recruit__folder', HTMLButtonElement);
   const characters = () => [...dialog.element.querySelectorAll<HTMLElement>('.recruit__character')];
   return {
     store,
@@ -105,24 +106,18 @@ function setup(agents: AgentView[] = [], connected = true) {
     emit,
     one,
     mode,
-    picker,
+    folder,
+    pick,
     characters,
     buttonByText,
   };
 }
 
 async function openAt(ctx: ReturnType<typeof setup>, folder: string) {
+  ctx.pick.mockResolvedValueOnce(`/home/demo/projects/${folder}`);
   ctx.dialog.open();
   ctx.one('.recruit__folder').click();
   await flush();
-  const entry = [...ctx.dialog.element.querySelectorAll<HTMLElement>('.folder-browser__entry')];
-  entry.find((node) => node.textContent === 'projects')?.click();
-  await flush();
-  [...ctx.dialog.element.querySelectorAll<HTMLElement>('.folder-browser__entry')]
-    .find((node) => node.textContent === folder)
-    ?.click();
-  await flush();
-  ctx.one('.folder-browser__select').click();
 }
 
 describe('helpers', () => {
@@ -203,14 +198,12 @@ describe('createRecruitButton', () => {
 });
 
 describe('createAddAgentDialog', () => {
-  it('opens with a fresh form and the folder picker closed', () => {
+  it('opens with a fresh form and the folder unselected', () => {
     const ctx = setup();
     ctx.dialog.open();
     expect(ctx.dialog.element.open).toBe(true);
     expect(ctx.dialog.element.isConnected).toBe(true);
-    expect(ctx.picker().open).toBe(false);
-    expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
-    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Select');
     expect(ctx.one('.recruit__folder-path').hidden).toBe(true);
     expect(ctx.one('.dialog__title').textContent).toBe('Recruit an adventurer');
     expect(ctx.buttonByText('Next').hidden).toBe(false);
@@ -218,39 +211,40 @@ describe('createAddAgentDialog', () => {
     expect(ctx.buttonByText('Recruit').hidden).toBe(true);
   });
 
-  it('picks the folder in its own window, starting at home', async () => {
+  it('picks the folder in the native dialog', async () => {
     const ctx = setup();
+    ctx.pick.mockResolvedValueOnce('/home/demo');
     ctx.dialog.open();
     ctx.one('.recruit__folder').click();
     ctx.one('.recruit__folder').click();
-    expect(ctx.picker().open).toBe(true);
-    expect(ctx.dialog.element.querySelectorAll('.folder-browser')).toHaveLength(1);
+    expect(ctx.pick).toHaveBeenCalledTimes(1);
+    expect(ctx.pick).toHaveBeenCalledWith(null);
+    expect(ctx.folder().disabled).toBe(true);
     await flush();
-    expect(ctx.one('.folder-browser__path').textContent).toBe('/home/demo');
-    ctx.one('.folder-browser__select').click();
-    expect(ctx.picker().open).toBe(false);
-    expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
+    expect(ctx.folder().disabled).toBe(false);
     expect(document.activeElement).toBe(ctx.one('.recruit__folder'));
     expect(ctx.one('.recruit__folder-name').textContent).toBe('demo');
     expect(ctx.one('.recruit__folder-path').textContent).toBe('/home/demo');
     expect(ctx.buttonByText('Next').disabled).toBe(false);
   });
 
-  it('closes only the picker on its close button or Escape', async () => {
+  it('keeps the current folder when the native dialog is cancelled', async () => {
     const ctx = setup();
+    await openAt(ctx, 'web');
+    ctx.one('.recruit__folder').click();
+    await flush();
+    expect(ctx.pick).toHaveBeenLastCalledWith('/home/demo/projects/web');
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('web');
+  });
+
+  it('reports when the native dialog cannot open', async () => {
+    const ctx = setup();
+    ctx.pick.mockRejectedValueOnce(new Error('none'));
     ctx.dialog.open();
     ctx.one('.recruit__folder').click();
     await flush();
-    ctx.one('.dialog__close').click();
-    expect(ctx.picker().open).toBe(false);
-    expect(ctx.dialog.element.open).toBe(true);
-    ctx.one('.recruit__folder').click();
-    const event = new Event('cancel', { cancelable: true });
-    ctx.picker().dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
-    expect(ctx.picker().open).toBe(false);
-    expect(ctx.dialog.element.open).toBe(true);
-    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+    expect(ctx.one('.recruit__error').textContent).toBe('Could not open the folder selector');
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Select');
   });
 
   it('names the agent after the character, with a suffix when taken', async () => {
@@ -398,7 +392,6 @@ describe('createAddAgentDialog', () => {
     ctx.store.apply({ type: 'agent:updated', agent: agent('new', { name: 'mortis' }) });
     expect(ctx.dialog.element.open).toBe(false);
     expect(ctx.store.getState().focused).toBe('new');
-    expect(ctx.dialog.element.querySelector('.folder-browser')).toBeNull();
   });
 
   it('shows server errors and lets the user try again', async () => {
@@ -461,30 +454,27 @@ describe('createAddAgentDialog', () => {
     expect(ctx.buttonByText('Recruit').disabled).toBe(false);
   });
 
-  it('reopens with a clean form and the picker at the last folder', async () => {
+  it('reopens with a clean form and the dialog at the last folder', async () => {
     const ctx = setup();
     await openAt(ctx, 'docs');
     ctx.buttonByText('Next').click();
     ctx.buttonByText('Cancel').click();
     expect(ctx.dialog.element.open).toBe(false);
     ctx.dialog.open();
-    expect(ctx.one('.recruit__folder-name').textContent).toBe('Choose a folder…');
+    expect(ctx.one('.recruit__folder-name').textContent).toBe('Select');
     expect(ctx.buttonByText('Next').hidden).toBe(false);
     ctx.one('.recruit__folder').click();
     await flush();
-    expect(ctx.one('.folder-browser__path').textContent).toBe('/home/demo/projects/docs');
+    expect(ctx.pick).toHaveBeenLastCalledWith('/home/demo/projects/docs');
   });
 
-  it('closes on Escape, picker included', async () => {
+  it('closes on Escape', () => {
     const ctx = setup();
     ctx.dialog.open();
-    ctx.one('.recruit__folder').click();
-    await flush();
     const event = new Event('cancel', { cancelable: true });
     ctx.dialog.element.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
     expect(ctx.dialog.element.open).toBe(false);
-    expect(ctx.picker().open).toBe(false);
   });
 
   it('follows store changes while open', async () => {

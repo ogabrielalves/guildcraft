@@ -114,7 +114,8 @@
   "recruit": {
     "title": "Recruit an adventurer",
     "folder": "Project folder",
-    "chooseFolder": "Choose a folder…",
+    "chooseFolder": "Select",
+    "pickFailed": "Could not open the folder selector",
     "character": "Character",
     "inUse": "In use",
     "allInUse": "Every character is already in the guild. Remove an adventurer to recruit another.",
@@ -131,15 +132,6 @@
       "auto": "Automatic",
       "plan": "Plan only"
     }
-  },
-  "folders": {
-    "title": "Select folder",
-    "home": "Home",
-    "drives": "Drives",
-    "up": "Up",
-    "select": "Select this folder",
-    "empty": "No subfolders",
-    "error": "Could not open this folder"
   },
   "feed": {
     "joined": "{name} joined the workshop",

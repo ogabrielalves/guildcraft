@@ -5,7 +5,6 @@ import '@xterm/xterm/css/xterm.css';
 import './styles/terminal.css';
 import './styles/panel.css';
 import './styles/compose.css';
-import './styles/folder-browser.css';
 import './styles/dialog.css';
 import './styles/feedback.css';
 import './styles/game.css';
@@ -17,7 +16,7 @@ import type { WorkshopMap } from './game/map.js';
 import { loadWorkshopMap, parseWorkshopMap } from './game/map.js';
 import { provisionalWorkshop } from './game/provisional-workshop.js';
 import { loadImage } from './game/sprite-sheet.js';
-import { DemoSocket, demoListFolders, parseDemoOptions } from './demo/demo.js';
+import { DemoSocket, demoPickFolder, parseDemoOptions } from './demo/demo.js';
 import { initI18n, t } from './i18n/index.js';
 import { createApi } from './net/api.js';
 import { GameSocket, socketUrl } from './net/socket.js';
@@ -70,7 +69,7 @@ if (root) {
   const dialog = createAddAgentDialog({
     store,
     socket,
-    listFolders: demo ? demoListFolders : (path) => api.listFolders(path),
+    pickFolder: demo ? demoPickFolder : (initial) => api.pickFolder(initial),
     assets,
   });
   const recruit = createRecruitButton(store, () => {

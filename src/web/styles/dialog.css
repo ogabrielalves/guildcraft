@@ -346,7 +346,3 @@
   border-left-width: 6px;
   border-left-color: var(--warn);
 }
-
-.folder-picker {
-  width: min(560px, calc(100vw - 40px));
-}

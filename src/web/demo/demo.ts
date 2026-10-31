@@ -2,7 +2,6 @@ import type { AgentActivity } from '../../shared/activity.js';
 import { MAX_ACTIONS, emptyActivity } from '../../shared/activity.js';
 import type { AgentStatus, AgentTool, AgentView, VillageEvent } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_EVENTS } from '../../shared/constants.js';
-import type { FsEntry, FsListing } from '../../shared/fs.js';
 import type { PermissionOutcome, PermissionRequestView } from '../../shared/permission.js';
 import type { ClientMessage, ServerMessage } from '../../shared/protocol.js';
 import { notify } from '../net/socket.js';
@@ -70,19 +69,6 @@ const DEMO_PREVIEWS: readonly string[] = [
 ];
 
 const DEMO_HOME = '/home/demo';
-
-const DEMO_FOLDERS: Readonly<Record<string, readonly string[]>> = {
-  '/': ['home'],
-  '/home': ['demo'],
-  [DEMO_HOME]: ['projects'],
-  [`${DEMO_HOME}/projects`]: ['api', 'docs', 'game', 'infra', 'mobile', 'web'],
-  [`${DEMO_HOME}/projects/api`]: [],
-  [`${DEMO_HOME}/projects/docs`]: [],
-  [`${DEMO_HOME}/projects/game`]: [],
-  [`${DEMO_HOME}/projects/infra`]: [],
-  [`${DEMO_HOME}/projects/mobile`]: [],
-  [`${DEMO_HOME}/projects/web`]: [],
-};
 
 export interface DemoOptions {
   warp: number;
@@ -152,20 +138,8 @@ export function createDemoAgents(): AgentView[] {
   }));
 }
 
-export function demoListFolders(path: string | null): Promise<FsListing> {
-  const roots: FsEntry[] = [
-    { name: '~', path: DEMO_HOME },
-    { name: '/', path: '/' },
-  ];
-  if (path === null) return Promise.resolve({ path: null, parent: null, entries: [], roots });
-  const children = DEMO_FOLDERS[path];
-  if (!children) return Promise.reject(new Error(`unknown demo folder: ${path}`));
-  const parent = path === '/' ? null : path.slice(0, path.lastIndexOf('/')) || '/';
-  const entries = children.map((name) => ({
-    name,
-    path: path === '/' ? `/${name}` : `${path}/${name}`,
-  }));
-  return Promise.resolve({ path, parent, entries, roots });
+export function demoPickFolder(): Promise<string | null> {
+  return Promise.resolve(`${DEMO_HOME}/projects/web`);
 }
 
 export class DemoSocket {

@@ -6,10 +6,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentView } from '../../shared/agent.js';
-import type { FsListing } from '../../shared/fs.js';
 import { TOKEN_HEADER } from '../../shared/constants.js';
 import type { AppOptions } from './app.js';
 import { createApp } from './app.js';
+import type { FsDeps } from './routes/fs.js';
 import { defaultFsDeps } from './routes/fs.js';
 import { waitTimeout } from './routes/hooks.js';
 
@@ -134,7 +134,7 @@ describe('auth', () => {
     ['POST', '/hook/a1/Stop'],
     ['GET', '/api/a1/villagers'],
     ['POST', '/api/a1/messages'],
-    ['GET', '/api/fs'],
+    ['POST', '/api/fs/pick'],
   ])('rejects %s %s without the token', async (method, path) => {
     const response = await request(path, { method }, null);
     expect(response.status).toBe(401);
@@ -142,7 +142,7 @@ describe('auth', () => {
   });
 
   it('rejects a wrong token', async () => {
-    expect((await request('/api/fs', {}, 'nope')).status).toBe(401);
+    expect((await request('/api/fs/pick', { method: 'POST' }, 'nope')).status).toBe(401);
     expect(manager.others).not.toHaveBeenCalled();
   });
 });
@@ -281,24 +281,33 @@ describe('villagers', () => {
 });
 
 describe('fs', () => {
-  it('lists roots when no path is given', async () => {
-    const listing = (await (await request('/api/fs')).json()) as FsListing;
-    expect(listing).toMatchObject({ path: null, parent: null, entries: [] });
-    expect(listing.roots[0]?.name).toBe('~');
+  const pick = (body: unknown, overrides: Partial<FsDeps> = {}) =>
+    start({ fs: { ...defaultFsDeps(), ...overrides } }).then(() =>
+      request('/api/fs/pick', { method: 'POST', body: JSON.stringify(body) }),
+    );
+
+  it('returns the folder chosen in the native dialog', async () => {
+    const pickFolder = vi.fn(() => Promise.resolve(root));
+    const response = await pick({ path: join(root, 'web') }, { pickFolder });
+    expect(await response.json()).toEqual({ path: root });
+    expect(pickFolder).toHaveBeenCalledWith(join(root, 'web'));
   });
 
-  it('lists subdirectories', async () => {
-    const listing = (await (
-      await request(`/api/fs?path=${encodeURIComponent(root)}`)
-    ).json()) as FsListing;
-    expect(listing.entries.map((e) => e.name)).toEqual(['assets', 'web']);
+  it('opens the dialog without a start folder when the path is not a folder', async () => {
+    const pickFolder = vi.fn(() => Promise.resolve(null));
+    const response = await pick({ path: join(root, 'nope') }, { pickFolder });
+    expect(await response.json()).toEqual({ path: null });
+    expect(pickFolder).toHaveBeenCalledWith(null);
   });
 
-  it('rejects relative or missing paths', async () => {
-    expect((await request('/api/fs?path=relative')).status).toBe(400);
-    const missing = encodeURIComponent(join(root, 'nope'));
-    expect(await (await request(`/api/fs?path=${missing}`)).json()).toEqual({
-      code: 'INVALID_CWD',
-    });
+  it('ignores a selection that is not a folder', async () => {
+    const response = await pick({}, { pickFolder: () => Promise.resolve(join(root, 'nope')) });
+    expect(await response.json()).toEqual({ path: null });
+  });
+
+  it('reports a missing native dialog', async () => {
+    const response = await pick({}, { pickFolder: () => Promise.reject(new Error('none')) });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ code: 'SPAWN_FAILED' });
   });
 });

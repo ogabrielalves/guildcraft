@@ -114,7 +114,8 @@
   "recruit": {
     "title": "Recrutar aventureiro",
     "folder": "Pasta do projeto",
-    "chooseFolder": "Escolher pasta…",
+    "chooseFolder": "Selecionar",
+    "pickFailed": "Não foi possível abrir o seletor de pastas",
     "character": "Personagem",
     "inUse": "Em uso",
     "allInUse": "Todos os personagens já estão na guilda. Remova um aventureiro para recrutar outro.",
@@ -131,15 +132,6 @@
       "auto": "Automático",
       "plan": "Só planejar"
     }
-  },
-  "folders": {
-    "title": "Selecionar pasta",
-    "home": "Início",
-    "drives": "Unidades",
-    "up": "Subir",
-    "select": "Selecionar esta pasta",
-    "empty": "Nenhuma subpasta",
-    "error": "Não foi possível abrir esta pasta"
   },
   "feed": {
     "joined": "{name} entrou na oficina",
