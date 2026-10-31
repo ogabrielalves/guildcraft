@@ -1,5 +1,5 @@
 import type { AgentView, PermissionMode } from '../../shared/agent.js';
-import { PERMISSION_MODES } from '../../shared/agent.js';
+import { PERMISSION_MODES, folderName } from '../../shared/agent.js';
 import { MAX_AGENTS, MAX_NAME_LENGTH } from '../../shared/constants.js';
 import type { ErrorCode } from '../../shared/errors.js';
 import type { ServerMessage } from '../../shared/protocol.js';
@@ -45,11 +45,6 @@ export interface AddAgentDialog {
 export interface RecruitButton {
   readonly element: HTMLButtonElement;
   destroy(): void;
-}
-
-export function folderName(path: string): string {
-  const parts = path.split(/[\\/]+/).filter((part) => part.length > 0);
-  return parts.at(-1) ?? '';
 }
 
 export function sameName(a: string, b: string): boolean {

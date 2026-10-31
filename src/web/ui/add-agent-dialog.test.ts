@@ -12,7 +12,6 @@ import {
   createAddAgentDialog,
   createRecruitButton,
   defaultSkin,
-  folderName,
   isFull,
   sameName,
   suggestName,
@@ -121,12 +120,6 @@ async function openAt(ctx: ReturnType<typeof setup>, folder: string) {
 }
 
 describe('helpers', () => {
-  it('takes the last folder name on any platform', () => {
-    expect(folderName('/home/me/web')).toBe('web');
-    expect(folderName('C:\\Users\\me\\api\\')).toBe('api');
-    expect(folderName('/')).toBe('');
-  });
-
   it('compares names like the server', () => {
     expect(sameName(' Web ', 'web')).toBe(true);
     expect(sameName('web', 'api')).toBe(false);

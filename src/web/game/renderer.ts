@@ -1,8 +1,9 @@
 import type { AgentView } from '../../shared/agent.js';
+import { folderName } from '../../shared/agent.js';
 import type { Assets, Station } from './assets.js';
 import { ALERT_ICON, bubbleFor, drawBubble, drawNote } from './draw/bubble.js';
 import type { Emitter, Particles } from './draw/effects.js';
-import { drawNameplate } from './draw/nameplate.js';
+import { drawFolderTag, drawNameplate } from './draw/nameplate.js';
 import type { Paint } from './draw/paint.js';
 import { TAU } from './draw/paint.js';
 import { drawRing, drawShadow } from './draw/rings.js';
@@ -215,6 +216,18 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
   drawBody(ctx, villager, scene);
 }
 
+const TAG_GAP = 4;
+
+function drawStationTags(ctx: Paint, scene: Scene): void {
+  for (const villager of scene.world.all()) {
+    const place = scene.world.map.stations[villager.station];
+    const cwd = scene.agents.get(villager.id)?.cwd;
+    const folder = cwd === undefined ? '' : folderName(cwd);
+    if (place === undefined || folder === '') continue;
+    drawFolderTag(ctx, folder, place.work.x, Math.round(place.work.y + TAG_GAP));
+  }
+}
+
 function drawLabels(ctx: Paint, villager: Villager, scene: Scene): void {
   const agent = scene.agents.get(villager.id);
   if (!agent) return;
@@ -273,6 +286,7 @@ export function drawScene(ctx: Paint, scene: Scene): void {
   ].sort((a, b) => a.depth - b.depth);
   for (const layer of layers) layer.draw();
   scene.particles?.draw(ctx);
+  drawStationTags(ctx, scene);
   for (const villager of scene.world.byDepth()) drawLabels(ctx, villager, scene);
   ctx.restore();
 }

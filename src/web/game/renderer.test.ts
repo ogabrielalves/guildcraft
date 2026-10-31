@@ -318,6 +318,19 @@ describe('drawScene labels', () => {
     expect(texts(silent)).toContain('✉️');
   });
 
+  it('tags the station with the project folder, under the nameplates', () => {
+    const target = scene([{ ...agent('a', 'idle'), cwd: 'C:\\code\\guildcraft\\' }]);
+    const villager = target.world.villager('a');
+    if (!villager) throw new Error('missing villager');
+    villager.position = { x: 0, y: 0 };
+    const ctx = render(target);
+    const { work } = stationAt(map, villager.station);
+    expect(ctx.named('fillText').map((call) => call.args)).toEqual([
+      ['guildcraft', work.x, work.y + 9],
+      ['A', 0, -31],
+    ]);
+  });
+
   it('shows the queue on the nameplate', () => {
     expect(texts(scene([{ ...agent('a', 'idle'), queued: 3 }]))).toEqual(['A', '3']);
   });

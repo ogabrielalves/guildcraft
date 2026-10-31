@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { PERMISSION_MODES, isPermissionMode } from './agent.js';
+import { PERMISSION_MODES, folderName, isPermissionMode } from './agent.js';
 import { ERROR_CODES, isErrorCode } from './errors.js';
+
+describe('folderName', () => {
+  it('takes the last folder name on any platform', () => {
+    expect(folderName('/home/me/web')).toBe('web');
+    expect(folderName('C:\\Users\\me\\api\\')).toBe('api');
+    expect(folderName('/')).toBe('');
+  });
+});
 
 describe('isPermissionMode', () => {
   it.each(PERMISSION_MODES)('accepts %s', (mode) => {

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { BUBBLE_COLORS, NOTE_FONT, bubbleFor, drawBubble, drawNote, shortNote } from './bubble.js';
-import { NAMEPLATE_COLORS, badgeText, drawNameplate } from './nameplate.js';
+import {
+  MAX_TAG,
+  NAMEPLATE_COLORS,
+  TAG_COLORS,
+  badgeText,
+  drawFolderTag,
+  drawNameplate,
+  tagText,
+} from './nameplate.js';
 import { recordingPaint } from './recording-paint.js';
 import { RING_COLORS, drawRing, drawShadow, ringAlpha } from './rings.js';
 
@@ -78,6 +86,27 @@ describe('nameplate', () => {
     expect(ctx.named('fillText')[1]?.args[0]).toBe('12');
     drawNameplate(ctx, 'Brom', 2, 50, 40);
     expect(ctx.named('arc')[1]?.args[2]).toBe(4);
+  });
+});
+
+describe('folder tag', () => {
+  it('shortens long folder names', () => {
+    expect(tagText('web')).toBe('web');
+    const long = tagText('a-really-long-project-folder');
+    expect(long).toHaveLength(MAX_TAG);
+    expect(long.endsWith('…')).toBe(true);
+  });
+
+  it('draws the folder on an edged plate', () => {
+    const ctx = recordingPaint();
+    drawFolderTag(ctx, 'web', 50, 40);
+    expect(ctx.named('fillRect').map((call) => call.fillStyle)).toEqual([
+      TAG_COLORS.edge,
+      TAG_COLORS.plate,
+    ]);
+    expect(ctx.named('fillText')).toEqual([
+      expect.objectContaining({ args: ['web', 50, 45], fillStyle: TAG_COLORS.text }),
+    ]);
   });
 });
 

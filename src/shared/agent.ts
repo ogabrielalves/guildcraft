@@ -51,6 +51,11 @@ export interface VillageEvent {
   at: number;
 }
 
+export function folderName(path: string): string {
+  const parts = path.split(/[\\/]+/).filter((part) => part.length > 0);
+  return parts.at(-1) ?? '';
+}
+
 export function isPermissionMode(value: unknown): value is PermissionMode {
   return PERMISSION_MODES.some((mode) => mode === value);
 }
