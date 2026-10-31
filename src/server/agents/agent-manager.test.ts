@@ -1,5 +1,6 @@
 import { ActivityTracker } from '../sessions/activity-tracker.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { emptyActivity } from '../../shared/activity.js';
 import type { ServerMessage } from '../../shared/protocol.js';
 import type { StoredAgent } from '../store/agent-store.js';
 import { AgentRegistry } from './agent-registry.js';
@@ -1237,10 +1238,7 @@ describe('activity', () => {
     const ctx = setup({ activity: tracker });
     const { id } = await ready(ctx);
     const idle = await created(ctx, { name: 'Lyra', skin: 'lyra' });
-    expect(ctx.manager.activities()).toEqual([
-      { agentId: id, title: null, actions: [], tasks: [] },
-      { agentId: idle.id, title: null, actions: [], tasks: [] },
-    ]);
+    expect(ctx.manager.activities()).toEqual([emptyActivity(id), emptyActivity(idle.id)]);
     await ctx.manager.syncActivity();
     const sent = ctx.ofType('agent:activity');
     expect(sent).toHaveLength(1);

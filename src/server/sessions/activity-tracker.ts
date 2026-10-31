@@ -1,5 +1,5 @@
 import type { AgentActivity } from '../../shared/activity.js';
-import { emptyActivity } from '../../shared/activity.js';
+import { emptyActivity, emptyUsage } from '../../shared/activity.js';
 import { TranscriptActivity } from './transcript-activity.js';
 import type { OpenTail } from './transcript-tail.js';
 import { TranscriptTail, openTailFile } from './transcript-tail.js';
@@ -13,7 +13,10 @@ interface Entry {
 export class ActivityTracker {
   private readonly entries = new Map<string, Entry>();
 
-  constructor(private readonly openFile: OpenTail = openTailFile) {}
+  constructor(
+    private readonly openFile: OpenTail = openTailFile,
+    private readonly since = Date.now(),
+  ) {}
 
   get(agentId: string): AgentActivity {
     return this.entries.get(agentId)?.activity ?? emptyActivity(agentId);
@@ -31,8 +34,12 @@ export class ActivityTracker {
       changed = previous !== undefined && (previous.title !== null || previous.tasks.length > 0);
       entry = {
         tail: new TranscriptTail(path, this.openFile),
-        parser: new TranscriptActivity(previous?.actions),
-        activity: { ...emptyActivity(agentId), actions: previous?.actions ?? [] },
+        parser: new TranscriptActivity(previous?.actions, previous?.usage, this.since),
+        activity: {
+          ...emptyActivity(agentId),
+          actions: previous?.actions ?? [],
+          usage: previous?.usage ?? emptyUsage(),
+        },
       };
       this.entries.set(agentId, entry);
     }
@@ -44,7 +51,11 @@ export class ActivityTracker {
     }
     if (this.entries.get(agentId) !== entry) return null;
     if (read.reset) {
-      entry.parser = new TranscriptActivity(entry.activity.actions);
+      entry.parser = new TranscriptActivity(
+        entry.activity.actions,
+        entry.activity.usage,
+        this.since,
+      );
       changed = true;
     }
     for (const line of read.lines) entry.parser.feed(line);

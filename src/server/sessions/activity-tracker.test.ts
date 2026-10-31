@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { emptyActivity } from '../../shared/activity.js';
 import { ActivityTracker } from './activity-tracker.js';
 import type { TailFile } from './transcript-tail.js';
 
@@ -36,7 +37,7 @@ describe('ActivityTracker', () => {
   it('starts empty and reports only changes', async () => {
     const fs = files({ '/s1.jsonl': call('t1') });
     const tracker = new ActivityTracker(fs.open);
-    expect(tracker.get('a1')).toEqual({ agentId: 'a1', title: null, actions: [], tasks: [] });
+    expect(tracker.get('a1')).toEqual(emptyActivity('a1'));
     const first = await tracker.poll('a1', '/s1.jsonl');
     expect(first?.actions.map((action) => action.id)).toEqual(['t1']);
     expect(tracker.get('a1')).toBe(first);

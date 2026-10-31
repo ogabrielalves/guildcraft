@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest';
+import { emptyActivity } from '../../shared/activity.js';
+import type { AgentView } from '../../shared/agent.js';
 import { DICTIONARIES, getLocale, initI18n, setLocale } from '../i18n/index.js';
 import { Store } from '../state/store.js';
 import { connectionKey, createTopbar } from './topbar.js';
@@ -14,6 +16,22 @@ function parts(element: HTMLElement) {
   const select = element.querySelector('select');
   if (!brand || !connection || !select) throw new Error('missing topbar parts');
   return { brand, connection, select };
+}
+
+function agentView(id: string): AgentView {
+  return {
+    id,
+    name: id,
+    cwd: '/x',
+    skin: 's',
+    status: 'idle',
+    permissionMode: 'default',
+    tool: null,
+    waitingFor: null,
+    model: null,
+    effort: null,
+    queued: 0,
+  };
 }
 
 describe('connectionKey', () => {
@@ -47,6 +65,28 @@ describe('createTopbar', () => {
     const { connection } = parts(element);
     expect(connection.dataset.state).toBe('unauthorized');
     expect(connection.textContent).toBe(DICTIONARIES.en.get('errors.UNAUTHORIZED'));
+  });
+
+  it('shows the total tokens of all agents as they arrive', () => {
+    const store = new Store();
+    const { element } = createTopbar(store);
+    const tokens = element.querySelector('.topbar__tokens');
+    expect(tokens?.textContent).toBe('0 tokens');
+    store.apply({
+      type: 'session:init',
+      agents: [{ ...agentView('a') }],
+      events: [],
+      skins: [],
+      permissions: [],
+      activities: [
+        {
+          ...emptyActivity('a'),
+          usage: { input: 1_000, output: 500, cacheRead: 9_000, cacheWrite: 1_000 },
+        },
+      ],
+    });
+    expect(tokens?.textContent).toBe('2.5k tokens');
+    expect(tokens?.getAttribute('title')).toContain('9.0k cache read');
   });
 
   it('switches the locale from the selector and re-renders texts', () => {

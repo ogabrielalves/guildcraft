@@ -30,6 +30,56 @@ function parsed(...lines: string[]): TranscriptActivity {
   return activity;
 }
 
+function reply(id: string, usage: object, extra: object = {}, timestamp = T0): string {
+  return JSON.stringify({
+    type: 'assistant',
+    timestamp,
+    message: { id, content: [{ type: 'text', text: 'ok' }], usage },
+    ...extra,
+  });
+}
+
+describe('TranscriptActivity usage', () => {
+  it('sums usage per message and keeps only the last line of a streamed message', () => {
+    const activity = parsed(
+      reply('m1', { input_tokens: 10, output_tokens: 1 }),
+      reply('m1', { input_tokens: 10, output_tokens: 40, cache_read_input_tokens: 500 }),
+      reply('m2', { input_tokens: 5, output_tokens: 7, cache_creation_input_tokens: 100 }),
+    );
+    expect(activity.takeChanged()).toBe(true);
+    expect(activity.snapshot().usage).toEqual({
+      input: 15,
+      output: 47,
+      cacheRead: 500,
+      cacheWrite: 100,
+    });
+  });
+
+  it('ignores sidechains, lines before the cutoff and malformed counts', () => {
+    const activity = new TranscriptActivity([], undefined, Date.parse(T1));
+    activity.feed(reply('old', { input_tokens: 99 }));
+    activity.feed(reply('side', { input_tokens: 99 }, { isSidechain: true }, T1));
+    activity.feed(reply('bad', { input_tokens: 'x', output_tokens: -3 }, {}, T1));
+    expect(activity.snapshot().usage).toEqual({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0 });
+  });
+
+  it('continues from a previous total', () => {
+    const activity = new TranscriptActivity([], {
+      input: 1,
+      output: 2,
+      cacheRead: 3,
+      cacheWrite: 4,
+    });
+    activity.feed(reply('m1', { input_tokens: 10, output_tokens: 10 }));
+    expect(activity.snapshot().usage).toEqual({
+      input: 11,
+      output: 12,
+      cacheRead: 3,
+      cacheWrite: 4,
+    });
+  });
+});
+
 describe('TranscriptActivity actions', () => {
   it('records a running tool call with a readable label', () => {
     const activity = parsed(call('t1', 'Edit', { file_path: '/repo/src/app.ts' }));

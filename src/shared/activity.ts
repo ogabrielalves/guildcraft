@@ -23,13 +23,25 @@ export interface AgentTask {
   status: TaskStatus;
 }
 
+export interface AgentUsage {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+}
+
 export interface AgentActivity {
   agentId: string;
   title: string | null;
   actions: AgentAction[];
   tasks: AgentTask[];
+  usage: AgentUsage;
+}
+
+export function emptyUsage(): AgentUsage {
+  return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 }
 
 export function emptyActivity(agentId: string): AgentActivity {
-  return { agentId, title: null, actions: [], tasks: [] };
+  return { agentId, title: null, actions: [], tasks: [], usage: emptyUsage() };
 }

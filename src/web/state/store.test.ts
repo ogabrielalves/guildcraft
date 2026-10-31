@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentActivity } from '../../shared/activity.js';
+import { emptyUsage } from '../../shared/activity.js';
 import type { AgentView, VillageEvent } from '../../shared/agent.js';
 import type { PermissionRequestView } from '../../shared/permission.js';
 import { MAX_EVENTS } from '../../shared/constants.js';
@@ -322,6 +323,7 @@ describe('activities', () => {
     title,
     actions: [],
     tasks: [],
+    usage: emptyUsage(),
   });
 
   it('keeps activities of known agents from session init', () => {

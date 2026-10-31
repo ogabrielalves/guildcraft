@@ -16,11 +16,17 @@
   color: var(--accent);
 }
 
+.topbar__tokens {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .topbar__connection {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   font-size: 12px;
   color: var(--text-muted);
 }

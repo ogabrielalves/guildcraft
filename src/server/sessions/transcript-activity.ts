@@ -1,5 +1,5 @@
-import type { AgentAction, AgentTask, TaskStatus } from '../../shared/activity.js';
-import { MAX_ACTIONS, MAX_TASKS, TASK_STATUSES } from '../../shared/activity.js';
+import type { AgentAction, AgentTask, AgentUsage, TaskStatus } from '../../shared/activity.js';
+import { MAX_ACTIONS, MAX_TASKS, TASK_STATUSES, emptyUsage } from '../../shared/activity.js';
 import { describeTool } from '../hooks/describe-tool.js';
 import { maskSecrets } from '../hooks/mask-secrets.js';
 
@@ -19,6 +19,7 @@ const MARKERS = [
   '"custom-title"',
   '"agent-name"',
   '"ai-title"',
+  '"usage"',
 ];
 const MAX_PENDING_CREATES = 64;
 
@@ -29,6 +30,7 @@ export interface ActivitySnapshot {
   title: string | null;
   actions: AgentAction[];
   tasks: AgentTask[];
+  usage: AgentUsage;
 }
 
 function isRecord(value: unknown): value is Fields {
@@ -87,9 +89,16 @@ export class TranscriptActivity {
   private tasks: AgentTask[] = [];
   private readonly pendingCreates = new Map<string, string>();
   private dirty = false;
+  private usage: AgentUsage;
+  private openMessage: { id: string; usage: AgentUsage } | null = null;
 
-  constructor(previous: readonly AgentAction[] = []) {
+  constructor(
+    previous: readonly AgentAction[] = [],
+    previousUsage: AgentUsage = emptyUsage(),
+    private readonly since = 0,
+  ) {
     for (const action of previous.toReversed()) this.actions.set(action.id, action);
+    this.usage = { ...previousUsage };
   }
 
   feed(line: string): void {
@@ -131,7 +140,37 @@ export class TranscriptActivity {
       title: this.titles.custom ?? this.titles.agent ?? this.titles.ai,
       actions: [...this.actions.values()].reverse().map((action) => ({ ...action })),
       tasks: this.tasks.map((task) => ({ ...task })),
+      usage: this.totalUsage(),
     };
+  }
+
+  private totalUsage(): AgentUsage {
+    const open = this.openMessage?.usage ?? emptyUsage();
+    return {
+      input: this.usage.input + open.input,
+      output: this.usage.output + open.output,
+      cacheRead: this.usage.cacheRead + open.cacheRead,
+      cacheWrite: this.usage.cacheWrite + open.cacheWrite,
+    };
+  }
+
+  private countUsage(raw: Fields, message: Fields): void {
+    const id = text(message.id);
+    if (id === null || !isRecord(message.usage) || timestampOf(raw) < this.since) return;
+    const { usage } = message;
+    if (this.openMessage && this.openMessage.id !== id) {
+      this.usage = this.totalUsage();
+    }
+    this.openMessage = {
+      id,
+      usage: {
+        input: tokens(usage.input_tokens),
+        output: tokens(usage.output_tokens),
+        cacheRead: tokens(usage.cache_read_input_tokens),
+        cacheWrite: tokens(usage.cache_creation_input_tokens),
+      },
+    };
+    this.dirty = true;
   }
 
   private setTitle(kind: TitleKind, value: unknown): void {
@@ -144,7 +183,9 @@ export class TranscriptActivity {
   }
 
   private assistant(raw: Fields): void {
-    if (!isRecord(raw.message) || !Array.isArray(raw.message.content)) return;
+    if (!isRecord(raw.message)) return;
+    this.countUsage(raw, raw.message);
+    if (!Array.isArray(raw.message.content)) return;
     const at = timestampOf(raw);
     for (const block of raw.message.content) {
       if (!isRecord(block) || block.type !== 'tool_use') continue;
@@ -301,6 +342,10 @@ function dropOldest(map: Map<string, unknown>): void {
     map.delete(key);
     return;
   }
+}
+
+function tokens(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
 }
 
 function timestampOf(raw: Fields): number {

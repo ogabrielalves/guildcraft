@@ -3,6 +3,7 @@ import type { AgentStatus, AgentView, WaitingReason } from '../../shared/agent.j
 import type { IdlePlan } from '../game/activity.js';
 import type { Assets } from '../game/assets.js';
 import type { TranslationKey } from '../i18n/index.js';
+import { emptyUsage } from '../../shared/activity.js';
 import { onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store, StoreState } from '../state/store.js';
@@ -10,6 +11,7 @@ import { pendingFor, resolvePermission } from '../state/store.js';
 import { confirmModal } from './modal.js';
 import { createPermissionCard } from './permission-card.js';
 import { PORTRAIT, drawPortrait, skinLabel } from './portrait.js';
+import { usageText, usageTitle } from './usage.js';
 import type { TerminalView } from './terminal-view.js';
 
 const STATUS_KEYS: Record<AgentStatus, TranslationKey> = {
@@ -269,13 +271,17 @@ export function createPanel(options: PanelOptions): Panel {
   const sessionLabel = label(make('span', 'panel__session-label'), 'history.session');
   const sessionTitle = make('span', 'panel__session-title');
   sessionRow.append(sessionLabel, sessionTitle);
+  const usageRow = make('p', 'panel__session panel__usage');
+  const usageLabel = label(make('span', 'panel__session-label'), 'usage.label');
+  const usageValue = make('span', 'panel__session-title');
+  usageRow.append(usageLabel, usageValue);
   const tasksTitle = label(make('h4', 'panel__subheading'), 'history.tasks');
   const tasks = make('ul', 'panel__tasks');
   const tasksBlock = make('div', 'panel__tasks-block');
   tasksBlock.append(tasksTitle, tasks);
   const log = make('ol', 'panel__log');
   const empty = label(make('p', 'panel__empty'), 'history.empty');
-  history.append(historyTitle, sessionRow, tasksBlock, log, empty);
+  history.append(historyTitle, sessionRow, usageRow, tasksBlock, log, empty);
 
   let logOpen = true;
   const syncLog = () => {
@@ -318,10 +324,6 @@ export function createPanel(options: PanelOptions): Panel {
   const toggle = button('console', 'panel.console', () => {
     setConsole(!consoleOpen);
   });
-  const interrupt = button('interrupt', 'panel.interrupt', (agent) => {
-    socket.send({ type: 'agent:interrupt', agentId: agent.id });
-    focusConsole();
-  });
   const restart = button('restart', 'panel.restart', (agent) => {
     socket.send({ type: 'agent:restart', agentId: agent.id });
     focusConsole();
@@ -341,7 +343,7 @@ export function createPanel(options: PanelOptions): Panel {
   });
 
   const actions = make('div', 'panel__actions');
-  actions.append(toggle, interrupt, restart);
+  actions.append(toggle, restart);
   const manage = make('div', 'panel__manage');
   manage.append(remove);
   element.append(header, card.element, details, history, actions, manage);
@@ -438,6 +440,9 @@ export function createPanel(options: PanelOptions): Panel {
     sessionRow.hidden = title === null || title === '';
     sessionTitle.textContent = title ?? '';
     sessionTitle.title = title ?? '';
+    const usage = activity?.usage ?? emptyUsage();
+    usageValue.textContent = usageText(usage);
+    usageValue.title = usageTitle(usage);
     const taskList = activity?.tasks ?? [];
     tasksBlock.hidden = taskList.length === 0;
     tasks.replaceChildren(
@@ -479,7 +484,6 @@ export function createPanel(options: PanelOptions): Panel {
     queue.textContent = t('workshop.queue', { count: agent.queued });
     cwd.textContent = agent.cwd;
     cwd.title = agent.cwd;
-    interrupt.disabled = agent.status === 'offline';
     close.title = t('panel.close');
     close.setAttribute('aria-label', t('panel.close'));
     consoleTitle.textContent = t('console.title', { name: agent.name });

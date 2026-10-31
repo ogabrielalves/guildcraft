@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentAction, AgentActivity } from '../../shared/activity.js';
-import { ACTION_STATES } from '../../shared/activity.js';
+import { ACTION_STATES, emptyActivity } from '../../shared/activity.js';
 import type { AgentView } from '../../shared/agent.js';
 import { AGENT_STATUSES, WAITING_REASONS } from '../../shared/agent.js';
 import type { PermissionRequestView } from '../../shared/permission.js';
@@ -466,12 +466,11 @@ describe('createPanel', () => {
   });
 
   it('follows updates of the focused agent', () => {
-    const { store, query, button } = setup();
+    const { store, query } = setup();
     store.focus('a');
     expect(query('.panel__queue').hidden).toBe(true);
     store.apply({ type: 'agent:updated', agent: agent('a', { status: 'offline' }) });
     expect(query('.panel__status').textContent).toBe('Offline');
-    expect(button('interrupt').disabled).toBe(true);
     store.apply({ type: 'agent:removed', agentId: 'a' });
     expect(query('.panel__name').textContent).toBe('Agent a');
   });
@@ -483,20 +482,16 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
   });
 
-  it('interrupts and restarts the focused agent', () => {
+  it('restarts the focused agent', () => {
     const { store, sent, terminal, click } = setup();
-    click('interrupt');
+    click('restart');
     expect(sent).toEqual([]);
     store.focus('a');
-    click('interrupt');
     click('restart');
-    expect(sent).toEqual([
-      { type: 'agent:interrupt', agentId: 'a' },
-      { type: 'agent:restart', agentId: 'a' },
-    ]);
+    expect(sent).toEqual([{ type: 'agent:restart', agentId: 'a' }]);
     expect(terminal.focus).not.toHaveBeenCalled();
     click('console');
-    click('interrupt');
+    click('restart');
     expect(terminal.focus).toHaveBeenCalledTimes(2);
   });
 
@@ -571,7 +566,7 @@ function action(id: string, overrides: Partial<AgentAction> = {}): AgentAction {
 }
 
 function activity(agentId: string, overrides: Partial<AgentActivity> = {}): AgentActivity {
-  return { agentId, title: null, actions: [], tasks: [], ...overrides };
+  return { ...emptyActivity(agentId), ...overrides };
 }
 
 describe('history helpers', () => {
@@ -671,6 +666,15 @@ describe('history', () => {
     expect(query('.panel__empty').hidden).toBe(true);
     expect(query('.panel__session').hidden).toBe(false);
     expect(query('.panel__session-title').textContent).toBe('Fix the login');
+  });
+
+  it('shows the token usage of the shown agent', () => {
+    const usage = { input: 1_000, output: 500, cacheRead: 9_000, cacheWrite: 1_000 };
+    const { store, panel } = setup({ activities: [activity('a', { usage })] });
+    store.focus('a');
+    const value = panel.element.querySelector<HTMLElement>('.panel__usage .panel__session-title');
+    expect(value?.textContent).toBe('2.5k tokens');
+    expect(value?.title).toContain('9.0k cache read');
   });
 
   it('keeps only the most recent actions', () => {

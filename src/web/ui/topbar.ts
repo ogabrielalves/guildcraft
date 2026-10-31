@@ -9,6 +9,7 @@ import {
   t,
 } from '../i18n/index.js';
 import type { ConnectionState, Store } from '../state/store.js';
+import { totalUsage, usageText, usageTitle } from './usage.js';
 
 const CONNECTION_KEYS: Record<ConnectionState, TranslationKey> = {
   connecting: 'connection.connecting',
@@ -51,7 +52,15 @@ export function createTopbar(store: Store): Topbar {
     if (isLocale(select.value)) setLocale(select.value);
   });
   language.append(languageLabel, select);
-  element.append(brand, connection, language);
+  const tokens = document.createElement('span');
+  tokens.className = 'topbar__tokens';
+  element.append(brand, tokens, connection, language);
+
+  const renderTokens = () => {
+    const usage = totalUsage(Object.values(store.getState().activities).map((a) => a.usage));
+    tokens.textContent = usageText(usage);
+    tokens.title = usageTitle(usage);
+  };
 
   const renderConnection = () => {
     const state = store.getState().connection;
@@ -63,12 +72,14 @@ export function createTopbar(store: Store): Topbar {
     languageLabel.textContent = t('app.language');
     select.value = locale;
     renderConnection();
+    renderTokens();
   };
 
   renderTexts(getLocale());
   const unsubscribeLocale = onLocaleChange(renderTexts);
   const unsubscribeStore = store.subscribe((state, previous) => {
     if (state.connection !== previous.connection) renderConnection();
+    if (state.activities !== previous.activities) renderTokens();
   });
 
   return {

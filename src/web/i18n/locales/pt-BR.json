@@ -24,7 +24,6 @@
     "confirmRemoveAll": "Remover todos os aventureiros? Todos os agentes serão encerrados."
   },
   "panel": {
-    "interrupt": "Esc",
     "restart": "Reiniciar",
     "remove": "Remover",
     "confirmRemove": "Remover {name}? O agente será encerrado.",
@@ -57,6 +56,11 @@
       "projectSettings": "nas configurações do projeto",
       "userSettings": "nas suas configurações de usuário"
     }
+  },
+  "usage": {
+    "tokens": "{count} tokens",
+    "tokensTitle": "Desde que o Guildcraft abriu: {input} de entrada, {output} de saída, {cacheRead} de leitura de cache, {cacheWrite} de escrita de cache",
+    "label": "Consumo"
   },
   "history": {
     "title": "Últimos comandos",

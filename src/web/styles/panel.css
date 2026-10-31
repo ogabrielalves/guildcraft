@@ -367,7 +367,7 @@
 }
 
 .panel__manage {
-  justify-content: flex-end;
+  justify-content: stretch;
   padding-top: 8px;
   border-top: 2px solid rgb(0 0 0 / 30%);
 }
@@ -412,7 +412,26 @@
 }
 
 .panel__action--remove {
-  color: #ffc2b8;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffd9d2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgb(160 40 30 / 35%);
+  border-image-source: url('/assets/ui/wood-button.png');
+  filter: sepia(1) saturate(3.5) hue-rotate(-35deg) brightness(0.85);
+}
+
+.panel__action--remove::before {
+  content: '✕';
+  font-size: 14px;
+}
+
+.panel__action--remove:hover:not(:disabled) {
+  filter: sepia(1) saturate(4) hue-rotate(-35deg) brightness(1.05);
 }
 
 .console-window {
