@@ -11,13 +11,10 @@ export type ShortcutKey = Pick<
 >;
 
 export type Shortcut =
-  | { type: 'select'; index: number; mode: 'replace' | 'toggle' }
-  | { type: 'clear' }
-  | { type: 'compose' };
+  { type: 'select'; index: number; mode: 'replace' | 'toggle' } | { type: 'clear' };
 
 export interface ShortcutsOptions {
   store: Store;
-  focusCompose: () => void;
   isBlocked?: () => boolean;
   target?: Pick<Document, 'addEventListener' | 'removeEventListener'>;
 }
@@ -43,12 +40,11 @@ export function shortcutFor(event: ShortcutKey): Shortcut | null {
     return { type: 'select', index, mode: event.shiftKey ? 'toggle' : 'replace' };
   }
   if (event.key === 'Escape') return { type: 'clear' };
-  if (event.key === 'Enter' && !event.shiftKey) return { type: 'compose' };
   return null;
 }
 
 export function createShortcuts(options: ShortcutsOptions): Shortcuts {
-  const { store, focusCompose } = options;
+  const { store } = options;
   const target = options.target ?? document;
 
   const run = (shortcut: Shortcut): boolean => {
@@ -64,10 +60,6 @@ export function createShortcuts(options: ShortcutsOptions): Shortcuts {
         if (state.selected.length === 0 && state.focused === null) return false;
         store.clearSelection();
         return true;
-      case 'compose':
-        if (state.selected.length === 0) return false;
-        focusCompose();
-        return true;
     }
   };
 
@@ -75,7 +67,7 @@ export function createShortcuts(options: ShortcutsOptions): Shortcuts {
     if (!(event instanceof KeyboardEvent) || event.defaultPrevented || event.isComposing) return;
     if (isEditable(event.target) || options.isBlocked?.()) return;
     const shortcut = shortcutFor(event);
-    if (!shortcut || (shortcut.type === 'compose' && isInteractive(event.target))) return;
+    if (!shortcut) return;
     if (run(shortcut)) event.preventDefault();
   };
 

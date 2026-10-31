@@ -106,11 +106,6 @@
     "high": "High",
     "max": "Max"
   },
-  "compose": {
-    "placeholder": "Send a prompt to {count} selected",
-    "send": "Send",
-    "hint": "Enter sends, Shift+Enter adds a new line"
-  },
   "recruit": {
     "title": "Recruit an adventurer",
     "folder": "Project folder",

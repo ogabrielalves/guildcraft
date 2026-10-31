@@ -4,7 +4,6 @@ import './styles/topbar.css';
 import '@xterm/xterm/css/xterm.css';
 import './styles/terminal.css';
 import './styles/panel.css';
-import './styles/compose.css';
 import './styles/dialog.css';
 import './styles/feedback.css';
 import './styles/game.css';
@@ -22,7 +21,6 @@ import { createApi } from './net/api.js';
 import { GameSocket, socketUrl } from './net/socket.js';
 import { Store } from './state/store.js';
 import { createAddAgentDialog, createRecruitButton } from './ui/add-agent-dialog.js';
-import { createCompose } from './ui/compose.js';
 import { createFeed } from './ui/feed.js';
 import { createNotifications, reportFailedSends } from './ui/notifications.js';
 import { createPanel, statusKey } from './ui/panel.js';
@@ -87,7 +85,6 @@ if (root) {
     assets,
     doing: (agentId) => game?.world.villager(agentId)?.doing ?? null,
   });
-  const compose = createCompose({ store, socket });
   const hud = document.createElement('div');
   hud.className = 'hud';
   const removeAll = createRemoveAllButton({ store, socket });
@@ -107,14 +104,7 @@ if (root) {
     createFeed(store).element,
   );
   const tooltip = createTooltip();
-  mountShell(root, store, [
-    hud,
-    panel.element,
-    panel.console,
-    compose.element,
-    toasts.element,
-    tooltip.element,
-  ]);
+  mountShell(root, store, [hud, panel.element, panel.console, toasts.element, tooltip.element]);
   const startGame = (map: WorkshopMap) => {
     const started = createGame({
       store,
@@ -142,9 +132,6 @@ if (root) {
   createNotifications({ store, socket, toasts, isHandled: (message) => dialog.handles(message) });
   createShortcuts({
     store,
-    focusCompose: () => {
-      compose.focus();
-    },
     isBlocked: () => document.querySelector('dialog[open]') !== null,
   });
   bindSocket(socket, store);

@@ -106,11 +106,6 @@
     "high": "Alto",
     "max": "Máximo"
   },
-  "compose": {
-    "placeholder": "Enviar prompt para {count} selecionados",
-    "send": "Enviar",
-    "hint": "Enter envia, Shift+Enter quebra a linha"
-  },
   "recruit": {
     "title": "Recrutar aventureiro",
     "folder": "Pasta do projeto",

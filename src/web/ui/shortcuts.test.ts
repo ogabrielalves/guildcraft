@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { AgentView } from '../../shared/agent.js';
 import { Store } from '../state/store.js';
 import type { ShortcutKey, Shortcuts } from './shortcuts.js';
@@ -50,15 +50,14 @@ function setup(blocked = false) {
     permissions: [],
     activities: [],
   });
-  const focusCompose = vi.fn();
-  const shortcuts = createShortcuts({ store, focusCompose, isBlocked: () => blocked });
+  const shortcuts = createShortcuts({ store, isBlocked: () => blocked });
   active.push(shortcuts);
   const press = (init: KeyboardEventInit, target: EventTarget = document.body) => {
     const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
     target.dispatchEvent(event);
     return event;
   };
-  return { store, focusCompose, shortcuts, press };
+  return { store, shortcuts, press };
 }
 
 describe('shortcutFor', () => {
@@ -76,10 +75,9 @@ describe('shortcutFor', () => {
     expect(shortcutFor(key({ code: 'Digit9' }))).toBeNull();
   });
 
-  it('maps Escape and Enter', () => {
+  it('maps Escape', () => {
     expect(shortcutFor(key({ key: 'Escape' }))).toEqual({ type: 'clear' });
-    expect(shortcutFor(key({ key: 'Enter' }))).toEqual({ type: 'compose' });
-    expect(shortcutFor(key({ key: 'Enter', shiftKey: true }))).toBeNull();
+    expect(shortcutFor(key({ key: 'Enter' }))).toBeNull();
   });
 
   it('leaves browser and system shortcuts alone', () => {
@@ -121,19 +119,6 @@ describe('createShortcuts', () => {
     store.select('a');
     expect(press({ key: 'Escape' }).defaultPrevented).toBe(true);
     expect(store.getState().selected).toEqual([]);
-  });
-
-  it('focuses compose with Enter when agents are selected', () => {
-    const { store, focusCompose, press } = setup();
-    press({ key: 'Enter' });
-    expect(focusCompose).not.toHaveBeenCalled();
-    store.select('a');
-    press({ key: 'Enter' });
-    expect(focusCompose).toHaveBeenCalledOnce();
-    const button = document.createElement('button');
-    document.body.append(button);
-    expect(press({ key: 'Enter' }, button).defaultPrevented).toBe(false);
-    expect(focusCompose).toHaveBeenCalledOnce();
   });
 
   it('ignores typing, console input, IME and handled events', () => {
