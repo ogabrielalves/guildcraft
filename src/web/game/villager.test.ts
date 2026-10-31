@@ -540,10 +540,27 @@ describe('Villager lounging', () => {
       ],
     });
     const villager = new Villager('a', 0, new Layout(chairs), 'idle', fixed(0.99));
+    run(villager, LOUNGE_AFTER + 1);
     for (let i = 0; i < 400 && villager.doing !== 'table'; i += 1) villager.update(0.05);
     expect(villager.doing).toBe('table');
     expect(villager.pose).toBe('sit');
     expect(villager.facing).toBe('south');
+  });
+
+  it('does not use common spots before the lounge delay', () => {
+    const chairs = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      spots: [{ kind: 'table', at: { x: 300, y: 200 }, facing: 'south' }],
+      zones: [
+        { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+        { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+      ],
+    });
+    const villager = new Villager('a', 0, new Layout(chairs), 'idle', fixed(0.99));
+    for (let t = 0; t < LOUNGE_AFTER - 5; t += 0.05) {
+      villager.update(0.05);
+      expect(villager.doing).not.toBe('table');
+    }
   });
 
   it('stays out of its work zone for as long as it is idle', () => {

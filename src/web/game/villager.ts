@@ -223,7 +223,7 @@ export class Villager {
         if (option === 'chat') return partners.length > 0;
         const kind = idleSpot(option);
         if (option === 'bench' && !this.lounging) return false;
-        return kind !== null && this.layout.hasFree(kind, roam);
+        return kind !== null && this.layout.hasFree(kind, roam, !this.lounging);
       },
       this.random,
       this.plan,
@@ -239,7 +239,8 @@ export class Villager {
       return;
     }
     const kind = idleSpot(plan);
-    const spot = kind === null ? null : this.layout.claim(kind, this.id, this.random, roam);
+    const spot =
+      kind === null ? null : this.layout.claim(kind, this.id, this.random, roam, !this.lounging);
     if (spot !== null) {
       this.walkTo({ point: spot.at, facing: spot.facing });
       return;

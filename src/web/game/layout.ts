@@ -45,19 +45,20 @@ export class Layout {
     owner: string,
     random: () => number = Math.random,
     zone: string | null = null,
+    ownOnly = false,
   ): Spot | null {
     this.release(owner);
-    const free = this.free(kind, zone);
+    const free = this.free(kind, zone, ownOnly);
     const own = free.filter((spot) => this.zoneOf(spot.at) === zone);
-    const pool = own.length > 0 ? own : free;
+    const pool = own.length > 0 || ownOnly ? own : free;
     const spot = pool[Math.floor(random() * pool.length)];
     if (spot === undefined) return null;
     this.claims.set(spot, owner);
     return spot;
   }
 
-  hasFree(kind: SpotKind, zone: string | null = null): boolean {
-    return this.free(kind, zone).length > 0;
+  hasFree(kind: SpotKind, zone: string | null = null, ownOnly = false): boolean {
+    return this.free(kind, zone, ownOnly).length > 0;
   }
 
   release(owner: string): void {
@@ -78,12 +79,12 @@ export class Layout {
     return this.map.zones.some(({ id, common }) => id === zone && common);
   }
 
-  private free(kind: SpotKind, zone: string | null): Spot[] {
+  private free(kind: SpotKind, zone: string | null, ownOnly = false): Spot[] {
     return this.map.spots.filter((spot) => {
       if (spot.kind !== kind || this.claims.has(spot)) return false;
       if (kind === 'bench') return true;
       const at = this.zoneOf(spot.at);
-      return zone === null || at === zone || this.isCommon(at);
+      return zone === null || at === zone || (!ownOnly && this.isCommon(at));
     });
   }
 }

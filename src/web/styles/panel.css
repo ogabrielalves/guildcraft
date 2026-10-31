@@ -390,10 +390,11 @@
   color: #d6e8ff;
   background: rgb(40 90 170 / 35%);
   filter: sepia(1) saturate(3) hue-rotate(165deg) brightness(0.9);
+  transition: filter 0.2s ease;
 }
 
-.panel__action--console:hover:not(:disabled) {
-  filter: sepia(1) saturate(3.5) hue-rotate(165deg) brightness(1.1);
+.panel__action.panel__action--console:hover:not(:disabled) {
+  filter: sepia(1) saturate(3.5) hue-rotate(165deg) brightness(0.65);
 }
 
 .panel__action:hover:not(:disabled),
