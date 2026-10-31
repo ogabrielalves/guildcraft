@@ -30,12 +30,20 @@ interface Png {
   data: Uint8Array;
 }
 
-function closest(distances: (number | undefined)[], values: number[]): number {
-  const best = Math.min(...distances.map((distance) => distance ?? Infinity));
-  return values[distances.indexOf(best)] ?? 0;
+function paeth(left: number, up: number, corner: number): number {
+  const guess = left + up - corner;
+  const toLeft = Math.abs(guess - left);
+  const toUp = Math.abs(guess - up);
+  const toCorner = Math.abs(guess - corner);
+  if (toLeft <= toUp && toLeft <= toCorner) return left;
+  return toUp <= toCorner ? up : corner;
 }
 
+const decoded = new Map<string, Png>();
+
 function decodePng(path: string): Png {
+  const cached = decoded.get(path);
+  if (cached) return cached;
   const file = readFileSync(join(ROOT, path));
   const { width, height } = pngSize(path);
   const channels = file[25] === 6 ? 4 : 3;
@@ -51,25 +59,34 @@ function decodePng(path: string): Png {
   const stride = width * channels;
   const data = new Uint8Array(stride * height);
   for (let y = 0; y < height; y++) {
+    const row = y * stride;
     const filter = raw[y * (stride + 1)] ?? 0;
     for (let x = 0; x < stride; x++) {
-      const left = x >= channels ? (data[y * stride + x - channels] ?? 0) : 0;
-      const up = y > 0 ? (data[(y - 1) * stride + x] ?? 0) : 0;
-      const corner = x >= channels && y > 0 ? (data[(y - 1) * stride + x - channels] ?? 0) : 0;
-      const guess = left + up - corner;
-      const [toLeft, toUp, toCorner] = [left, up, corner].map((value) => Math.abs(guess - value));
-      const paeth = closest([toLeft, toUp, toCorner], [left, up, corner]);
-      const predictor = [0, left, up, (left + up) >> 1, paeth][filter] ?? 0;
-      data[y * stride + x] = ((raw[y * (stride + 1) + 1 + x] ?? 0) + predictor) & 255;
+      const left = x >= channels ? (data[row + x - channels] ?? 0) : 0;
+      const up = y > 0 ? (data[row - stride + x] ?? 0) : 0;
+      const corner = x >= channels && y > 0 ? (data[row - stride + x - channels] ?? 0) : 0;
+      let predictor = 0;
+      if (filter === 1) predictor = left;
+      else if (filter === 2) predictor = up;
+      else if (filter === 3) predictor = (left + up) >> 1;
+      else if (filter === 4) predictor = paeth(left, up, corner);
+      data[row + x] = ((raw[y * (stride + 1) + 1 + x] ?? 0) + predictor) & 255;
     }
   }
-  return { width, channels, data };
+  const png = { width, channels, data };
+  decoded.set(path, png);
+  return png;
 }
 
 function pixel(png: Png, x: number, y: number): number[] {
   const at = (y * png.width + x) * png.channels;
-  const rgb = [...png.data.subarray(at, at + 3)];
-  return [...rgb, png.channels === 4 ? (png.data[at + 3] ?? 0) : 255];
+  const { data } = png;
+  return [
+    data[at] ?? 0,
+    data[at + 1] ?? 0,
+    data[at + 2] ?? 0,
+    png.channels === 4 ? (data[at + 3] ?? 0) : 255,
+  ];
 }
 
 function fits(path: string, area: Rect): boolean {
