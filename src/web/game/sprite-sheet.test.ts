@@ -46,6 +46,7 @@ describe('parseCharacterManifest', () => {
       image: 'brom.png',
       frame: { width: 32, height: 32 },
       anchor: { x: 16, y: 30 },
+      scale: 1,
       row: 8,
       start: 1,
       frames: 8,
@@ -108,6 +109,18 @@ describe('parseCharacterManifest', () => {
     expect(failsAt(lpc({ anchor: undefined }))).toBe('$.animations.idle.anchor');
   });
 
+  it('inherits a sheet scale and lets an animation override it', () => {
+    const half = parseCharacterManifest(
+      lpc({
+        scale: 0.5,
+        animations: { ...lpc().animations, walk: { row: 8, frames: 8, fps: 10, scale: 1 } },
+      }),
+    );
+    expect(half.animations.idle.scale).toBe(0.5);
+    expect(half.animations.walk.scale).toBe(1);
+    expect(failsAt(lpc({ scale: 0 }))).toBe('$.scale');
+  });
+
   it('rejects a non-object manifest', () => {
     expect(failsAt([])).toBe('$');
   });
@@ -124,6 +137,7 @@ describe('frameAt', () => {
       width: 32,
       height: 32,
       anchor: { x: 16, y: 30 },
+      scale: 1,
       flip: false,
       lift: 0,
     });

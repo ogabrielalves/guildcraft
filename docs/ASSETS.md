@@ -34,8 +34,9 @@ Image paths must be relative, end in `.png` and never contain `..`.
   "source": "lpc",
   "facing": "four", // "four" or "side"
   "image": "brom.png", // defaults for every animation
-  "frame": { "width": 32, "height": 32 },
-  "anchor": { "x": 16, "y": 30 }, // pixel of the frame that touches the floor
+  "frame": { "width": 64, "height": 64 },
+  "anchor": { "x": 32, "y": 60 }, // pixel of the frame that touches the floor
+  "scale": 0.5, // drawn at half size in the world
   "animations": {
     "idle": { "row": 22, "frames": 2, "fps": 2 },
     "walk": { "row": 8, "start": 1, "frames": 8, "fps": 10 },
@@ -60,14 +61,14 @@ All five poses are required:
 
 Animation fields:
 
-| Field                      | Default         | Meaning                                              |
-| -------------------------- | --------------- | ---------------------------------------------------- |
-| `image`, `frame`, `anchor` | top-level value | sheet, frame size and floor anchor of this animation |
-| `row`                      | `0`             | first row of the animation                           |
-| `start`                    | `0`             | first column                                         |
-| `frames`                   | required        | number of frames, read left to right                 |
-| `fps`                      | required        | playback speed; the animation loops                  |
-| `hop`                      | `0`             | height in pixels of a small jump, used for cheering  |
+| Field                               | Default                                   | Meaning                                                                                                    |
+| ----------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `image`, `frame`, `anchor`, `scale` | top-level value (`scale` defaults to `1`) | sheet, frame size, floor anchor and draw scale of this animation; `frame` and `anchor` are in sheet pixels |
+| `row`                               | `0`                                       | first row of the animation                                                                                 |
+| `start`                             | `0`                                       | first column                                                                                               |
+| `frames`                            | required                                  | number of frames, read left to right                                                                       |
+| `fps`                               | required                                  | playback speed; the animation loops                                                                        |
+| `hop`                               | `0`                                       | height in pixels of a small jump, used for cheering                                                        |
 
 `facing` tells how directions are stored:
 
@@ -79,9 +80,9 @@ Frames of different animations can have different sizes. The anchor keeps the fe
 ### Adding an LPC character
 
 1. Build it in the [Universal LPC Spritesheet Character Generator](https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/) and export the sheet, the credits and the JSON.
-2. Downscale the sheet to 50% with nearest-neighbor sampling, so 64 px frames become 32 px.
+2. Keep the sheet at its native 64 px frames. The manifest draws it at `"scale": 0.5`.
 3. Save it as `assets/characters/<id>/<id>.png`. Save the generator JSON as `<id>.lpc.json` and keep `<id>.credits.txt` and `<id>.credits.csv` next to it.
-4. Copy an existing LPC manifest and change `name`. The row map of the downscaled sheets is in [`assets/characters/lpc-rows.md`](../assets/characters/lpc-rows.md).
+4. Copy an existing LPC manifest and change `name`. The row map of the sheets is in [`assets/characters/lpc-rows.md`](../assets/characters/lpc-rows.md).
 5. Add the character's section to `assets/CREDITS.md`.
 
 ## Station manifest

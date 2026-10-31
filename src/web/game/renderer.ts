@@ -46,6 +46,7 @@ interface Image {
   source: Rect;
   at: Point;
   flip: boolean;
+  scale?: number;
 }
 
 export function villagerBounds(villager: Villager): Rect {
@@ -95,16 +96,18 @@ export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): 
   return emitters;
 }
 
-function blit(ctx: Paint, { image, source, at, flip }: Image): void {
+function blit(ctx: Paint, { image, source, at, flip, scale = 1 }: Image): void {
   const { x, y, width, height } = source;
+  const drawWidth = width * scale;
+  const drawHeight = height * scale;
   if (!flip) {
-    ctx.drawImage(image, x, y, width, height, at.x, at.y, width, height);
+    ctx.drawImage(image, x, y, width, height, at.x, at.y, drawWidth, drawHeight);
     return;
   }
   ctx.save();
-  ctx.translate(at.x + width, at.y);
+  ctx.translate(at.x + drawWidth, at.y);
   ctx.scale(-1, 1);
-  ctx.drawImage(image, x, y, width, height, 0, 0, width, height);
+  ctx.drawImage(image, x, y, width, height, 0, 0, drawWidth, drawHeight);
   ctx.restore();
 }
 
@@ -201,12 +204,14 @@ function drawBody(ctx: Paint, villager: Villager, scene: Scene): void {
     : null;
   const image = character && frame ? scene.assets.image(character.base + frame.image) : null;
   if (frame && image) {
-    const anchorX = frame.flip ? frame.width - frame.anchor.x : frame.anchor.x;
+    const { scale } = frame;
+    const anchorX = (frame.flip ? frame.width - frame.anchor.x : frame.anchor.x) * scale;
     blit(ctx, {
       image,
       source: { x: frame.sx, y: frame.sy, width: frame.width, height: frame.height },
-      at: { x: Math.round(x - anchorX), y: Math.round(y - frame.anchor.y - frame.lift) },
+      at: { x: Math.round(x - anchorX), y: Math.round(y - frame.anchor.y * scale - frame.lift) },
       flip: frame.flip,
+      scale,
     });
   } else {
     ctx.fillStyle = skinColor(skin === '' ? villager.id : skin);

@@ -24,6 +24,7 @@ export interface Animation {
   image: string;
   frame: Size;
   anchor: Point;
+  scale: number;
   row: number;
   start: number;
   frames: number;
@@ -44,6 +45,7 @@ export interface Frame {
   width: number;
   height: number;
   anchor: Point;
+  scale: number;
   flip: boolean;
   lift: number;
 }
@@ -72,6 +74,7 @@ function parseAnimation(value: unknown, path: string, defaults: Partial<Animatio
     image: imagePath(image, `${path}.image`),
     frame: size(frame, `${path}.frame`),
     anchor: point(anchor, `${path}.anchor`),
+    scale: positive(raw.scale ?? defaults.scale ?? 1, `${path}.scale`),
     row: optional(raw.row, count, `${path}.row`, 0),
     start: optional(raw.start, count, `${path}.start`, 0),
     frames: count(raw.frames, `${path}.frames`, 1),
@@ -87,6 +90,7 @@ export function parseCharacterManifest(value: unknown): CharacterManifest {
   if (raw.image !== undefined) defaults.image = imagePath(raw.image, '$.image');
   if (raw.frame !== undefined) defaults.frame = size(raw.frame, '$.frame');
   if (raw.anchor !== undefined) defaults.anchor = point(raw.anchor, '$.anchor');
+  if (raw.scale !== undefined) defaults.scale = positive(raw.scale, '$.scale');
   const parsed = {} as Record<Pose, Animation>;
   for (const pose of POSES) {
     parsed[pose] = parseAnimation(animations[pose], `$.animations.${pose}`, defaults);
@@ -118,6 +122,7 @@ export function frameAt(
     width,
     height,
     anchor: animation.anchor,
+    scale: animation.scale,
     flip: !four && side === 'west',
     lift: Math.round(Math.abs(Math.sin(clock * Math.PI * 2)) * animation.hop),
   };

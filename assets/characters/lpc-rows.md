@@ -3,7 +3,7 @@
 Generated with the Universal LPC Spritesheet Character Generator on 2026-10-29.
 Each `<id>/<id>.lpc.json` holds the `hash` and `url` needed to recreate the character.
 
-**Scale:** the LPC sheets (`assets/characters/<id>/<id>.png`) were **downscaled to 50% with nearest neighbor** (sampling pixel `2x, 2y`) to match the Pixel Crawler art. The 64 px originals are kept outside the repository. Every measurement below uses the downscaled size.
+**Scale:** the sheets (`assets/characters/<id>/<id>.png`) are the generator's native **64 px** output, drawn at `"scale": 0.5` to match the Pixel Crawler art. Row and column indices are unchanged, but every pixel measurement below (y, frame and sheet sizes) is in the old half-size units: **multiply by 2** for the real sheet pixels (a 32x32 frame is 64x64 on the sheet, a 96x96 block is 192x192).
 
 ## Standard area (same for all 10): y = 0–1727, 32x32 frames, 13 columns (416 px)
 

@@ -4,7 +4,7 @@ import type { Layout } from './layout.js';
 import type { Point, SpotKind } from './map.js';
 import { stationAt } from './map.js';
 import type { NavGrid } from './pathing.js';
-import { pointAlong, routeLength } from './pathing.js';
+import { BODY_REACH, pointAlong, routeLength } from './pathing.js';
 import type { Direction, Pose } from './sprite-sheet.js';
 import { directionTo } from './sprite-sheet.js';
 
@@ -12,6 +12,9 @@ export const WALK_SPEED = 56;
 export const VISIT_LINGER = 3;
 export const VISIT_GAP = 18;
 export const CHEER_TIME = 1.5;
+export const BODY_GAP = BODY_REACH;
+export const REROUTE_AFTER = 0.4;
+export const GIVE_UP_AFTER = 2.5;
 
 interface Target {
   point: Point;
@@ -57,6 +60,8 @@ export class Villager {
   private chat: Chat = null;
   private idleFor = 0;
   private lounging = false;
+  private stalledFor = 0;
+  private rerouted = false;
 
   constructor(
     readonly id: string,
@@ -109,13 +114,18 @@ export class Villager {
     return this.activityNow === 'idle' && this.visit === null && this.chat === null;
   }
 
+  get stalled(): boolean {
+    return this.stalledFor > 0 && this.stalledFor < GIVE_UP_AFTER;
+  }
+
   get pose(): Pose {
+    if (this.stalled) return 'idle';
     if (this.moving) return 'walk';
     if (this.cheer > 0) return 'cheer';
     if (this.visit !== null) return 'idle';
     if (isWorkingActivity(this.activityNow)) return 'work';
     if (this.activityNow === 'sleep' || this.activityNow === 'off') return 'sit';
-    if (this.doing === 'nap' || this.doing === 'bench') return 'sit';
+    if (this.doing === 'nap' || this.doing === 'bench' || this.doing === 'table') return 'sit';
     return 'idle';
   }
 
@@ -276,7 +286,34 @@ export class Villager {
     return { point: nav.nearest(point), facing: null, via: route?.slice(0, -1) ?? [] };
   }
 
-  private walkTo(target: Target): void {
+  private bodies(): Point[] {
+    return this.peers()
+      .filter((peer) => peer !== this)
+      .map((peer) => peer.position);
+  }
+
+  private blocker(next: Point): Villager | undefined {
+    const { point } = this.destination;
+    return this.peers().find((peer) => {
+      if (peer === this) return false;
+      const gap = Math.hypot(peer.position.x - next.x, peer.position.y - next.y);
+      if (gap >= BODY_GAP) return false;
+      const now = Math.hypot(peer.position.x - this.position.x, peer.position.y - this.position.y);
+      if (gap >= now) return false;
+      return Math.hypot(peer.position.x - point.x, peer.position.y - point.y) >= BODY_GAP;
+    });
+  }
+
+  private yield(dt: number): void {
+    this.stalledFor += dt;
+    if (this.rerouted || this.stalledFor < REROUTE_AFTER) return;
+    this.rerouted = true;
+    const stalledFor = this.stalledFor;
+    this.walkTo({ ...this.destination, via: [] }, this.bodies());
+    this.stalledFor = stalledFor;
+  }
+
+  private walkTo(target: Target, avoid: readonly Point[] = []): void {
     const away =
       target.free === true ||
       this.layout.zoneOf(this.position) !== this.roam ||
@@ -285,19 +322,30 @@ export class Villager {
     let from = this.position;
     this.path = [from];
     for (const stop of [...(target.via ?? []), target.point]) {
-      this.path.push(...nav.route(from, stop).slice(1));
+      this.path.push(...nav.route(from, stop, avoid).slice(1));
       from = stop;
     }
     this.travelled = 0;
     this.length = routeLength(this.path);
     this.destination = target;
+    if (avoid.length === 0) {
+      this.stalledFor = 0;
+      this.rerouted = false;
+    }
     if (!this.moving) this.arrive();
   }
 
   private advance(dt: number): void {
     const before = this.position;
-    this.travelled = Math.min(this.length, this.travelled + WALK_SPEED * dt);
-    this.position = pointAlong(this.path, this.travelled);
+    const travelled = Math.min(this.length, this.travelled + WALK_SPEED * dt);
+    const next = pointAlong(this.path, travelled);
+    if (this.blocker(next) !== undefined && this.stalledFor < GIVE_UP_AFTER) {
+      this.yield(dt);
+      return;
+    }
+    if (this.stalledFor < GIVE_UP_AFTER) this.stalledFor = 0;
+    this.travelled = travelled;
+    this.position = next;
     this.face(directionTo(this.position.x - before.x, this.position.y - before.y, this.facing));
     if (this.travelled >= this.length) {
       this.position = { ...this.destination.point };

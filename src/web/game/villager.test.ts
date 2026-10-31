@@ -3,7 +3,7 @@ import { Layout } from './layout.js';
 import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 import { LOUNGE_AFTER } from './activity.js';
-import { CHEER_TIME, VISIT_GAP, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
+import { BODY_GAP, CHEER_TIME, VISIT_GAP, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
 const first = () => 0;
@@ -530,6 +530,32 @@ describe('Villager lounging', () => {
     }
   });
 
+  it('sits on a chair at the table', () => {
+    const chairs = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      spots: [{ kind: 'table', at: { x: 300, y: 200 }, facing: 'south' }],
+      zones: [
+        { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+        { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+      ],
+    });
+    const villager = new Villager('a', 0, new Layout(chairs), 'idle', fixed(0.99));
+    for (let i = 0; i < 400 && villager.doing !== 'table'; i += 1) villager.update(0.05);
+    expect(villager.doing).toBe('table');
+    expect(villager.pose).toBe('sit');
+    expect(villager.facing).toBe('south');
+  });
+
+  it('stays out of its work zone for as long as it is idle', () => {
+    const villager = lounger(seededLounge());
+    run(villager, LOUNGE_AFTER + 5);
+    settle(villager);
+    for (let t = 0; t < 300; t += 0.05) {
+      villager.update(0.05);
+      expect(villager.position.x).toBeGreaterThanOrEqual(240);
+    }
+  });
+
   it('keeps its post when there is no common zone', () => {
     const solo = parseWorkshopMap({
       ...provisionalWorkshop(),
@@ -549,3 +575,64 @@ function seededLounge(): () => number {
   let seed = 0;
   return () => (seed = (seed + 0.37) % 1);
 }
+
+describe('Villager bodies', () => {
+  function pair() {
+    const shared = layout();
+    const all: Villager[] = [];
+    const peers = () => all;
+    const make = (id: string, station: number) => {
+      const villager = new Villager(id, station, shared, 'write', first, peers);
+      all.push(villager);
+      return villager;
+    };
+    return { shared, make };
+  }
+
+  it('never overlaps a colleague standing in its way', () => {
+    const { make } = pair();
+    const walker = make('a', 0);
+    const standing = make('b', 1);
+    const start = { ...walker.position };
+    standing.position = { x: start.x + 40, y: start.y };
+    walker.startVisit({ x: start.x + 120, y: start.y });
+    let closest = Infinity;
+    for (let i = 0; i < 400; i += 1) {
+      walker.update(0.05);
+      closest = Math.min(
+        closest,
+        Math.hypot(
+          walker.position.x - standing.position.x,
+          walker.position.y - standing.position.y,
+        ),
+      );
+    }
+    expect(closest).toBeGreaterThanOrEqual(BODY_GAP - 3);
+  });
+
+  it('waits in place while blocked and shows an idle pose', () => {
+    const { make } = pair();
+    const walker = make('a', 0);
+    const standing = make('b', 1);
+    walker.position = { x: 100, y: 100 };
+    standing.position = { x: 100 + BODY_GAP + 2, y: 100 };
+    (walker as unknown as { path: unknown }).path = [walker.position, { x: 160, y: 100 }];
+    (walker as unknown as { length: number }).length = 60;
+    walker.update(0.1);
+    expect(walker.position).toEqual({ x: 100, y: 100 });
+    expect(walker.stalled).toBe(true);
+    expect(walker.pose).toBe('idle');
+  });
+
+  it('gives up waiting so nobody deadlocks', () => {
+    const { make } = pair();
+    const walker = make('a', 0);
+    const standing = make('b', 1);
+    walker.position = { x: 100, y: 100 };
+    standing.position = { x: 100 + BODY_GAP + 2, y: 100 };
+    (walker as unknown as { path: unknown }).path = [walker.position, { x: 100, y: 100 }];
+    (walker as unknown as { length: number }).length = 0;
+    run(walker, 1);
+    expect(walker.stalled).toBe(false);
+  });
+});

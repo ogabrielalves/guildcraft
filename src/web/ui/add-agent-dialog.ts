@@ -221,8 +221,8 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
         card.setAttribute('role', 'radio');
         card.setAttribute('aria-checked', String(id === skin));
         const portrait = make('canvas', 'recruit__portrait');
-        portrait.width = PORTRAIT.width;
-        portrait.height = PORTRAIT.height;
+        portrait.width = PORTRAIT.width * PORTRAIT.zoom;
+        portrait.height = PORTRAIT.height * PORTRAIT.zoom;
         const name = make('span', 'recruit__character-name');
         name.textContent = characterName(assets, id, getLocale());
         card.append(portrait, name);

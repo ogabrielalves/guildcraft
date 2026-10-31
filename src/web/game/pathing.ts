@@ -2,6 +2,7 @@ import type { Point, Rect, WorkshopMap } from './map.js';
 import { contains } from './map.js';
 
 export const NAV_CELL = 8;
+export const BODY_REACH = 12;
 const DIAGONAL = Math.SQRT2;
 const STEPS = [
   [1, 0, 1],
@@ -141,25 +142,59 @@ export class NavGrid {
     return this.center(index % this.columns, Math.floor(index / this.columns));
   }
 
-  clear(from: Point, to: Point): boolean {
+  clear(from: Point, to: Point, crowd: ReadonlySet<number> | null = null): boolean {
     const length = Math.hypot(to.x - from.x, to.y - from.y);
     const steps = Math.ceil(length / (this.cell / 4));
     for (let step = 0; step <= steps; step++) {
       const ratio = steps === 0 ? 0 : step / steps;
       const x = from.x + (to.x - from.x) * ratio;
       const y = from.y + (to.y - from.y) * ratio;
-      if (!this.walkable({ x, y })) return false;
+      if (!this.walkable({ x, y }) || crowd?.has(this.cellOf({ x, y })) === true) return false;
     }
     return true;
   }
 
-  route(from: Point, to: Point): Point[] {
+  route(from: Point, to: Point, avoid: readonly Point[] = []): Point[] {
     const start = this.nearest(from);
     const goal = this.nearest(to);
-    const cells = this.search(start, goal);
+    if (avoid.length > 0) {
+      const crowd = this.crowd(avoid, [start, goal]);
+      const around = this.search(start, goal, crowd);
+      if (around !== null) {
+        const inner = this.smooth([start, ...around.slice(1, -1), goal], crowd);
+        return withoutRepeats([from, ...inner, to]);
+      }
+    }
+    const cells = this.search(start, goal, null);
     if (cells === null) return withoutRepeats([from, to]);
-    const inner = this.smooth([start, ...cells.slice(1, -1), goal]);
+    const inner = this.smooth([start, ...cells.slice(1, -1), goal], null);
     return withoutRepeats([from, ...inner, to]);
+  }
+
+  private cellOf(point: Point): number {
+    return Math.floor(point.y / this.cell) * this.columns + Math.floor(point.x / this.cell);
+  }
+
+  private crowd(bodies: readonly Point[], except: readonly Point[]): Set<number> {
+    const reach = BODY_REACH + this.cell / 2;
+    const cells = new Set<number>();
+    for (const body of bodies) {
+      const column = Math.floor(body.x / this.cell);
+      const row = Math.floor(body.y / this.cell);
+      const span = Math.ceil(reach / this.cell);
+      for (let dy = -span; dy <= span; dy++) {
+        for (let dx = -span; dx <= span; dx++) {
+          if (!this.open(column + dx, row + dy)) continue;
+          const center = this.center(column + dx, row + dy);
+          if (Math.hypot(center.x - body.x, center.y - body.y) >= reach) continue;
+          if (except.some((safe) => Math.hypot(center.x - safe.x, center.y - safe.y) < reach)) {
+            continue;
+          }
+          cells.add((row + dy) * this.columns + column + dx);
+        }
+      }
+    }
+    return cells;
   }
 
   private keepLargestArea(): void {
@@ -195,7 +230,7 @@ export class NavGrid {
     return { x: (column + 0.5) * this.cell, y: (row + 0.5) * this.cell };
   }
 
-  private search(start: Point, goal: Point): Point[] | null {
+  private search(start: Point, goal: Point, crowd: ReadonlySet<number> | null): Point[] | null {
     const { columns } = this;
     const index = (point: Point) =>
       Math.floor(point.y / this.cell) * columns + Math.floor(point.x / this.cell);
@@ -217,8 +252,10 @@ export class NavGrid {
       const column = current % columns;
       const row = Math.floor(current / columns);
       for (const [dx, dy, step] of STEPS) {
-        if (!this.open(column + dx, row + dy)) continue;
-        if (dx !== 0 && dy !== 0 && !(this.open(column + dx, row) && this.open(column, row + dy))) {
+        const free = (c: number, r: number) =>
+          this.open(c, r) && crowd?.has(r * columns + c) !== true;
+        if (!free(column + dx, row + dy)) continue;
+        if (dx !== 0 && dy !== 0 && !(free(column + dx, row) && free(column, row + dy))) {
           continue;
         }
         const next = (row + dy) * columns + column + dx;
@@ -240,7 +277,7 @@ export class NavGrid {
     return cells;
   }
 
-  private smooth(points: Point[]): Point[] {
+  private smooth(points: Point[], crowd: ReadonlySet<number> | null): Point[] {
     const first = points[0];
     if (first === undefined) return [];
     const kept = [first];
@@ -249,7 +286,7 @@ export class NavGrid {
       let next = anchor + 1;
       for (let candidate = points.length - 1; candidate > anchor + 1; candidate--) {
         const [a, b] = [points[anchor], points[candidate]];
-        if (a !== undefined && b !== undefined && this.clear(a, b)) {
+        if (a !== undefined && b !== undefined && this.clear(a, b, crowd)) {
           next = candidate;
           break;
         }

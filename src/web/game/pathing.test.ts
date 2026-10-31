@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Point } from './map.js';
-import { NavGrid, pointAlong, routeLength } from './pathing.js';
+import { BODY_REACH, NavGrid, pointAlong, routeLength } from './pathing.js';
 
 const wall = { x: 32, y: 0, width: 16, height: 64 };
 const room = { width: 80, height: 80, obstacles: [wall] };
@@ -11,6 +11,35 @@ function blocked(grid: NavGrid, path: readonly Point[]): boolean {
     return previous !== undefined && !grid.clear(previous, point);
   });
 }
+
+describe('NavGrid crowd', () => {
+  const open = { width: 160, height: 80, obstacles: [] };
+
+  it('steers around a body standing in the way', () => {
+    const grid = new NavGrid(open);
+    const body = { x: 80, y: 40 };
+    const route = grid.route({ x: 8, y: 40 }, { x: 152, y: 40 }, [body]);
+    expect(route.length).toBeGreaterThan(2);
+    for (let at = 0; at <= routeLength(route); at += 2) {
+      const point = pointAlong(route, at);
+      expect(Math.hypot(point.x - body.x, point.y - body.y)).toBeGreaterThanOrEqual(BODY_REACH - 2);
+    }
+  });
+
+  it('ignores a body standing on the goal', () => {
+    const grid = new NavGrid(open);
+    const route = grid.route({ x: 8, y: 40 }, { x: 152, y: 40 }, [{ x: 152, y: 40 }]);
+    expect(route.at(-1)).toEqual({ x: 152, y: 40 });
+  });
+
+  it('walks straight when the body is far away', () => {
+    const grid = new NavGrid(open);
+    expect(grid.route({ x: 8, y: 8 }, { x: 152, y: 8 }, [{ x: 80, y: 70 }])).toEqual([
+      { x: 8, y: 8 },
+      { x: 152, y: 8 },
+    ]);
+  });
+});
 
 describe('NavGrid', () => {
   it('blocks every cell an obstacle touches', () => {

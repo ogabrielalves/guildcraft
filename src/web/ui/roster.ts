@@ -52,7 +52,8 @@ export function portraitFace(assets: Assets): DrawFace {
     const source = scratch.getContext('2d', { willReadFrequently: true });
     const ctx = target.getContext('2d');
     if (!source || !ctx) return false;
-    drawPortrait(source, assets, skin, 0);
+    source.imageSmoothingEnabled = false;
+    drawPortrait(source, assets, skin, 0, 1);
     const origin = faceOrigin(
       source.getImageData(0, 0, PORTRAIT.width, PORTRAIT.height).data,
       PORTRAIT.width,

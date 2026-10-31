@@ -7,13 +7,14 @@
   "facing": "four",
   "image": "faelan.png",
   "frame": {
-    "width": 32,
-    "height": 32
+    "width": 64,
+    "height": 64
   },
   "anchor": {
-    "x": 16,
-    "y": 30
+    "x": 32,
+    "y": 60
   },
+  "scale": 0.5,
   "animations": {
     "idle": {
       "row": 22,

@@ -217,8 +217,8 @@ export function createPanel(options: PanelOptions): Panel {
   element.hidden = true;
 
   const portrait = make('canvas', 'panel__portrait');
-  portrait.width = PORTRAIT.width;
-  portrait.height = PORTRAIT.height;
+  portrait.width = PORTRAIT.width * PORTRAIT.zoom;
+  portrait.height = PORTRAIT.height * PORTRAIT.zoom;
   const name = make('h2', 'panel__name');
   const status = make('span', 'panel__status');
   const queue = make('span', 'panel__queue');
