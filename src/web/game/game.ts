@@ -9,7 +9,7 @@ import { bindInput, hitTest } from './input.js';
 import type { WorkshopMap } from './map.js';
 import type { Hover } from './renderer.js';
 import { BODY, drawScene, emittersFor } from './renderer.js';
-import { World } from './world.js';
+import { World, browserZoneMemory } from './world.js';
 
 export const STAGE_BACKGROUND = '#17110d';
 
@@ -38,7 +38,7 @@ export function createGame(options: GameOptions): Game {
   const now = options.now ?? (() => Date.now());
   const canvas = document.createElement('canvas');
   canvas.className = 'game';
-  const world = new World(map, options.random);
+  const world = new World(map, options.random, browserZoneMemory());
   let agents = new Map<string, AgentView>();
   let hovered: Hover = null;
   const particles = new Particles(options.random);

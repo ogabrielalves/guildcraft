@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AgentStatus, AgentView, VillageEvent } from '../../shared/agent.js';
 import { parseWorkshopMap } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
-import { EVENT_FRESHNESS_MS, World } from './world.js';
+import { EVENT_FRESHNESS_MS, World, projectOf } from './world.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
 
@@ -57,6 +57,64 @@ describe('World', () => {
     expect(world.villager('c')?.station).toBe(2);
     world.sync([agent('a'), agent('c'), agent('d')]);
     expect(world.villager('d')?.station).toBe(1);
+  });
+
+  describe('projects', () => {
+    const zoned = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [
+        { id: 'left', areas: [{ x: 0, y: 0, width: 200, height: 352 }] },
+        { id: 'middle', areas: [{ x: 200, y: 0, width: 160, height: 352 }] },
+        { id: 'right', areas: [{ x: 360, y: 0, width: 120, height: 352 }] },
+      ],
+    });
+    const at = (id: string, cwd: string): AgentView => ({ ...agent(id), cwd });
+    const zonesOf = (world: World) => world.all().map((v) => [v.id, v.zone]);
+
+    it('keeps every agent of a project in the same zone, other projects elsewhere', () => {
+      const world = new World(zoned, () => 0);
+      world.sync([at('a', '/p/web'), at('b', '/p/api'), at('c', '/p/web/'), at('d', '/p/web')]);
+      const zone = (id: string) => world.villager(id)?.zone;
+      expect(zone('a')).toBe(zone('c'));
+      expect(zone('a')).toBe(zone('d'));
+      expect(zone('b')).not.toBe(zone('a'));
+    });
+
+    it('keeps the project zone while it has agents, and frees it afterwards', () => {
+      const world = new World(zoned, () => 0);
+      world.sync([at('a', '/p/web'), at('b', '/p/api')]);
+      const web = world.villager('a')?.zone;
+      world.sync([at('a', '/p/web'), at('b', '/p/api'), at('c', '/p/web')]);
+      expect(world.villager('c')?.zone).toBe(web);
+      world.sync([at('b', '/p/api')]);
+      world.sync([at('b', '/p/api'), at('d', '/p/docs')]);
+      expect(world.villager('d')?.zone).toBe(web);
+    });
+
+    it('restores the project zones after a reload', () => {
+      const saved: Record<string, string> = {};
+      const memory = {
+        load: () => ({ ...saved }),
+        save: (zones: Record<string, string>) => Object.assign(saved, zones),
+      };
+      const first = new World(zoned, () => 0, memory);
+      first.sync([at('a', '/p/web'), at('b', '/p/api')]);
+      const before = zonesOf(first);
+      const reloaded = new World(zoned, () => 0, memory);
+      reloaded.sync([at('b', '/p/api'), at('a', '/p/web')]);
+      expect(zonesOf(reloaded)).toEqual([...before].reverse());
+    });
+
+    it('falls back to a free station elsewhere once the zone is full', () => {
+      const world = new World(zoned, () => 0);
+      world.sync(Array.from({ length: 5 }, (_, i) => at(`w${String(i)}`, '/p/web')));
+      expect(world.all()).toHaveLength(5);
+    });
+  });
+
+  it('normalizes project paths', () => {
+    expect(projectOf('C:\\code\\web\\')).toBe('C:/code/web');
+    expect(projectOf('/code//web/')).toBe('/code/web');
   });
 
   it('leaves agents beyond the last station out', () => {

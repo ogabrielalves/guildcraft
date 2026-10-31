@@ -219,11 +219,17 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
 const TAG_GAP = 4;
 
 function drawStationTags(ctx: Paint, scene: Scene): void {
+  const drawn = new Set<string>();
   for (const villager of scene.world.all()) {
     const place = scene.world.map.stations[villager.station];
     const cwd = scene.agents.get(villager.id)?.cwd;
     const folder = cwd === undefined ? '' : folderName(cwd);
     if (place === undefined || folder === '') continue;
+    if (villager.zone !== null) {
+      const key = `${villager.zone}/${folder}`;
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+    }
     drawFolderTag(ctx, folder, place.work.x, Math.round(place.work.y + TAG_GAP));
   }
 }

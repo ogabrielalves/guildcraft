@@ -331,6 +331,22 @@ describe('drawScene labels', () => {
     ]);
   });
 
+  it('draws a single folder tag per zone when agents share a project', () => {
+    const cwd = '/code/guildcraft';
+    const zoned = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [{ id: 'all', areas: [{ x: 0, y: 0, width: 480, height: 352 }] }],
+    });
+    const world = new World(zoned, () => 0);
+    const agents = [
+      { ...agent('a', 'idle'), cwd },
+      { ...agent('b', 'idle'), cwd },
+    ];
+    world.sync(agents);
+    const target = { ...scene(agents), world };
+    expect(texts(target).filter((text) => text === 'guildcraft')).toHaveLength(1);
+  });
+
   it('shows the queue on the nameplate', () => {
     expect(texts(scene([{ ...agent('a', 'idle'), queued: 3 }]))).toEqual(['A', '3']);
   });
