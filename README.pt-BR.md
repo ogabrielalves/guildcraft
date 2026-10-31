@@ -100,6 +100,14 @@ Ele abre a oficina no navegador. A porta padrão é a 7777, e dá para trocar co
 
 Quer só dar uma olhada, sem servidor nem Claude? Abra o app web com `?demo` e você terá agentes simulados.
 
+## Perguntas frequentes
+
+**Usar `/model` ou `/effort` dentro de um agente muda só aquele agente?**
+Não. O Claude Code salva os dois como padrão global, então a mudança vale também para os próximos agentes que você recrutar e para as suas sessões normais do Claude Code.
+
+**Dá para colar imagem no console de um agente com Ctrl+V?**
+Ainda não. Texto cola normalmente, mas colar imagem não funciona no console.
+
 ## Desenvolvimento
 
 ```sh

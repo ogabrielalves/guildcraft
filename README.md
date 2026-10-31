@@ -100,6 +100,14 @@ It opens the workshop in your browser. The default port is 7777, and you can cha
 
 Want to look around without a server or Claude? Open the web app with `?demo` and you get simulated agents.
 
+## FAQ
+
+**Does `/model` or `/effort` inside an agent only change that agent?**
+No. Claude Code saves them as your global default, so the change also applies to the next agents you recruit and to your regular Claude Code sessions.
+
+**Can I paste an image into an agent's console with Ctrl+V?**
+Not yet. Text pastes fine, but pasting images does not work in the console.
+
 ## Development
 
 ```sh
