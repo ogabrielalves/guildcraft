@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/ogabrielalves/guildcraft/compare/v1.0.0...v1.1.0) (2026-10-31)
+
+
+### Features
+
+* **i18n:** rename remove button to delete adventurer ([b0ffeae](https://github.com/ogabrielalves/guildcraft/commit/b0ffeae43453c4178503bc1a6dd7c432ceb542e9))
+
 ## 1.0.0 (2026-10-31)
 
 
