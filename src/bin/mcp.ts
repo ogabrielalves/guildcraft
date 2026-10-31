@@ -7,11 +7,16 @@ const { version } = createRequire(import.meta.url)('../../package.json') as { ve
 const port = Number(process.env[`${ENV_PREFIX}PORT`]);
 const agentId = process.env[`${ENV_PREFIX}AGENT_ID`] ?? '';
 const token = process.env[`${ENV_PREFIX}TOKEN`] ?? '';
+const name = process.env[`${ENV_PREFIX}AGENT_NAME`];
 
 if (!Number.isInteger(port) || agentId === '' || token === '') {
   process.stderr.write('guildcraft mcp: missing port, agent id or token in the environment\n');
   process.exit(1);
 }
 
-const server = createVillageServer(createVillageApi({ port, agentId, token, fetch }), version);
+const server = createVillageServer(
+  createVillageApi({ port, agentId, token, fetch }),
+  version,
+  name,
+);
 await server.connect(new StdioServerTransport());

@@ -70,4 +70,9 @@ describe('Agent', () => {
     agent.setStatus('idle');
     expect(agent.toStored()).toEqual({ id: 'a1', ...INIT });
   });
+
+  it('persists the session id once known', () => {
+    const agent = new Agent({ ...INIT, id: 'a1', sessionId: 's1' });
+    expect(agent.toStored()).toEqual({ id: 'a1', ...INIT, sessionId: 's1' });
+  });
 });

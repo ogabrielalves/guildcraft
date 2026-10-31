@@ -88,8 +88,15 @@ export function sentText(to: string, result: SendResult): string {
   return `${to} is busy. The message is queued (position ${result.queued}) and will be delivered when they finish.`;
 }
 
-export function createVillageServer(api: VillageApi, version: string): McpServer {
-  const server = new McpServer({ name: MCP_SERVER_NAME, version });
+export function villageInstructions(name: string): string {
+  return `You are "${name}", one of several Claude Code agents in a Guildcraft workshop. Call list_villagers to see the others by name, and send_message to hand work to one of them or ask for something.`;
+}
+
+export function createVillageServer(api: VillageApi, version: string, name?: string): McpServer {
+  const server = new McpServer(
+    { name: MCP_SERVER_NAME, version },
+    name ? { instructions: villageInstructions(name) } : undefined,
+  );
   server.registerTool(
     'list_villagers',
     {

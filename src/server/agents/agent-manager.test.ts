@@ -270,6 +270,23 @@ describe('restore', () => {
     expect(ctx.processes).toHaveLength(1);
   });
 
+  it('resumes the saved session and remembers new ones', async () => {
+    const ctx = setup();
+    await ctx.manager.restore([{ id: 'a1', ...INPUT, sessionId: 's-old' }]);
+    expect(ctx.processes[0]?.spec.args.slice(-2)).toEqual(['--resume', 's-old']);
+    ctx.manager.hook('a1', 'SessionStart', { session_id: 's-new' });
+    await Promise.resolve();
+    expect(ctx.saved.at(-1)?.[0]?.sessionId).toBe('s-new');
+  });
+
+  it('drops a saved session that fails to resume', async () => {
+    const ctx = setup();
+    await ctx.manager.restore([{ id: 'a1', ...INPUT, sessionId: 's-gone' }]);
+    ctx.processes[0]?.exit(1);
+    await Promise.resolve();
+    expect(ctx.saved.at(-1)?.[0]?.sessionId).toBeUndefined();
+  });
+
   it('keeps restoring when one agent fails to spawn', async () => {
     let calls = 0;
     const ctx = setup({

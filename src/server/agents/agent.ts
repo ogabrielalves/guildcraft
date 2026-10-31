@@ -14,6 +14,7 @@ export interface AgentInit {
   cwd: string;
   skin: string;
   permissionMode: PermissionMode;
+  sessionId?: string;
 }
 
 export class Agent {
@@ -28,6 +29,7 @@ export class Agent {
   model: string | null = null;
   effort: string | null = null;
   queued = 0;
+  sessionId: string | null;
 
   constructor(init: AgentInit) {
     this.id = init.id ?? randomUUID();
@@ -35,6 +37,7 @@ export class Agent {
     this.cwd = init.cwd;
     this.skin = init.skin;
     this.permissionMode = init.permissionMode;
+    this.sessionId = init.sessionId ?? null;
   }
 
   setStatus(
@@ -79,12 +82,14 @@ export class Agent {
   }
 
   toStored(): StoredAgent {
-    return {
+    const stored: StoredAgent = {
       id: this.id,
       name: this.name,
       cwd: this.cwd,
       skin: this.skin,
       permissionMode: this.permissionMode,
     };
+    if (this.sessionId) stored.sessionId = this.sessionId;
+    return stored;
   }
 }

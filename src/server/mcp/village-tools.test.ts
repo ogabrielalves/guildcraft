@@ -22,7 +22,7 @@ const CORVIN: Villager = {
 
 let client: Client | null = null;
 
-async function connect(api: Partial<VillageApi>) {
+async function connect(api: Partial<VillageApi>, name?: string) {
   const full: VillageApi = {
     listVillagers: vi.fn(() => Promise.resolve({ ok: true as const, value: [] })),
     sendMessage: vi.fn(() =>
@@ -30,7 +30,7 @@ async function connect(api: Partial<VillageApi>) {
     ),
     ...api,
   };
-  const server = createVillageServer(full, '1.2.3');
+  const server = createVillageServer(full, '1.2.3', name);
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   await server.connect(serverSide);
   client = new Client({ name: 'test', version: '0.0.0' });
@@ -51,6 +51,11 @@ afterEach(async () => {
 });
 
 describe('village server', () => {
+  it('tells the agent its own name through the server instructions', async () => {
+    const { client } = await connect({}, 'Mortis');
+    expect(client.getInstructions()).toContain('"Mortis"');
+  });
+
   it('lists both tools with english descriptions', async () => {
     const { client } = await connect({});
     const { tools } = await client.listTools();

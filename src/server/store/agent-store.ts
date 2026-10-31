@@ -11,6 +11,7 @@ export interface StoredAgent {
   cwd: string;
   skin: string;
   permissionMode: PermissionMode;
+  sessionId?: string;
 }
 
 const FILE_NAME = 'agents.json';
@@ -22,12 +23,15 @@ function isStoredAgent(value: unknown): value is StoredAgent {
   return (
     STRING_FIELDS.every((field) => typeof record[field] === 'string' && record[field] !== '') &&
     AGENT_ID_PATTERN.test(record.id as string) &&
-    isPermissionMode(record.permissionMode)
+    isPermissionMode(record.permissionMode) &&
+    (record.sessionId === undefined || typeof record.sessionId === 'string')
   );
 }
 
-function pick({ id, name, cwd, skin, permissionMode }: StoredAgent): StoredAgent {
-  return { id, name, cwd, skin, permissionMode };
+function pick({ id, name, cwd, skin, permissionMode, sessionId }: StoredAgent): StoredAgent {
+  return sessionId
+    ? { id, name, cwd, skin, permissionMode, sessionId }
+    : { id, name, cwd, skin, permissionMode };
 }
 
 export class AgentStore {

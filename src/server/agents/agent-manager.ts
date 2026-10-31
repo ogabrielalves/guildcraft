@@ -117,6 +117,8 @@ interface Runtime {
   unsubscribe: (() => void)[];
 }
 
+const RESUME_FAIL_MS = 15_000;
+
 type QueueHold = 'none' | 'interrupted' | 'resumed';
 
 const ESC = '\x1b';
@@ -372,6 +374,7 @@ export class AgentManager {
     if (runtime) this.advanceHold(runtime, event);
     const payload = parseHookPayload(rawPayload);
     if (runtime) this.trackSession(runtime, payload);
+    if (payload.sessionId) this.rememberSession(agent, payload.sessionId);
     if (runtime && event === 'Stop') void this.refreshModel(agent, runtime);
     this.settlePermissions(id, event, payload);
     const outcome = handleHook(event, payload, agent.status);
@@ -417,6 +420,7 @@ export class AgentManager {
       const agent = this.deps.registry.get(id);
       if (!agent || !entry) continue;
       runtime.sessionId ??= entry.sessionId;
+      this.rememberSession(agent, entry.sessionId);
       if (runtime.trustOpen || this.broker.oldestFor(id)) continue;
       const next = reconcileSession(agent.status, runtime.lastSignalAt, entry);
       if (!next) continue;
@@ -445,6 +449,12 @@ export class AgentManager {
       if (!runtime || agent?.status === 'offline') return null;
       return { transcriptPath: runtime.transcriptPath, session: runtime.session };
     });
+  }
+
+  private rememberSession(agent: Agent, sessionId: string): void {
+    if (agent.sessionId === sessionId) return;
+    agent.sessionId = sessionId;
+    void this.persist().catch(() => undefined);
   }
 
   private trackSession(runtime: Runtime, payload: HookPayload): void {
@@ -511,6 +521,7 @@ export class AgentManager {
       return false;
     }
     const process = this.deps.createProcess(this.spawnSpec(agent, files));
+    const resumedAt = agent.sessionId ? this.now() : null;
     const runtime: Runtime = {
       process,
       queue: new MessageQueue(
@@ -540,6 +551,14 @@ export class AgentManager {
         if (runtime.trustWindow) void this.checkTrust(agent, runtime);
       }),
       process.onExit(() => {
+        if (
+          resumedAt !== null &&
+          runtime.sessionId === null &&
+          this.now() - resumedAt < RESUME_FAIL_MS
+        ) {
+          agent.sessionId = null;
+          void this.persist().catch(() => undefined);
+        }
         this.broker.releaseAgent(agent.id);
         this.clearReadyTimer(agent.id);
         clearTrustRetry(runtime);
@@ -575,6 +594,7 @@ export class AgentManager {
         files.mcp,
         '--permission-mode',
         agent.permissionMode,
+        ...(agent.sessionId ? ['--resume', agent.sessionId] : []),
       ],
       cwd: agent.cwd,
       env: {
