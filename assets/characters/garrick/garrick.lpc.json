@@ -6,15 +6,15 @@
       "itemId": "body",
       "subId": null,
       "variant": "",
-      "recolor": "light",
-      "name": "Body Color (light)"
+      "recolor": "brown",
+      "name": "Body Color (brown)"
     },
     "head": {
       "itemId": "heads_human_male",
       "subId": null,
       "variant": "",
-      "recolor": "light",
-      "name": "Human Male (light)"
+      "recolor": "brown",
+      "name": "Human Male (brown)"
     },
     "hair": {
       "itemId": "hair_buzzcut",
@@ -104,14 +104,14 @@
     "1h_backslash": false,
     "1h_halfslash": false
   },
-  "url": "https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/#sex=male&body=Body_Color_light&head=Human_Male_light&hair=Buzzcut_black&beard=Medium_Beard_black&clothes=Shortsleeve_gray&overalls=Overalls_brown&legs=Pants_charcoal&shoes=Basic_Boots_black&bracers=Bracers_iron&gloves=Gloves_bronze",
+  "url": "http://localhost:5200/#sex=male&body=Body_Color_brown&head=Human_Male_brown&hair=Buzzcut_black&beard=Medium_Beard_black&clothes=Shortsleeve_gray&overalls=Overalls_brown&legs=Pants_charcoal&shoes=Basic_Boots_black&bracers=Bracers_iron&gloves=Gloves_bronze",
   "layers": [
     {
       "itemId": "body",
-      "name": "Body Color (light)",
+      "name": "Body Color (brown)",
       "variant": "",
       "recolors": {
-        "body": "light"
+        "body": "brown"
       },
       "zPos": 10,
       "layerNum": 1,
@@ -334,10 +334,10 @@
     },
     {
       "itemId": "heads_human_male",
-      "name": "Human Male (light)",
+      "name": "Human Male (brown)",
       "variant": "",
       "recolors": {
-        "head": "light"
+        "head": "brown"
       },
       "zPos": 100,
       "layerNum": 1,
@@ -638,6 +638,5 @@
         "http://opengameart.org/content/lpc-clothing-updates"
       ]
     }
-  ],
-  "hash": "sex=male&body=Body_Color_light&head=Human_Male_light&hair=Buzzcut_black&beard=Medium_Beard_black&clothes=Shortsleeve_gray&overalls=Overalls_brown&legs=Pants_charcoal&shoes=Basic_Boots_black&bracers=Bracers_iron&gloves=Gloves_bronze"
+  ]
 }

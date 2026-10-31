@@ -1,0 +1,50 @@
+{
+  "name": {
+    "en": "Aurora",
+    "pt-BR": "Aurora"
+  },
+  "source": "lpc",
+  "facing": "four",
+  "image": "aurora.png",
+  "frame": {
+    "width": 64,
+    "height": 64
+  },
+  "anchor": {
+    "x": 32,
+    "y": 60
+  },
+  "scale": 0.5,
+  "animations": {
+    "idle": {
+      "row": 22,
+      "frames": 2,
+      "fps": 2
+    },
+    "walk": {
+      "row": 8,
+      "start": 1,
+      "frames": 8,
+      "fps": 10
+    },
+    "work": {
+      "row": 0,
+      "frames": 7,
+      "fps": 8
+    },
+    "sit": {
+      "row": 30,
+      "start": 1,
+      "frames": 1,
+      "fps": 1
+    },
+    "cheer": {
+      "row": 34,
+      "start": 2,
+      "frames": 1,
+      "fps": 1
+    }
+  },
+  "license": "See assets/CREDITS.md and aurora.credits.txt",
+  "author": "Liberated Pixel Cup contributors"
+}

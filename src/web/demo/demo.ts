@@ -23,6 +23,8 @@ export const DEMO_SKINS = [
   'faelan',
   'amara',
   'garrick',
+  'aurora',
+  'vexis',
 ] as const;
 
 const DEMO_CREW: readonly Pick<AgentView, 'name' | 'cwd' | 'skin' | 'model' | 'effort'>[] = [

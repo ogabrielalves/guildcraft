@@ -5,7 +5,7 @@ Each `<id>/<id>.lpc.json` holds the `hash` and `url` needed to recreate the char
 
 **Scale:** the sheets (`assets/characters/<id>/<id>.png`) are the generator's native **64 px** output, drawn at `"scale": 0.5` to match the Pixel Crawler art. Row and column indices are unchanged, but every pixel measurement below (y, frame and sheet sizes) is in the old half-size units: **multiply by 2** for the real sheet pixels (a 32x32 frame is 64x64 on the sheet, a 96x96 block is 192x192).
 
-## Standard area (same for all 10): y = 0–1727, 32x32 frames, 13 columns (416 px)
+## Standard area (same for all 12): y = 0–1727, 32x32 frames, 13 columns (416 px)
 
 Each 4-row animation follows the order **N, W, S, E**. `hurt` and `climb` have a single row.
 The "frames" column is the number of filled columns, starting at column 0.
@@ -44,6 +44,8 @@ Large weapons are **not** drawn on the standard thrust/slash rows. The weapon sw
 | lyra   | —               | —                                                                      | —                                                       |
 | mortis | —               | —                                                                      | —                                                       |
 | garrick| —               | —                                                                      | —                                                       |
+| aurora| —                                                                      | —                                                       |
+| vexis| —                                                                    | —                                                       |
 
 ## Extra blocks (below y = 1728), order N, W, S, E, 4 rows each
 
@@ -57,7 +59,7 @@ Large weapons are **not** drawn on the standard thrust/slash rows. The weapon sw
 | oren   | 768x2112   | thrust_oversize        | 1728    | 96x96 | 8          | staff strike                                                |
 | faelan | 576x1984   | walk_128               | 1728    | 64x64 | 9          | walk with the full bow visible (block name kept from the generator) |
 | amara  | 576x2112   | slash_oversize         | 1728    | 96x96 | 6          | mace swing                                                  |
-| corvin, lyra, mortis, garrick | 416x1728 | — | — | — | — | — (no weapons; layers chosen to cover spellcast, walk, idle, sit and emote) |
+| corvin, lyra, mortis, garrick, aurora, vexis | 416x1728 | — | — | — | — | — (no weapons; layers chosen to cover spellcast, walk, idle, sit and emote) |
 
 Row of each direction in a block: `y = start_y + dir * frame_size` (dir: N=0, W=1, S=2, E=3).
 The character is centered in each 64 or 96 px frame. To align it with the 32 px frame, offset by (64−32)/2 = 16 px or (96−32)/2 = 32 px.

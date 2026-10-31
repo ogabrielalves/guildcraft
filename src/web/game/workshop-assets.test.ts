@@ -107,7 +107,17 @@ const stations = readdirSync(join(ROOT, 'stations'))
 describe('shipped characters', () => {
   it('has the whole LPC cast', () => {
     expect(characters).toEqual(
-      expect.arrayContaining(['mortis', 'corvin', 'lyra', 'garrick', 'aldwin', 'brom', 'seren']),
+      expect.arrayContaining([
+        'mortis',
+        'corvin',
+        'lyra',
+        'garrick',
+        'aldwin',
+        'brom',
+        'seren',
+        'aurora',
+        'vexis',
+      ]),
     );
   });
 
