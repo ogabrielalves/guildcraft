@@ -25,7 +25,7 @@
   },
   "panel": {
     "restart": "Restart",
-    "remove": "Remove",
+    "remove": "Delete adventurer",
     "confirmRemove": "Remove {name}? The agent will be stopped.",
     "copy": "Copy",
     "paste": "Paste",

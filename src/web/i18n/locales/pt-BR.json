@@ -25,7 +25,7 @@
   },
   "panel": {
     "restart": "Reiniciar",
-    "remove": "Remover",
+    "remove": "Apagar aventureiro",
     "confirmRemove": "Remover {name}? O agente será encerrado.",
     "copy": "Copiar",
     "paste": "Colar",

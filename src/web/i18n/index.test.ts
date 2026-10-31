@@ -157,7 +157,7 @@ describe('runtime locale', () => {
   it('prefers the saved locale', () => {
     const storage = memoryStorage({ [LOCALE_STORAGE_KEY]: 'pt-BR' });
     expect(initI18n({ storage, languages: ['en-US'] })).toBe('pt-BR');
-    expect(t('panel.remove')).toBe('Remover');
+    expect(t('panel.remove')).toBe('Apagar aventureiro');
   });
 
   it('ignores an invalid saved locale', () => {
