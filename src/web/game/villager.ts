@@ -1,5 +1,5 @@
 import type { Activity, IdlePlan } from './activity.js';
-import { idleSpot, idleTime, isWorkingActivity, pickIdle } from './activity.js';
+import { idleSpot, idleTime, isWorkingActivity, LOUNGE_AFTER, pickIdle } from './activity.js';
 import type { Layout } from './layout.js';
 import type { Point, SpotKind } from './map.js';
 import { stationAt } from './map.js';
@@ -55,6 +55,8 @@ export class Villager {
   private plan: IdlePlan | null = null;
   private planTimer = 0;
   private chat: Chat = null;
+  private idleFor = 0;
+  private lounging = false;
 
   constructor(
     readonly id: string,
@@ -113,7 +115,7 @@ export class Villager {
     if (this.visit !== null) return 'idle';
     if (isWorkingActivity(this.activityNow)) return 'work';
     if (this.activityNow === 'sleep' || this.activityNow === 'off') return 'sit';
-    if (this.doing === 'nap') return 'sit';
+    if (this.doing === 'nap' || this.doing === 'bench') return 'sit';
     return 'idle';
   }
 
@@ -124,6 +126,8 @@ export class Villager {
     this.cheer = 0;
     this.plan = null;
     this.planTimer = 0;
+    this.idleFor = 0;
+    this.lounging = false;
     if (this.visit === null) this.walkTo(this.homeTarget());
   }
 
@@ -159,6 +163,7 @@ export class Villager {
   }
 
   update(dt: number): void {
+    this.tire(dt);
     if (this.cheer > 0) this.cheer = Math.max(0, this.cheer - dt);
     if (this.moving) {
       this.advance(dt);
@@ -180,15 +185,35 @@ export class Villager {
     this.nextPlan();
   }
 
+  private tire(dt: number): void {
+    if (this.activityNow !== 'idle') return;
+    this.idleFor += dt;
+    if (this.lounging || this.idleFor < LOUNGE_AFTER || this.layout.commonZone() === null) return;
+    this.lounging = true;
+    this.leaveChat();
+    this.planTimer = 0;
+  }
+
+  private get roam(): string | null {
+    return this.lounging ? (this.layout.commonZone() ?? this.zone) : this.zone;
+  }
+
   private nextPlan(): void {
+    const { roam } = this;
     const partners = this.peers().filter(
-      (peer) => peer !== this && peer.canChat && peer.zone === this.zone,
+      (peer) =>
+        peer !== this &&
+        peer.canChat &&
+        (this.lounging || peer.zone === this.zone) &&
+        this.layout.zoneOf(peer.position) === roam &&
+        this.layout.zoneOf(this.position) === roam,
     );
     const plan = pickIdle(
       (option) => {
         if (option === 'chat') return partners.length > 0;
         const kind = idleSpot(option);
-        return kind !== null && this.layout.hasFree(kind, this.zone);
+        if (option === 'bench' && !this.lounging) return false;
+        return kind !== null && this.layout.hasFree(kind, roam);
       },
       this.random,
       this.plan,
@@ -204,7 +229,7 @@ export class Villager {
       return;
     }
     const kind = idleSpot(plan);
-    const spot = kind === null ? null : this.layout.claim(kind, this.id, this.random, this.zone);
+    const spot = kind === null ? null : this.layout.claim(kind, this.id, this.random, roam);
     if (spot !== null) {
       this.walkTo({ point: spot.at, facing: spot.facing });
       return;
@@ -238,12 +263,12 @@ export class Villager {
   }
 
   private get nav(): NavGrid {
-    return this.layout.navFor(this.zone);
+    return this.layout.navFor(this.roam);
   }
 
   private wanderTarget(): Target {
     const { nav } = this;
-    const { wander, routes } = this.layout.paths(this.zone);
+    const { wander, routes } = this.layout.paths(this.roam);
     const choice = Math.floor(this.random() * (wander.length + routes.length));
     const route = routes[choice - wander.length]?.map((point) => nav.nearest(point));
     const point = wander[choice] ?? route?.at(-1);
@@ -252,7 +277,10 @@ export class Villager {
   }
 
   private walkTo(target: Target): void {
-    const away = target.free === true || this.layout.zoneOf(this.position) !== this.zone;
+    const away =
+      target.free === true ||
+      this.layout.zoneOf(this.position) !== this.roam ||
+      this.layout.zoneOf(target.point) !== this.roam;
     const nav = away ? this.layout.nav : this.nav;
     let from = this.position;
     this.path = [from];

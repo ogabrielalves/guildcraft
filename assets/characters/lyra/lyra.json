@@ -3,76 +3,47 @@
     "en": "Lyra",
     "pt-BR": "Lyra"
   },
-  "source": "pixel-crawler",
-  "facing": "side",
+  "source": "lpc",
+  "facing": "four",
+  "image": "lyra.png",
+  "frame": {
+    "width": 32,
+    "height": 32
+  },
+  "anchor": {
+    "x": 16,
+    "y": 30
+  },
   "animations": {
     "idle": {
-      "image": "idle.png",
-      "frame": {
-        "width": 64,
-        "height": 64
-      },
-      "anchor": {
-        "x": 32,
-        "y": 47
-      },
-      "frames": 4,
-      "fps": 6
+      "row": 22,
+      "frames": 2,
+      "fps": 2
     },
     "walk": {
-      "image": "walk.png",
-      "frame": {
-        "width": 64,
-        "height": 64
-      },
-      "anchor": {
-        "x": 32,
-        "y": 47
-      },
-      "frames": 6,
+      "row": 8,
+      "start": 1,
+      "frames": 8,
       "fps": 10
     },
     "work": {
-      "image": "idle.png",
-      "frame": {
-        "width": 64,
-        "height": 64
-      },
-      "anchor": {
-        "x": 32,
-        "y": 47
-      },
-      "frames": 4,
+      "row": 0,
+      "frames": 7,
       "fps": 8
     },
     "sit": {
-      "image": "idle.png",
-      "frame": {
-        "width": 64,
-        "height": 64
-      },
-      "anchor": {
-        "x": 32,
-        "y": 47
-      },
+      "row": 30,
+      "start": 1,
       "frames": 1,
       "fps": 1
     },
     "cheer": {
-      "image": "idle.png",
-      "frame": {
-        "width": 64,
-        "height": 64
-      },
-      "anchor": {
-        "x": 32,
-        "y": 47
-      },
-      "frames": 4,
-      "fps": 8,
-      "hop": 3
+      "row": 34,
+      "start": 2,
+      "frames": 1,
+      "fps": 1
     }
   },
-  "license": "Pixel Crawler Free Pack terms (see assets/CREDITS.md)",
-  "author": "Anokolisa"
+  "license": "See assets/CREDITS.md and lyra.credits.txt",
+  "author": "Liberated Pixel Cup contributors"
 }

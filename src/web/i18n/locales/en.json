@@ -98,7 +98,8 @@
     "bookshelf": "Browsing the shelves",
     "table": "Resting at a table",
     "chat": "Chatting with a friend",
-    "nap": "Taking a nap"
+    "nap": "Taking a nap",
+    "bench": "Resting on the porch bench"
   },
   "effort": {
     "low": "Low",

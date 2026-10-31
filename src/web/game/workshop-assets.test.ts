@@ -105,9 +105,9 @@ const stations = readdirSync(join(ROOT, 'stations'))
   .map((file) => file.slice(0, -'.json'.length));
 
 describe('shipped characters', () => {
-  it('has the fixed cast and the LPC adventurers', () => {
+  it('has the whole LPC cast', () => {
     expect(characters).toEqual(
-      expect.arrayContaining(['mortis', 'corvin', 'lyra', 'aldwin', 'brom', 'seren']),
+      expect.arrayContaining(['mortis', 'corvin', 'lyra', 'garrick', 'aldwin', 'brom', 'seren']),
     );
   });
 
@@ -300,7 +300,7 @@ describe('shipped workshop zones', () => {
   const map = parseWorkshopMap(json('maps/workshop.json'));
   const places = [
     ...map.stations.map(({ work }) => work),
-    ...map.spots.map(({ at }) => at),
+    ...map.spots.filter(({ kind }) => kind !== 'bench').map(({ at }) => at),
     ...map.wander,
     ...map.routes.flat(),
   ];
@@ -311,6 +311,19 @@ describe('shipped workshop zones', () => {
     const path = nav.route(start, end);
     return path.slice(1).every((point, index) => nav.clear(path[index] ?? point, point));
   }
+
+  it('puts the porch benches outside the house, on walkable floor, in reach of the hall', () => {
+    const benches = map.spots.filter(({ kind }) => kind === 'bench');
+    expect(benches.length).toBeGreaterThan(0);
+    const nav = new NavGrid(map);
+    const hall = { x: 450, y: 540 };
+    for (const { at } of benches) {
+      expect(map.house !== null && contains(map.house, at), JSON.stringify(at)).toBe(false);
+      expect(zoneAt(map, at)).toBeNull();
+      expect(nav.walkable(at), JSON.stringify(at)).toBe(true);
+      expect(reachable(nav, hall, at), JSON.stringify(at)).toBe(true);
+    }
+  });
 
   it('keeps every work point, spot, wander point, route and zone inside the house', () => {
     const { house } = map;
@@ -346,15 +359,15 @@ describe('shipped workshop zones', () => {
   });
 
   it.each(map.zones.map((zone) => [zone.id, zone] as const))(
-    '%s has a station and somewhere to idle, all reachable inside the zone',
+    '%s has a station (or is common) and somewhere to idle, all reachable inside the zone',
     (id, zone) => {
       const inZone = (target: Point) => zoneAt(map, target) === id;
       const stations = map.stations.filter(({ work }) => inZone(work));
       const idle = [...map.spots.map(({ at }) => at), ...map.wander].filter(inZone);
-      expect(stations.length).toBeGreaterThan(0);
+      expect(stations.length > 0 || zone.common).toBe(true);
       expect(idle.length).toBeGreaterThan(0);
       const nav = new NavGrid(map, NAV_CELL, zone.areas);
-      const start = stations[0]?.work ?? { x: 0, y: 0 };
+      const start = stations[0]?.work ?? idle[0] ?? { x: 0, y: 0 };
       for (const station of stations) expect(nav.walkable(station.work)).toBe(true);
       for (const target of places.filter(inZone)) {
         expect(reachable(nav, start, target), JSON.stringify(target)).toBe(true);

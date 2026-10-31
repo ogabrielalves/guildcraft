@@ -94,3 +94,54 @@ describe('Layout zones', () => {
     expect(layout.zoneOf({ x: 10, y: 10 })).toBeNull();
   });
 });
+
+describe('Layout common zones', () => {
+  const west = { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] };
+  const shared = parseWorkshopMap({
+    ...provisionalWorkshop(),
+    zones: [
+      west,
+      { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+    ],
+  });
+
+  it('lends the spots of a common zone to the other zones', () => {
+    const layout = new Layout(shared);
+    expect(layout.isCommon('east')).toBe(true);
+    expect(layout.isCommon('west')).toBe(false);
+    expect(layout.hasFree('nap', 'west')).toBe(true);
+    expect(layout.claim('nap', 'a', () => 0, 'west')?.at).toEqual({ x: 440, y: 280 });
+  });
+
+  it('prefers a spot of its own zone', () => {
+    const layout = new Layout(shared);
+    for (const id of ['a', 'b', 'c']) {
+      const spot = layout.claim('table', id, () => 0.99, 'west');
+      expect(spot && layout.zoneOf(spot.at)).toBe('west');
+      layout.release(id);
+    }
+  });
+});
+
+describe('Layout bench and common zone', () => {
+  const porch = parseWorkshopMap({
+    ...provisionalWorkshop(),
+    spots: [...provisionalWorkshop().spots, { kind: 'bench', at: { x: 10, y: 340 } }],
+    zones: [
+      { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+      { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+    ],
+  });
+
+  it('names the common zone, or none', () => {
+    expect(new Layout(porch).commonZone()).toBe('east');
+    expect(new Layout(map).commonZone()).toBeNull();
+  });
+
+  it('offers bench spots to every zone', () => {
+    const layout = new Layout(porch);
+    expect(layout.hasFree('bench', 'west')).toBe(true);
+    expect(layout.claim('bench', 'a', () => 0, 'east')?.at).toEqual({ x: 10, y: 340 });
+    expect(layout.hasFree('bench', 'west')).toBe(false);
+  });
+});

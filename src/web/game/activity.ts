@@ -57,7 +57,15 @@ export function isWorkingActivity(activity: Activity): activity is WorkingActivi
   return WORKING_ACTIVITIES.some((working) => working === activity);
 }
 
-export const IDLE_PLANS = ['wander', 'hearth', 'bookshelf', 'table', 'chat', 'nap'] as const;
+export const IDLE_PLANS = [
+  'wander',
+  'hearth',
+  'bookshelf',
+  'table',
+  'chat',
+  'nap',
+  'bench',
+] as const;
 export type IdlePlan = (typeof IDLE_PLANS)[number];
 
 export const IDLE_WEIGHTS: Record<IdlePlan, number> = {
@@ -67,6 +75,7 @@ export const IDLE_WEIGHTS: Record<IdlePlan, number> = {
   table: 2,
   chat: 3,
   nap: 1,
+  bench: 2,
 };
 
 export const IDLE_TIME: Record<IdlePlan, { min: number; max: number }> = {
@@ -76,15 +85,18 @@ export const IDLE_TIME: Record<IdlePlan, { min: number; max: number }> = {
   table: { min: 6, max: 12 },
   chat: { min: 4, max: 8 },
   nap: { min: 10, max: 20 },
+  bench: { min: 10, max: 20 },
 };
 
 export const REPEAT_PENALTY = 0.25;
+export const LOUNGE_AFTER = 120;
 
 const IDLE_SPOTS = {
   hearth: 'hearth',
   bookshelf: 'read',
   table: 'table',
   nap: 'nap',
+  bench: 'bench',
 } as const;
 
 export type IdleSpot = (typeof IDLE_SPOTS)[keyof typeof IDLE_SPOTS];

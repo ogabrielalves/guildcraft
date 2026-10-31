@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Layout } from './layout.js';
 import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
+import { LOUNGE_AFTER } from './activity.js';
 import { CHEER_TIME, VISIT_GAP, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
@@ -412,6 +413,23 @@ describe('Villager zones', () => {
     expect(villager.position).toEqual(stationAt(zoned, 0).work);
   });
 
+  it('naps in a common zone when its own has no bed', () => {
+    const common = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [
+        { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+        { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+      ],
+    });
+    const villager = new Villager('a', 0, new Layout(common), 'idle', fixed(0));
+    villager.setActivity('sleep');
+    settle(villager);
+    expect(villager.position).toEqual({ x: 440, y: 280 });
+    villager.setActivity('write');
+    settle(villager);
+    expect(villager.position).toEqual(stationAt(common, 0).work);
+  });
+
   it('chats only with idle villagers of the same zone', () => {
     const shared = new Layout(zoned);
     const crowd: Villager[] = [];
@@ -449,3 +467,85 @@ describe('Villager zones', () => {
     expect(villager.position).toEqual(stationAt(zoned, 9).work);
   });
 });
+
+describe('Villager lounging', () => {
+  const lounge = parseWorkshopMap({
+    ...provisionalWorkshop(),
+    spots: [...provisionalWorkshop().spots, { kind: 'bench', at: { x: 300, y: 340 } }],
+    zones: [
+      { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+      { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }], common: true },
+    ],
+  });
+  const fixed = (value: number) => () => value;
+  const home = (station: number) => stationAt(lounge, station).work;
+
+  function lounger(random = fixed(0.5)) {
+    return new Villager('a', 0, new Layout(lounge), 'idle', random);
+  }
+
+  it('rests on the bench when the roll picks it', () => {
+    const villager = lounger(fixed(0.99));
+    run(villager, LOUNGE_AFTER + 1);
+    settle(villager);
+    run(villager, 1);
+    settle(villager);
+    expect(villager.doing).toBe('bench');
+    expect(villager.pose).toBe('sit');
+    expect(villager.position).toEqual({ x: 300, y: 340 });
+  });
+
+  it('never takes the bench before the two minutes are up', () => {
+    const villager = lounger(fixed(0.99));
+    run(villager, LOUNGE_AFTER - 5);
+    expect(villager.doing).not.toBe('bench');
+  });
+
+  it('goes back to its station and frees the bench when it gets work', () => {
+    const shared = new Layout(lounge);
+    const villager = new Villager('a', 0, shared, 'idle', fixed(0.99));
+    run(villager, LOUNGE_AFTER + 1);
+    settle(villager);
+    run(villager, 1);
+    settle(villager);
+    expect(shared.hasFree('bench')).toBe(false);
+    villager.setActivity('write');
+    expect(villager.moving).toBe(true);
+    settle(villager);
+    expect(villager.position).toEqual(home(0));
+    expect(villager.pose).toBe('work');
+    expect(shared.hasFree('bench')).toBe(true);
+  });
+
+  it('starts counting from zero after working', () => {
+    const villager = lounger(fixed(0.99));
+    run(villager, LOUNGE_AFTER + 1);
+    villager.setActivity('write');
+    settle(villager);
+    villager.setActivity('idle');
+    settle(villager);
+    for (let t = 0; t < LOUNGE_AFTER - 5; t += 0.05) {
+      villager.update(0.05);
+      expect(villager.doing).not.toBe('bench');
+    }
+  });
+
+  it('keeps its post when there is no common zone', () => {
+    const solo = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [{ id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] }],
+    });
+    const villager = new Villager('a', 0, new Layout(solo), 'idle', seededLounge());
+    let east = villager.position.x;
+    for (let t = 0; t < LOUNGE_AFTER * 3; t += 0.05) {
+      villager.update(0.05);
+      east = Math.max(east, villager.position.x);
+    }
+    expect(east).toBeLessThanOrEqual(240);
+  });
+});
+
+function seededLounge(): () => number {
+  let seed = 0;
+  return () => (seed = (seed + 0.37) % 1);
+}

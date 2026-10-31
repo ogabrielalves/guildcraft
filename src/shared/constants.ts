@@ -1,4 +1,4 @@
-export const MAX_AGENTS = 8;
+export const MAX_AGENTS = 12;
 export const DEFAULT_PORT = 7777;
 export const DEFAULT_HOST = '127.0.0.1';
 export const ENV_PREFIX = 'GUILDCRAFT_';

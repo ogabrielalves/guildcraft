@@ -40,13 +40,13 @@ describe('World', () => {
     const world = new World(map, () => 0.5);
     world.sync([agent('a'), agent('b'), agent('c')]);
     expect(world.all().map((v) => [v.id, v.station])).toEqual([
-      ['a', 5],
-      ['b', 4],
-      ['c', 6],
+      ['a', 6],
+      ['b', 5],
+      ['c', 7],
     ]);
-    expect(world.owner(6)?.id).toBe('c');
+    expect(world.owner(7)?.id).toBe('c');
     expect(world.owner(0)).toBeUndefined();
-    expect(world.freeStations()).toEqual([0, 1, 2, 3, 7, 8, 9]);
+    expect(world.freeStations()).toEqual([0, 1, 2, 3, 4, 8, 9, 10, 11]);
   });
 
   it('keeps stations stable when someone leaves and reuses the free one', () => {
@@ -149,9 +149,9 @@ describe('World', () => {
 
   it('leaves agents beyond the last station out', () => {
     const world = new World(map);
-    world.sync(Array.from({ length: 11 }, (_, i) => agent(`a${String(i)}`)));
-    expect(world.all()).toHaveLength(10);
-    expect(world.villager('a10')).toBeUndefined();
+    world.sync(Array.from({ length: 13 }, (_, i) => agent(`a${String(i)}`)));
+    expect(world.all()).toHaveLength(12);
+    expect(world.villager('a12')).toBeUndefined();
     expect(world.freeStations()).toEqual([]);
   });
 

@@ -1,19 +1,22 @@
 const STATION_COLUMNS = [48, 128, 208, 288, 368];
 const STATION_ROWS = [128, 304];
+const EXTRA_STATIONS = [48, 128];
 
 export function provisionalWorkshop() {
   return {
     width: 480,
     height: 352,
     tileSize: 16,
-    stations: STATION_ROWS.flatMap((y) =>
-      STATION_COLUMNS.map((x) => ({ id: 'anvil', at: { x, y }, work: { x: x + 28, y } })),
-    ),
+    stations: [
+      ...STATION_ROWS.flatMap((y) => STATION_COLUMNS.map((x) => ({ x, y }))),
+      ...EXTRA_STATIONS.map((x) => ({ x, y: 216 })),
+    ].map(({ x, y }) => ({ id: 'anvil', at: { x, y }, work: { x: x + 28, y } })),
     obstacles: [
       { x: 0, y: 0, width: 480, height: 80 },
-      ...STATION_ROWS.flatMap((y) =>
-        STATION_COLUMNS.map((x) => ({ x: x - 16, y: y - 12, width: 32, height: 12 })),
-      ),
+      ...[
+        ...STATION_ROWS.flatMap((y) => STATION_COLUMNS.map((x) => ({ x, y }))),
+        ...EXTRA_STATIONS.map((x) => ({ x, y: 216 })),
+      ].map(({ x, y }) => ({ x: x - 16, y: y - 12, width: 32, height: 12 })),
     ],
     spots: [
       { kind: 'read', at: { x: 440, y: 120 }, facing: 'north' },

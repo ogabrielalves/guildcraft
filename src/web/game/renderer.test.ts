@@ -157,7 +157,7 @@ describe('drawScene scenery', () => {
 
   it('draws every station even when nobody works there', () => {
     const urls = drawnImages(scene([]));
-    expect(urls.filter((url) => url.includes('stove'))).toHaveLength(9);
+    expect(urls.filter((url) => url.includes('stove'))).toHaveLength(11);
   });
 
   it('sorts depth scenery with the villagers', () => {

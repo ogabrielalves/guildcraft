@@ -61,7 +61,7 @@ function setup(blocked = false) {
 }
 
 describe('shortcutFor', () => {
-  it('maps digits 1-8 to selection', () => {
+  it('maps digits 1-9 to selection', () => {
     expect(shortcutFor(key({ code: 'Digit1' }))).toEqual({
       type: 'select',
       index: 0,
@@ -72,7 +72,12 @@ describe('shortcutFor', () => {
       index: 7,
       mode: 'toggle',
     });
-    expect(shortcutFor(key({ code: 'Digit9' }))).toBeNull();
+    expect(shortcutFor(key({ code: 'Digit9' }))).toEqual({
+      type: 'select',
+      index: 8,
+      mode: 'replace',
+    });
+    expect(shortcutFor(key({ code: 'Digit0' }))).toBeNull();
   });
 
   it('maps Escape', () => {

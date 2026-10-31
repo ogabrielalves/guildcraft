@@ -2,7 +2,7 @@
 
 Everything the workshop draws comes from `assets/`. The code never hardcodes a sprite, a station or a map coordinate. Add or change art by editing the files described here.
 
-The world is the Tavern Guild, a 944 × 768 px compound at 1× (59 × 48 tiles of 16 px) composed from the Pixel Crawler pack. Characters stand about 30 px tall.
+The world is the Tavern Guild, a 912 × 800 px compound at 1× (57 × 50 tiles of 16 px) composed from the Pixel Crawler pack. Characters stand about 30 px tall.
 
 Every asset needs an entry in [`assets/CREDITS.md`](../assets/CREDITS.md) with its author, link and license.
 
@@ -74,7 +74,7 @@ Animation fields:
 - **`four`**: four rows per animation in the order north, west, south, east (the LPC generator layout). The renderer adds the direction to `row`.
 - **`side`**: one row facing right. The renderer mirrors it when the character faces west and keeps the last side when it walks north or south (the Pixel Crawler layout).
 
-Frames of different animations can have different sizes. The anchor keeps the feet in the same place. For example, Mortis idles in 32 × 32 frames anchored at (16, 31) and runs in 64 × 64 frames anchored at (30, 63).
+Frames of different animations can have different sizes. The anchor keeps the feet in the same place. For example, a character can idle in 32 × 32 frames anchored at (16, 31) and run in 64 × 64 frames anchored at (30, 63).
 
 ### Adding an LPC character
 
@@ -121,8 +121,8 @@ When the map's background already shows a station, a manifest is only needed to 
 
 ```jsonc
 {
-  "width": 944,
-  "height": 768,
+  "width": 912,
+  "height": 800,
   "tileSize": 16,
   "floor": "#2f4a26", // fallback color under the scenery
   "view": { "x": 64, "y": 64, "width": 816, "height": 656 }, // what the camera frames first
@@ -185,7 +185,7 @@ The Tavern Guild's grid came with the map and was checked against the image: the
 
 A zone is a named union of rectangles. A station, spot, wander point or route belongs to the first zone that contains it (a station by its `work` point, a route by its first point). A villager lives in the zone of its station: it walks, idles, wanders, patrols, naps and chats only inside it, on a walking grid cut to the zone's areas. It may leave its zone only to walk in from the `entrance` the first time, and to visit another agent that sent it a message; then it walks straight back home.
 
-The Tavern Guild has five zones: `kitchen`, `storage`, `hall`, `alchemy` and `guild`, all inside the house, and the loader rejects any station, spot, wander point, route or zone outside it. Villagers never stay outside: they only cross the porch to walk in from the `entrance`. The kitchen and the storage room are separate zones because a shelf blocks the passage between them in the art. Without `zones`, villagers walk the whole map. Each zone also has a `sign` point, the fixed spot where the wooden sign with the project folder name hangs while a project lives there (the top-center of the sign; it never moves with the villagers). Without a `sign`, the sign falls back to the station.
+The Tavern Guild has five zones: `kitchen`, `storage`, `hall`, `alchemy` and `guild`, all inside the house, and the loader rejects any station, spot, wander point, route or zone outside it. Villagers stay inside, except to walk in from the `entrance` and to rest on a `bench` spot, the only kind allowed outside the house. The kitchen and the storage room are separate zones because a shelf blocks the passage between them in the art. Without `zones`, villagers walk the whole map. Each zone also has a `sign` point, the fixed spot where the wooden sign with the project folder name hangs while a project lives there (the top-center of the sign; it never moves with the villagers). Without a `sign`, the sign falls back to the station.
 
 ### Spots
 
@@ -199,8 +199,9 @@ The Tavern Guild has five zones: `kitchen`, `storage`, `hall`, `alchemy` and `gu
 | `nap`    | the agent is starting, sleeping or offline; idle agents take a nap   |
 | `hearth` | an idle agent warms up by the fire                                   |
 | `table`  | an idle agent sits at the table                                      |
+| `bench`  | an agent idle for two minutes rests on the porch bench               |
 
-An idle agent keeps busy on its own: it strolls to a `wander` point or along a `route`, visits the hearth, a bookshelf or the table, naps, or walks over to chat with another idle agent. The choice is weighted and avoids repeating the last plan; plans whose spots are all taken are skipped.
+An idle agent keeps busy on its own: it strolls to a `wander` point or along a `route`, visits the hearth, a bookshelf or the table, naps, or walks over to chat with another idle agent. The choice is weighted and avoids repeating the last plan; plans whose spots are all taken are skipped. After two minutes without work an idle agent leaves its zone and lounges in the common zone (the hall: chatting, sitting, warming up) or on a porch `bench`; as soon as it gets a prompt or task it walks back to its station.
 
 `facing` is `north`, `west`, `south` or `east` (default `south`). Each spot holds one agent. When all `read` or `nap` spots are taken, a busy agent stays at its station.
 
@@ -211,7 +212,7 @@ The Tavern Guild is one image drawn behind everything:
 ```json
 {
   "image": "maps/tavern-guild.png",
-  "source": { "x": 0, "y": 0, "width": 944, "height": 768 },
+  "source": { "x": 0, "y": 0, "width": 912, "height": 800 },
   "at": { "x": 0, "y": 0 }
 }
 ```

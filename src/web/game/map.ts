@@ -23,7 +23,7 @@ import { EFFECTS } from './stations.js';
 
 export type { Point, Rect, Size } from './parse.js';
 
-export const SPOT_KINDS = ['read', 'nap', 'hearth', 'table'] as const;
+export const SPOT_KINDS = ['read', 'nap', 'hearth', 'table', 'bench'] as const;
 export type SpotKind = (typeof SPOT_KINDS)[number];
 
 export interface StationPlace {
@@ -48,6 +48,7 @@ export interface Zone {
   id: string;
   areas: Rect[];
   sign: Point | null;
+  common: boolean;
 }
 
 export interface WorkshopMap {
@@ -128,7 +129,8 @@ function parseZone(value: unknown, path: string): Zone {
   const areas = each(raw.areas, `${path}.areas`, rect);
   if (areas.length === 0) throw new AssetError(`${path}.areas`);
   const sign = optional<Point | null>(raw.sign, point, `${path}.sign`, null);
-  return { id: text(raw.id, `${path}.id`), areas, sign };
+  const common = optional(raw.common, flag, `${path}.common`, false);
+  return { id: text(raw.id, `${path}.id`), areas, sign, common };
 }
 
 function parseRoute(value: unknown, path: string): Point[] {
@@ -224,8 +226,8 @@ export function parseWorkshopMap(value: unknown): WorkshopMap {
       indoors(at, `$.stations[${String(index)}].at`);
       indoors(work, `$.stations[${String(index)}].work`);
     });
-    spots.forEach(({ at }, index) => {
-      indoors(at, `$.spots[${String(index)}].at`);
+    spots.forEach(({ kind, at }, index) => {
+      if (kind !== 'bench') indoors(at, `$.spots[${String(index)}].at`);
     });
     wander.forEach((at, index) => {
       indoors(at, `$.wander[${String(index)}]`);

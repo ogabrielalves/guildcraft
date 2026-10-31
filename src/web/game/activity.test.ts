@@ -80,7 +80,7 @@ describe('pickIdle', () => {
   it('walks the weights in order', () => {
     expect(pickIdle(all, () => 0)).toBe('wander');
     expect(pickIdle(all, () => (IDLE_WEIGHTS.wander + 0.5) / total)).toBe('hearth');
-    expect(pickIdle(all, () => 0.9999)).toBe('nap');
+    expect(pickIdle(all, () => 0.9999)).toBe('bench');
   });
 
   it('only offers the plans that are available, and always wander', () => {
@@ -124,7 +124,7 @@ describe('pickIdle', () => {
   });
 
   it('accepts custom weights and skips the zero ones', () => {
-    const weights = { wander: 0, hearth: 0, bookshelf: 1, table: 0, chat: 0, nap: 0 };
+    const weights = { wander: 0, hearth: 0, bookshelf: 1, table: 0, chat: 0, nap: 0, bench: 0 };
     expect(pickIdle(all, () => 0.3, null, weights)).toBe('bookshelf');
     expect(
       pickIdle(
@@ -145,6 +145,7 @@ describe('idleSpot', () => {
     ['bookshelf', 'read'],
     ['table', 'table'],
     ['nap', 'nap'],
+    ['bench', 'bench'],
   ])('sends %s to %s', (plan, kind) => {
     expect(idleSpot(plan)).toBe(kind);
   });

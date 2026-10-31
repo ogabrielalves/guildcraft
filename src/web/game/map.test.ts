@@ -25,7 +25,7 @@ describe('parseWorkshopMap', () => {
     const raw = provisionalWorkshop();
     const map = parseWorkshopMap(raw);
     expect(map).toMatchObject({ width: 480, height: 352, tileSize: 16 });
-    expect(map.stations).toHaveLength(10);
+    expect(map.stations).toHaveLength(12);
     expect(map.stations[6]).toEqual({ ...raw.stations[6], effect: null });
     expect(map.obstacles).toEqual(raw.obstacles);
     expect(map.spots[0]).toEqual({ kind: 'read', at: { x: 440, y: 120 }, facing: 'north' });
@@ -137,11 +137,23 @@ describe('parseWorkshopMap', () => {
       },
     ];
     const map = parseWorkshopMap({ ...provisionalWorkshop(), zones });
-    expect(map.zones).toEqual(zones.map((zone) => ({ sign: null, ...zone })));
+    expect(map.zones).toEqual(zones.map((zone) => ({ sign: null, common: false, ...zone })));
     expect(zoneAt(map, { x: 10, y: 10 })).toBe('west');
     expect(zoneAt(map, { x: 400, y: 300 })).toBe('east');
     expect(zoneAt(map, { x: 260, y: 200 })).toBeNull();
     expect(parseWorkshopMap(provisionalWorkshop()).zones).toEqual([]);
+  });
+
+  it('marks a zone as common for idle villagers', () => {
+    const area = { x: 0, y: 0, width: 100, height: 100 };
+    const map = parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [
+        { id: 'hall', areas: [area], common: true },
+        { id: 'room', areas: [area] },
+      ],
+    });
+    expect(map.zones.map(({ common }) => common)).toEqual([true, false]);
   });
 
   it.each([
@@ -199,6 +211,17 @@ describe('parseWorkshopMap', () => {
         zones: [{ id: 'z', areas: [{ x: 450, y: 0, width: 20, height: 10 }] }],
       }),
     ).toBe('$.zones[0].areas[0]');
+  });
+
+  it('lets bench spots sit outside the house but no other kind', () => {
+    const raw = provisionalWorkshop();
+    const tight = { x: 0, y: 0, width: 460, height: 340 };
+    const outside = { x: 470, y: 345 };
+    const bench = { kind: 'bench', at: outside };
+    expect(invalidAt({ ...raw, house: tight, spots: [...raw.spots, bench] })).toBeUndefined();
+    expect(
+      invalidAt({ ...raw, house: tight, spots: [...raw.spots, { kind: 'nap', at: outside }] }),
+    ).toBe(`$.spots[${String(raw.spots.length)}].at`);
   });
 
   it('reads wander points, routes, the entrance and the start view', () => {
@@ -369,7 +392,7 @@ describe('loadWorkshopMap', () => {
     const request = vi.fn(() => Promise.resolve(Response.json(provisionalWorkshop())));
     const map = await loadWorkshopMap('/assets/maps/workshop.json', request);
     expect(request).toHaveBeenCalledWith('/assets/maps/workshop.json');
-    expect(map.stations).toHaveLength(10);
+    expect(map.stations).toHaveLength(12);
   });
 
   it('fails on an http error', async () => {
@@ -382,6 +405,6 @@ describe('stationAt', () => {
   it('returns the station or rejects an unknown index', () => {
     const map = parseWorkshopMap(provisionalWorkshop());
     expect(stationAt(map, 3)).toBe(map.stations[3]);
-    expect(() => stationAt(map, 10)).toThrow(RangeError);
+    expect(() => stationAt(map, 12)).toThrow(RangeError);
   });
 });

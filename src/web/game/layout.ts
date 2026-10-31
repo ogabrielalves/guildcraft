@@ -48,7 +48,9 @@ export class Layout {
   ): Spot | null {
     this.release(owner);
     const free = this.free(kind, zone);
-    const spot = free[Math.floor(random() * free.length)];
+    const own = free.filter((spot) => this.zoneOf(spot.at) === zone);
+    const pool = own.length > 0 ? own : free;
+    const spot = pool[Math.floor(random() * pool.length)];
     if (spot === undefined) return null;
     this.claims.set(spot, owner);
     return spot;
@@ -68,12 +70,20 @@ export class Layout {
     return this.claims.get(spot) ?? null;
   }
 
+  commonZone(): string | null {
+    return this.map.zones.find(({ common }) => common)?.id ?? null;
+  }
+
+  isCommon(zone: string | null): boolean {
+    return this.map.zones.some(({ id, common }) => id === zone && common);
+  }
+
   private free(kind: SpotKind, zone: string | null): Spot[] {
-    return this.map.spots.filter(
-      (spot) =>
-        spot.kind === kind &&
-        !this.claims.has(spot) &&
-        (zone === null || this.zoneOf(spot.at) === zone),
-    );
+    return this.map.spots.filter((spot) => {
+      if (spot.kind !== kind || this.claims.has(spot)) return false;
+      if (kind === 'bench') return true;
+      const at = this.zoneOf(spot.at);
+      return zone === null || at === zone || this.isCommon(at);
+    });
   }
 }

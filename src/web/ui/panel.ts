@@ -36,6 +36,7 @@ const IDLE_KEYS: Record<IdlePlan, TranslationKey> = {
   table: 'idle.table',
   chat: 'idle.chat',
   nap: 'idle.nap',
+  bench: 'idle.bench',
 };
 
 const ACTION_KEYS: Record<ActionState, TranslationKey> = {
