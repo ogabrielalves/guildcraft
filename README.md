@@ -90,6 +90,21 @@ The name is not injected into the model's prompt: an agent learns its peers from
 
 CI builds and runs the test suite on all three, but the app itself has only been exercised by hand on Windows 11 so far.
 
+## Installation
+
+Run it straight from npm, nothing to install:
+
+```sh
+npx guildcraft
+```
+
+Or install it globally:
+
+```sh
+npm install -g guildcraft
+guildcraft
+```
+
 ## Usage
 
 ```sh

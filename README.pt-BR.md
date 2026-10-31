@@ -90,6 +90,21 @@ O nome não é injetado no prompt do modelo: o agente descobre os outros por `li
 
 O CI compila e roda a suíte de testes nos três, mas o app em si só foi usado manualmente no Windows 11 até agora.
 
+## Instalação
+
+Rode direto pelo npm, sem instalar nada:
+
+```sh
+npx guildcraft
+```
+
+Ou instale globalmente:
+
+```sh
+npm install -g guildcraft
+guildcraft
+```
+
 ## Como usar
 
 ```sh
