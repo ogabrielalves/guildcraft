@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/ogabrielalves/guildcraft/compare/v1.1.0...v1.2.0) (2026-10-31)
+
+
+### Features
+
+* **ui:** make the open console button blue ([bf84154](https://github.com/ogabrielalves/guildcraft/commit/bf84154f6e76df780ebb12fa119d3efc7f261ac5))
+
 ## [1.1.0](https://github.com/ogabrielalves/guildcraft/compare/v1.0.0...v1.1.0) (2026-10-31)
 
 
