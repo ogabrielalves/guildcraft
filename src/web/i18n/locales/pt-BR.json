@@ -59,7 +59,7 @@
     }
   },
   "history": {
-    "title": "Histórico",
+    "title": "Últimos comandos",
     "empty": "Nenhuma ação ainda",
     "session": "Sessão",
     "tasks": "Tarefas",

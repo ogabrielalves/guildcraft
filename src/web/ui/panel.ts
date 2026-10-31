@@ -61,6 +61,7 @@ const TASK_KEYS: Record<TaskStatus, TranslationKey> = {
 };
 
 export const REFRESH_MS = 500;
+export const RECENT_ACTIONS = 5;
 
 export type PanelSocket = Pick<GameSocket, 'send'> & Partial<Pick<GameSocket, 'onMessage'>>;
 export type PanelTerminal = Pick<TerminalView, 'element' | 'fit' | 'focus' | 'copy' | 'paste'>;
@@ -430,7 +431,7 @@ export function createPanel(options: PanelOptions): Panel {
       }),
     );
     times.clear();
-    const actionList = newestFirst(activity?.actions ?? []);
+    const actionList = newestFirst(activity?.actions ?? []).slice(0, RECENT_ACTIONS);
     log.replaceChildren(...actionList.map(renderAction));
     empty.hidden = actionList.length > 0;
     renderTimes();

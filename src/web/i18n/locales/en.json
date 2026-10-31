@@ -59,7 +59,7 @@
     }
   },
   "history": {
-    "title": "History",
+    "title": "Recent commands",
     "empty": "No actions yet",
     "session": "Session",
     "tasks": "Tasks",

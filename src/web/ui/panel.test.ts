@@ -16,6 +16,7 @@ import type { Confirm, PanelTerminal } from './panel.js';
 import {
   ACTION_ICONS,
   DETAIL_ROWS,
+  RECENT_ACTIONS,
   REFRESH_MS,
   createPanel,
   effortLabel,
@@ -620,7 +621,7 @@ describe('history', () => {
     expect(query('.panel__empty').textContent).toBe('No actions yet');
     expect(query('.panel__session').hidden).toBe(true);
     expect(query('.panel__tasks-block').hidden).toBe(true);
-    expect(query('.panel__heading').textContent).toBe('History');
+    expect(query('.panel__heading').textContent).toBe('Recent commands');
   });
 
   it('lists actions newest first with state, detail, result and time', () => {
@@ -652,6 +653,18 @@ describe('history', () => {
     expect(query('.panel__empty').hidden).toBe(true);
     expect(query('.panel__session').hidden).toBe(false);
     expect(query('.panel__session-title').textContent).toBe('Fix the login');
+  });
+
+  it('keeps only the most recent actions', () => {
+    const actions = Array.from({ length: RECENT_ACTIONS + 3 }, (_, index) =>
+      action(String(index), { startedAt: index }),
+    );
+    const { store, panel } = setup({ activities: [activity('a', { actions })] });
+    store.focus('a');
+    const details = entries(panel).map(
+      (entry) => entry.querySelector('.panel__entry-detail')?.textContent,
+    );
+    expect(details).toEqual(['run 7', 'run 6', 'run 5', 'run 4', 'run 3']);
   });
 
   it('shows tasks when present', () => {
