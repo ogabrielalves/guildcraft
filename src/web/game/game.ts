@@ -20,6 +20,7 @@ export interface GameOptions {
   assets: Assets;
   session?: string | null;
   onHover?(hover: Hover, clientX: number, clientY: number): void;
+  onOpen?(agentId: string): void;
   now?: () => number;
   random?: () => number;
   frames?: Pick<EngineOptions, 'requestFrame' | 'cancelFrame' | 'pixelRatio'>;
@@ -92,6 +93,10 @@ export function createGame(options: GameOptions): Game {
     hit: (point) => hitTest(world, point),
     onSelect(agentId, mode) {
       store.select(agentId, mode);
+    },
+    onOpen(agentId) {
+      store.select(agentId, 'replace');
+      options.onOpen?.(agentId);
     },
     onHover(hover, clientX, clientY) {
       hovered = hover;

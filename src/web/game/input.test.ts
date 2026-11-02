@@ -97,6 +97,27 @@ describe('bindInput', () => {
     expect(options.onSelect).toHaveBeenCalledWith('a', 'toggle');
   });
 
+  it('opens a villager on double click and ignores empty floor', () => {
+    const onOpen = vi.fn();
+    const canvas = document.createElement('canvas');
+    let hover: ReturnType<typeof hitTest> = { kind: 'villager', id: 'a' };
+    bindInput({
+      canvas,
+      toWorld: (x, y) => ({ x, y }),
+      hit: () => hover,
+      onSelect: vi.fn(),
+      onOpen,
+      onHover: vi.fn(),
+      onPan: vi.fn(),
+      onZoom: vi.fn(),
+    });
+    canvas.dispatchEvent(new MouseEvent('dblclick'));
+    expect(onOpen).toHaveBeenCalledWith('a');
+    hover = null;
+    canvas.dispatchEvent(new MouseEvent('dblclick'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('ignores clicks on nothing', () => {
     const { canvas, options } = setup(null);
     canvas.dispatchEvent(new MouseEvent('click'));

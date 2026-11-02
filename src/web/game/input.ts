@@ -15,6 +15,7 @@ export interface InputOptions {
   toWorld(clientX: number, clientY: number): Point;
   hit(point: Point): Hover;
   onSelect(agentId: string, mode: SelectMode): void;
+  onOpen?(agentId: string): void;
   onHover(hover: Hover, clientX: number, clientY: number): void;
   onPan(dx: number, dy: number): void;
   onZoom(clientX: number, clientY: number, factor: number): void;
@@ -81,6 +82,10 @@ export function bindInput(options: InputOptions): () => void {
     const hover = hitAt(event);
     if (hover !== null) options.onSelect(hover.id, selectMode(event));
   };
+  const onDoubleClick = (event: MouseEvent) => {
+    const hover = hitAt(event);
+    if (hover !== null) options.onOpen?.(hover.id);
+  };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
     options.onZoom(event.clientX, event.clientY, wheelFactor(event.deltaY));
@@ -91,6 +96,7 @@ export function bindInput(options: InputOptions): () => void {
   canvas.addEventListener('mouseup', onUp);
   canvas.addEventListener('mouseleave', onLeave);
   canvas.addEventListener('click', onClick);
+  canvas.addEventListener('dblclick', onDoubleClick);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   return () => {
     canvas.removeEventListener('mousedown', onDown);
@@ -98,6 +104,7 @@ export function bindInput(options: InputOptions): () => void {
     canvas.removeEventListener('mouseup', onUp);
     canvas.removeEventListener('mouseleave', onLeave);
     canvas.removeEventListener('click', onClick);
+    canvas.removeEventListener('dblclick', onDoubleClick);
     canvas.removeEventListener('wheel', onWheel);
   };
 }

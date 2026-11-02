@@ -119,6 +119,7 @@ export interface PanelOptions {
 export interface Panel {
   readonly element: HTMLElement;
   readonly console: HTMLElement;
+  openConsole(): void;
   destroy(): void;
 }
 
@@ -559,6 +560,9 @@ export function createPanel(options: PanelOptions): Panel {
   return {
     element,
     console: consoleWindow,
+    openConsole() {
+      if (shown) setConsole(true);
+    },
     destroy() {
       stopRefresh?.();
       stopRefresh = null;

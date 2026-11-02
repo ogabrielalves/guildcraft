@@ -240,6 +240,15 @@ describe('createPanel', () => {
     expect(panel.element.hidden).toBe(true);
   });
 
+  it('opens the console programmatically only with a focused agent', () => {
+    const { panel, store } = setup();
+    panel.openConsole();
+    expect(panel.console.hidden).toBe(true);
+    store.focus('a');
+    panel.openConsole();
+    expect(panel.console.hidden).toBe(false);
+  });
+
   it('opens the console in its own window without widening the menu', () => {
     const { panel, store, terminal, button, click } = setup();
     const window = panel.console;

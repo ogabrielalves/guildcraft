@@ -112,6 +112,9 @@ if (root) {
       map,
       assets,
       session: token,
+      onOpen: () => {
+        panel.openConsole();
+      },
       onHover: (hover, clientX, clientY) => {
         const agent = hover?.kind === 'villager' ? store.agent(hover.id) : undefined;
         const text = agent
