@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/ogabrielalves/guildcraft/compare/v1.3.0...v1.4.0) (2026-11-02)
+
+
+### Features
+
+* **game:** open the console on villager double click ([fafea6e](https://github.com/ogabrielalves/guildcraft/commit/fafea6e4f98d9fff16ddbae8039335557e292484))
+* **ui:** list recent folders when recruiting ([59b28aa](https://github.com/ogabrielalves/guildcraft/commit/59b28aafb662e9f6e99d5cce37aee5fbcfe418bd))
+
 ## [1.3.0](https://github.com/ogabrielalves/guildcraft/compare/v1.2.0...v1.3.0) (2026-10-31)
 
 
