@@ -114,6 +114,7 @@
   "recruit": {
     "title": "Recruit an adventurer",
     "folder": "Project folder",
+    "recent": "Recent folders",
     "chooseFolder": "Select",
     "pickFailed": "Could not open the folder selector",
     "character": "Character",

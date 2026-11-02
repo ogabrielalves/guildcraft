@@ -45,7 +45,18 @@ const flush = async () => {
   for (let i = 0; i < 8; i += 1) await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
-function setup(agents: AgentView[] = [], connected = true) {
+function memoryStorage(initial: string[] = []) {
+  const data = new Map<string, string>();
+  if (initial.length > 0) data.set('guildcraft.recentFolders', JSON.stringify(initial));
+  return {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      data.set(key, value);
+    },
+  };
+}
+
+function setup(agents: AgentView[] = [], connected = true, recent: string[] = []) {
   const store = new Store();
   store.apply({
     type: 'session:init',
@@ -73,6 +84,7 @@ function setup(agents: AgentView[] = [], connected = true) {
     },
     pickFolder: pick,
     assets: fakeAssets({ mortis: SIDE_CHARACTER }),
+    storage: memoryStorage(recent),
   });
   const emit = (message: ServerMessage) => {
     for (const listener of listeners) listener(message);
@@ -118,6 +130,46 @@ async function openAt(ctx: ReturnType<typeof setup>, folder: string) {
   ctx.one('.recruit__folder').click();
   await flush();
 }
+
+describe('recent folders', () => {
+  const chips = (ctx: ReturnType<typeof setup>) => [
+    ...ctx.dialog.element.querySelectorAll<HTMLButtonElement>('.recruit__recent-item'),
+  ];
+
+  it('hides the list when there is no history', () => {
+    const ctx = setup();
+    ctx.dialog.open();
+    expect(chips(ctx)).toHaveLength(0);
+    expect(ctx.one('.recruit__recent').hidden).toBe(true);
+  });
+
+  it('picks a recent folder with one click', () => {
+    const ctx = setup([], true, ['/work/api', '/work/web']);
+    ctx.dialog.open();
+    expect(chips(ctx).map((chip) => chip.textContent)).toEqual(['api', 'web']);
+    chips(ctx)[1]?.click();
+    expect(ctx.one('.recruit__folder-path').textContent).toBe('/work/web');
+    expect(chips(ctx)[1]?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('remembers the folder of a recruited agent', () => {
+    const ctx = setup([], true, ['/work/api']);
+    ctx.dialog.open();
+    chips(ctx)[0]?.click();
+    ctx.one('.dialog__button--primary').click();
+    ctx.buttonByText(DICTIONARIES.en.get('recruit.confirm') ?? '').click();
+    ctx.store.apply({
+      type: 'session:init',
+      agents: [agent('Mortis', { cwd: '/work/api' })],
+      events: [],
+      skins: ['mortis', 'corvin', 'lyra'],
+      permissions: [],
+      activities: [],
+    });
+    ctx.dialog.open();
+    expect(chips(ctx).map((chip) => chip.title)).toEqual(['/work/api']);
+  });
+});
 
 describe('helpers', () => {
   it('compares names like the server', () => {

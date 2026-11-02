@@ -114,6 +114,7 @@
   "recruit": {
     "title": "Recrutar aventureiro",
     "folder": "Pasta do projeto",
+    "recent": "Pastas recentes",
     "chooseFolder": "Selecionar",
     "pickFailed": "Não foi possível abrir o seletor de pastas",
     "character": "Personagem",

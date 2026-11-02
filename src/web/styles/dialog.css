@@ -346,3 +346,28 @@
   border-left-width: 6px;
   border-left-color: var(--warn);
 }
+
+.recruit__recent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.recruit__recent-item {
+  max-width: 100%;
+  padding: 4px 10px;
+  overflow: hidden;
+  font: 13px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 0;
+}
+
+.recruit__recent-item:hover:not(:disabled),
+.recruit__recent-item[aria-pressed='true'] {
+  border-color: var(--ink);
+}

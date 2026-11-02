@@ -10,6 +10,8 @@ import { getLocale, onLocaleChange, t } from '../i18n/index.js';
 import type { GameSocket } from '../net/socket.js';
 import type { Store } from '../state/store.js';
 import { PORTRAIT, characterName, drawPortrait } from './portrait.js';
+import type { RecentStorage } from './recent-folders.js';
+import { loadRecentFolders, rememberFolder } from './recent-folders.js';
 
 type ErrorMessage = Extract<ServerMessage, { type: 'error' }>;
 
@@ -32,6 +34,7 @@ export interface AddAgentDialogOptions {
   socket: AddAgentSocket;
   pickFolder: PickFolder;
   assets?: Assets;
+  storage?: RecentStorage | null;
 }
 
 export interface AddAgentDialog {
@@ -109,6 +112,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   let step: Step = 'details';
   let cwd: string | null = null;
   let lastCwd: string | null = null;
+  let recent: string[] = loadRecentFolders(options.storage);
   let skin: string | null = null;
   let pending: string | null = null;
   let picking = false;
@@ -148,7 +152,9 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   const folderTitle = make('span', 'recruit__folder-name');
   const folderPath = make('span', 'recruit__folder-path');
   folderButton.append(folderTitle, folderPath);
-  details.append(characterLabel, catalog, folderLabel, folderButton);
+  const recentLabel = label(make('span', 'recruit__label'), 'recruit.recent');
+  const recentList = make('div', 'recruit__recent');
+  details.append(characterLabel, catalog, folderLabel, folderButton, recentLabel, recentList);
 
   const trust = make('section', 'recruit__step recruit__step--trust');
   const warning = make('p', 'recruit__warning');
@@ -242,6 +248,27 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     drawPortraits();
   };
 
+  const renderRecent = () => {
+    recentLabel.hidden = recent.length === 0;
+    recentList.hidden = recent.length === 0;
+    recentList.replaceChildren(
+      ...recent.map((path) => {
+        const chip = make('button', 'recruit__recent-item');
+        chip.type = 'button';
+        chip.title = path;
+        chip.textContent = folderName(path) || path;
+        chip.setAttribute('aria-pressed', String(path === cwd));
+        chip.disabled = picking || pending !== null;
+        chip.addEventListener('click', () => {
+          cwd = path;
+          error = null;
+          render();
+        });
+        return chip;
+      }),
+    );
+  };
+
   const pickSkin = () => {
     const skins = store.getState().skins;
     if (skin === null || !skins.includes(skin) || agents().some((agent) => agent.skin === skin)) {
@@ -280,6 +307,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     errorBox.hidden = error === null;
     errorBox.textContent = error ? t(error.key, error.params) : '';
     element.setAttribute('aria-busy', String(busy));
+    renderRecent();
     renderCatalog();
   };
 
@@ -331,6 +359,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
   };
 
   const reset = () => {
+    recent = loadRecentFolders(options.storage);
     step = 'details';
     cwd = null;
     picking = false;
@@ -374,6 +403,7 @@ export function createAddAgentDialog(options: AddAgentDialogOptions): AddAgentDi
     const created =
       pending === null ? undefined : state.agents.find((a) => sameName(a.name, pending ?? ''));
     if (created) {
+      if (cwd !== null) recent = rememberFolder(cwd, options.storage);
       close();
       store.focus(created.id);
       return;
