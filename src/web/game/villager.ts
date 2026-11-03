@@ -17,7 +17,6 @@ export const REROUTE_AFTER = 0.4;
 export const GIVE_UP_AFTER = 2.5;
 export const WARP_OUT_TIME = 0.5;
 export const WARP_IN_TIME = 0.5;
-export const WARP_MIN_DISTANCE = 40;
 
 interface Target {
   point: Point;
@@ -229,12 +228,12 @@ export class Villager {
     this.nextPlan();
   }
 
-  private farFrom(point: Point): boolean {
-    return Math.hypot(point.x - this.position.x, point.y - this.position.y) >= WARP_MIN_DISTANCE;
+  private inOtherRoom(point: Point): boolean {
+    return this.layout.zoneOf(this.position) !== this.layout.zoneOf(point);
   }
 
   private goTo(target: Target): void {
-    if (this.farFrom(target.point)) this.startWarp(target);
+    if (this.inOtherRoom(target.point)) this.startWarp(target);
     else this.walkTo(target);
   }
 

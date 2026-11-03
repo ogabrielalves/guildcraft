@@ -26,9 +26,9 @@ describe('warp effect', () => {
 
   it('draws rings and a light beam, then restores the alpha', () => {
     const paint = recordingPaint();
-    drawWarp(paint, { x: 50, y: 80 }, 'out', 0.5);
+    drawWarp(paint, { x: 50, y: 80 }, 'out', 0.5, 1);
     expect(paint.named('ellipse').length > 0).toBe(true);
-    expect(paint.named('fillRect')).toHaveLength(2);
+    expect(paint.named('fillRect').length).toBeGreaterThanOrEqual(3);
     expect(paint.globalAlpha).toBe(1);
   });
 });

@@ -88,7 +88,7 @@ export const SPECS: Record<ParticleKind, Spec> = {
     spread: 6,
   },
   warp: {
-    colors: ['#ff8ad8', '#ff5fc0', '#ffc2ee', '#ffffff'],
+    colors: ['#3ddc5a', '#5dff6e', '#b8ff8a', '#e6ffd0'],
     life: [0.5, 1],
     speed: { x: [-8, 8], y: [-55, -25] },
     gravity: -20,

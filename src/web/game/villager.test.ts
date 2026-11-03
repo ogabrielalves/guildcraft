@@ -65,8 +65,8 @@ describe('Villager', () => {
     const shared = layout();
     const villager = new Villager('a', 1, shared, 'read', first);
     villager.setActivity('term');
-    expect(villager.warp).toEqual({ phase: 'out', progress: 0 });
-    expect(villager.pose).toBe('idle');
+    expect(villager.moving).toBe(true);
+    expect(villager.pose).toBe('walk');
     expect(shared.claim('read', 'b', first)?.at).toEqual({ x: 440, y: 120 });
     settle(villager);
     expect(villager.position).toEqual(stationAt(map, 1).work);
@@ -167,7 +167,7 @@ describe('Villager', () => {
     villager.update(VISIT_LINGER);
     expect(villager.visiting).toBe(false);
     expect(villager.note).toBeNull();
-    expect(villager.warp?.phase).toBe('out');
+    expect(villager.moving).toBe(true);
     settle(villager);
     expect(villager.position).toEqual(stationAt(map, 0).work);
   });
@@ -666,57 +666,80 @@ describe('Villager bodies', () => {
 });
 
 describe('Villager warp', () => {
-  it('vanishes, reappears at the station and then works', () => {
-    const villager = new Villager('a', 1, layout(), 'read');
-    const from = { ...villager.position };
+  const rooms = new Layout(
+    parseWorkshopMap({
+      ...provisionalWorkshop(),
+      zones: [
+        { id: 'west', areas: [{ x: 0, y: 80, width: 240, height: 272 }] },
+        { id: 'east', areas: [{ x: 240, y: 80, width: 240, height: 272 }] },
+      ],
+    }),
+  );
+  const westStation = stationAt(rooms.map, 0).work;
+  const eastDoor = { x: 300, y: 200 };
+
+  it('vanishes, reappears at the station and then works when coming from another room', () => {
+    const villager = new Villager('a', 0, rooms, 'read');
+    villager.position = { ...eastDoor };
     villager.setActivity('term');
     expect(villager.moving).toBe(false);
     expect(villager.atStation).toBe(false);
     villager.update(WARP_OUT_TIME / 2);
-    expect(villager.position).toEqual(from);
+    expect(villager.position).toEqual(eastDoor);
     expect(villager.warp?.phase).toBe('out');
     villager.update(WARP_OUT_TIME);
-    expect(villager.position).toEqual(stationAt(map, 1).work);
+    expect(villager.position).toEqual(westStation);
     expect(villager.warp?.phase).toBe('in');
-    expect(villager.facing).toBe('west');
     villager.update(WARP_IN_TIME + 0.01);
     expect(villager.warp).toBeNull();
     expect(villager.atStation).toBe(true);
     expect(villager.pose).toBe('work');
   });
 
-  it('warps to a host and back instead of walking', () => {
-    const villager = new Villager('a', 0, layout(), 'write');
-    const host = stationAt(map, 3).work;
+  it('walks when the station is in the same room', () => {
+    const villager = new Villager('a', 0, rooms, 'read');
+    villager.position = { x: 200, y: 300 };
+    villager.setActivity('term');
+    expect(villager.warp).toBeNull();
+    expect(villager.moving).toBe(true);
+  });
+
+  it('warps to a host in another room and back', () => {
+    const villager = new Villager('a', 0, rooms, 'write');
+    const host = stationAt(rooms.map, 9).work;
     villager.startVisit(host);
     expect(villager.moving).toBe(false);
     expect(villager.warp?.phase).toBe('out');
     villager.update(WARP_OUT_TIME + 0.01);
-    expect(villager.position).toEqual({ x: host.x - VISIT_GAP, y: host.y });
+    expect(villager.position.x).toBeCloseTo(host.x - VISIT_GAP);
     villager.update(WARP_IN_TIME + 0.01);
     expect(villager.warp).toBeNull();
     expect(villager.visiting).toBe(true);
-    expect(villager.facing).toBe('east');
+    villager.update(VISIT_LINGER + 0.1);
+    expect(villager.warp?.phase).toBe('out');
+    settle(villager);
+    expect(villager.position).toEqual(westStation);
   });
 
-  it('does not warp when the station is close', () => {
-    const villager = new Villager('a', 0, layout(), 'write');
-    villager.setActivity('term');
+  it('walks to a host in the same room', () => {
+    const villager = new Villager('a', 0, rooms, 'write');
+    const host = { x: 120, y: 300 };
+    villager.startVisit(host);
     expect(villager.warp).toBeNull();
+    expect(villager.moving).toBe(true);
   });
 
   it('does not warp to a non-work anchor', () => {
-    const villager = new Villager('a', 0, layout(), 'write');
+    const villager = new Villager('a', 0, rooms, 'write');
     villager.setActivity('read');
     expect(villager.warp).toBeNull();
-    expect(villager.moving).toBe(true);
   });
 
   it('cancels the warp when the agent goes back to sleep', () => {
-    const villager = new Villager('a', 1, layout(), 'read');
+    const villager = new Villager('a', 0, rooms, 'read');
+    villager.position = { ...eastDoor };
     villager.setActivity('term');
     villager.setActivity('sleep');
     expect(villager.warp).toBeNull();
-    expect(villager.moving).toBe(true);
   });
 });

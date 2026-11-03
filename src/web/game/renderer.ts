@@ -8,7 +8,14 @@ import type { Paint } from './draw/paint.js';
 import { TAU } from './draw/paint.js';
 import { drawRing, drawShadow } from './draw/rings.js';
 import { whitened } from './draw/tint.js';
-import { bodyAlpha, bodyWhite, drawWarp, WARP_HEIGHT, WARP_RATE } from './draw/warp.js';
+import {
+  bodyAlpha,
+  bodyWhite,
+  drawWarp,
+  WARP_COLORS,
+  WARP_HEIGHT,
+  WARP_RATE,
+} from './draw/warp.js';
 import type { Point, Rect, Scenery, StationPlace, WorkshopMap } from './map.js';
 import { frameAt } from './sprite-sheet.js';
 import { DEFAULT_EFFECT, stationFrame } from './stations.js';
@@ -221,7 +228,7 @@ function drawBody(ctx: Paint, villager: Villager, scene: Scene): void {
     const anchorX = (frame.flip ? frame.width - frame.anchor.x : frame.anchor.x) * scale;
     const rect = { x: frame.sx, y: frame.sy, width: frame.width, height: frame.height };
     const white = warp === null ? 0 : bodyWhite(warp.phase, warp.progress);
-    const tinted = white > 0 ? whitened(image, rect, white) : null;
+    const tinted = white > 0 ? whitened(image, rect, white, WARP_COLORS.tint) : null;
     blit(ctx, {
       image: tinted ?? image,
       source: tinted === null ? rect : { ...rect, x: 0, y: 0 },
@@ -253,7 +260,7 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
   drawShadow(ctx, villager.position);
   drawBody(ctx, villager, scene);
   const { warp } = villager;
-  if (warp !== null) drawWarp(ctx, villager.position, warp.phase, warp.progress);
+  if (warp !== null) drawWarp(ctx, villager.position, warp.phase, warp.progress, scene.time);
 }
 
 const TAG_GAP = 4;
