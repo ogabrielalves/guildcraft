@@ -3,7 +3,16 @@ import { Layout } from './layout.js';
 import { parseWorkshopMap, stationAt } from './map.js';
 import { provisionalWorkshop } from './provisional-workshop.js';
 import { LOUNGE_AFTER } from './activity.js';
-import { BODY_GAP, CHEER_TIME, VISIT_GAP, VISIT_LINGER, Villager, WALK_SPEED } from './villager.js';
+import {
+  BODY_GAP,
+  CHEER_TIME,
+  VISIT_GAP,
+  VISIT_LINGER,
+  Villager,
+  WALK_SPEED,
+  WARP_IN_TIME,
+  WARP_OUT_TIME,
+} from './villager.js';
 
 const map = parseWorkshopMap(provisionalWorkshop());
 const first = () => 0;
@@ -17,7 +26,9 @@ function run(villager: Villager, seconds: number, step = 0.05): void {
 }
 
 function settle(villager: Villager): void {
-  for (let i = 0; i < 4000 && villager.moving; i += 1) villager.update(0.05);
+  for (let i = 0; i < 4000 && (villager.moving || villager.warp !== null); i += 1) {
+    villager.update(0.05);
+  }
 }
 
 describe('Villager', () => {
@@ -54,8 +65,8 @@ describe('Villager', () => {
     const shared = layout();
     const villager = new Villager('a', 1, shared, 'read', first);
     villager.setActivity('term');
-    expect(villager.moving).toBe(true);
-    expect(villager.pose).toBe('walk');
+    expect(villager.warp).toEqual({ phase: 'out', progress: 0 });
+    expect(villager.pose).toBe('idle');
     expect(shared.claim('read', 'b', first)?.at).toEqual({ x: 440, y: 120 });
     settle(villager);
     expect(villager.position).toEqual(stationAt(map, 1).work);
@@ -156,7 +167,7 @@ describe('Villager', () => {
     villager.update(VISIT_LINGER);
     expect(villager.visiting).toBe(false);
     expect(villager.note).toBeNull();
-    expect(villager.moving).toBe(true);
+    expect(villager.warp?.phase).toBe('out');
     settle(villager);
     expect(villager.position).toEqual(stationAt(map, 0).work);
   });
@@ -250,7 +261,7 @@ describe('Villager', () => {
   it('walks at a steady speed', () => {
     const villager = new Villager('a', 0, layout(), 'read');
     const start = { ...villager.position };
-    villager.setActivity('write');
+    villager.setActivity('idle');
     villager.update(0.1);
     const moved = Math.hypot(villager.position.x - start.x, villager.position.y - start.y);
     expect(moved).toBeCloseTo(WALK_SPEED * 0.1);
@@ -510,7 +521,7 @@ describe('Villager lounging', () => {
     settle(villager);
     expect(shared.hasFree('bench')).toBe(false);
     villager.setActivity('write');
-    expect(villager.moving).toBe(true);
+    expect(villager.warp?.phase).toBe('out');
     settle(villager);
     expect(villager.position).toEqual(home(0));
     expect(villager.pose).toBe('work');
@@ -651,5 +662,61 @@ describe('Villager bodies', () => {
     (walker as unknown as { length: number }).length = 0;
     run(walker, 1);
     expect(walker.stalled).toBe(false);
+  });
+});
+
+describe('Villager warp', () => {
+  it('vanishes, reappears at the station and then works', () => {
+    const villager = new Villager('a', 1, layout(), 'read');
+    const from = { ...villager.position };
+    villager.setActivity('term');
+    expect(villager.moving).toBe(false);
+    expect(villager.atStation).toBe(false);
+    villager.update(WARP_OUT_TIME / 2);
+    expect(villager.position).toEqual(from);
+    expect(villager.warp?.phase).toBe('out');
+    villager.update(WARP_OUT_TIME);
+    expect(villager.position).toEqual(stationAt(map, 1).work);
+    expect(villager.warp?.phase).toBe('in');
+    expect(villager.facing).toBe('west');
+    villager.update(WARP_IN_TIME + 0.01);
+    expect(villager.warp).toBeNull();
+    expect(villager.atStation).toBe(true);
+    expect(villager.pose).toBe('work');
+  });
+
+  it('warps to a host and back instead of walking', () => {
+    const villager = new Villager('a', 0, layout(), 'write');
+    const host = stationAt(map, 3).work;
+    villager.startVisit(host);
+    expect(villager.moving).toBe(false);
+    expect(villager.warp?.phase).toBe('out');
+    villager.update(WARP_OUT_TIME + 0.01);
+    expect(villager.position).toEqual({ x: host.x - VISIT_GAP, y: host.y });
+    villager.update(WARP_IN_TIME + 0.01);
+    expect(villager.warp).toBeNull();
+    expect(villager.visiting).toBe(true);
+    expect(villager.facing).toBe('east');
+  });
+
+  it('does not warp when the station is close', () => {
+    const villager = new Villager('a', 0, layout(), 'write');
+    villager.setActivity('term');
+    expect(villager.warp).toBeNull();
+  });
+
+  it('does not warp to a non-work anchor', () => {
+    const villager = new Villager('a', 0, layout(), 'write');
+    villager.setActivity('read');
+    expect(villager.warp).toBeNull();
+    expect(villager.moving).toBe(true);
+  });
+
+  it('cancels the warp when the agent goes back to sleep', () => {
+    const villager = new Villager('a', 1, layout(), 'read');
+    villager.setActivity('term');
+    villager.setActivity('sleep');
+    expect(villager.warp).toBeNull();
+    expect(villager.moving).toBe(true);
   });
 });

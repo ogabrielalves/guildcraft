@@ -7,6 +7,8 @@ import { drawFolderTag, drawNameplate } from './draw/nameplate.js';
 import type { Paint } from './draw/paint.js';
 import { TAU } from './draw/paint.js';
 import { drawRing, drawShadow } from './draw/rings.js';
+import { whitened } from './draw/tint.js';
+import { bodyAlpha, bodyWhite, drawWarp, WARP_HEIGHT, WARP_RATE } from './draw/warp.js';
 import type { Point, Rect, Scenery, StationPlace, WorkshopMap } from './map.js';
 import { frameAt } from './sprite-sheet.js';
 import { DEFAULT_EFFECT, stationFrame } from './stations.js';
@@ -81,6 +83,15 @@ export function emittersFor(scene: Pick<Scene, 'world' | 'agents' | 'assets'>): 
     rate: HEARTH_RATE,
   }));
   for (const villager of scene.world.all()) {
+    if (villager.warp !== null) {
+      const { x, y } = villager.position;
+      emitters.push({
+        key: `warp:${villager.id}`,
+        kind: 'warp',
+        at: { x, y: y - WARP_HEIGHT / 3 },
+        rate: WARP_RATE,
+      });
+    }
     const place = map.stations[villager.station];
     if (!villager.atStation || place === undefined) continue;
     const station = place.id === null ? null : scene.assets.station(place.id);
@@ -198,7 +209,9 @@ function drawBody(ctx: Paint, villager: Villager, scene: Scene): void {
   const skin = skinOf(scene, villager);
   const character = scene.assets.character(skin);
   const { x, y } = villager.position;
-  ctx.globalAlpha = villager.activity === 'off' ? 0.5 : 1;
+  const { warp } = villager;
+  const base = villager.activity === 'off' ? 0.5 : 1;
+  ctx.globalAlpha = warp === null ? base : base * bodyAlpha(warp.phase, warp.progress);
   const frame = character
     ? frameAt(character.manifest, villager.pose, villager.facing, villager.side, scene.time)
     : null;
@@ -206,9 +219,12 @@ function drawBody(ctx: Paint, villager: Villager, scene: Scene): void {
   if (frame && image) {
     const { scale } = frame;
     const anchorX = (frame.flip ? frame.width - frame.anchor.x : frame.anchor.x) * scale;
+    const rect = { x: frame.sx, y: frame.sy, width: frame.width, height: frame.height };
+    const white = warp === null ? 0 : bodyWhite(warp.phase, warp.progress);
+    const tinted = white > 0 ? whitened(image, rect, white) : null;
     blit(ctx, {
-      image,
-      source: { x: frame.sx, y: frame.sy, width: frame.width, height: frame.height },
+      image: tinted ?? image,
+      source: tinted === null ? rect : { ...rect, x: 0, y: 0 },
       at: { x: Math.round(x - anchorX), y: Math.round(y - frame.anchor.y * scale - frame.lift) },
       flip: frame.flip,
       scale,
@@ -236,6 +252,8 @@ function drawVillager(ctx: Paint, villager: Villager, scene: Scene): void {
   );
   drawShadow(ctx, villager.position);
   drawBody(ctx, villager, scene);
+  const { warp } = villager;
+  if (warp !== null) drawWarp(ctx, villager.position, warp.phase, warp.progress);
 }
 
 const TAG_GAP = 4;

@@ -10,7 +10,7 @@ function emitter(rate: number, key = 'a'): Emitter {
 
 describe('Particles', () => {
   it('has a spec for every station effect', () => {
-    expect(Object.keys(SPECS).sort()).toEqual([...EFFECTS].sort());
+    expect(Object.keys(SPECS).sort()).toEqual([...EFFECTS, 'warp'].sort());
   });
 
   it('emits at the emitter rate, carrying fractions between frames', () => {

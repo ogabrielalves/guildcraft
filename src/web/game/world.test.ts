@@ -185,7 +185,9 @@ describe('World', () => {
     const sender = world.villager('a');
     expect(sender?.visiting).toBe(true);
     expect(sender?.note).toBe('please review');
-    for (let i = 0; i < 2000 && sender?.moving; i += 1) world.update(0.05);
+    for (let i = 0; i < 2000 && (sender?.moving === true || sender?.warp != null); i += 1) {
+      world.update(0.05);
+    }
     const host = world.villager('b')?.position ?? { x: 0, y: 0 };
     expect(Math.abs((sender?.position.x ?? 0) - host.x)).toBeCloseTo(18);
     expect(sender?.position.y).toBe(host.y);

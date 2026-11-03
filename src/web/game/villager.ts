@@ -15,6 +15,9 @@ export const CHEER_TIME = 1.5;
 export const BODY_GAP = BODY_REACH;
 export const REROUTE_AFTER = 0.4;
 export const GIVE_UP_AFTER = 2.5;
+export const WARP_OUT_TIME = 0.5;
+export const WARP_IN_TIME = 0.5;
+export const WARP_MIN_DISTANCE = 40;
 
 interface Target {
   point: Point;
@@ -31,6 +34,15 @@ type Visit = {
 } | null;
 
 type Chat = { partner: Villager; phase: 'going' | 'talking' } | null;
+
+export type WarpPhase = 'out' | 'in';
+
+type Warp = { phase: WarpPhase; timer: number; to: Target } | null;
+
+export interface WarpState {
+  phase: WarpPhase;
+  progress: number;
+}
 
 function anchorOf(activity: Activity): 'work' | SpotKind | null {
   if (isWorkingActivity(activity) || activity === 'think') return 'work';
@@ -62,6 +74,7 @@ export class Villager {
   private lounging = false;
   private stalledFor = 0;
   private rerouted = false;
+  private warpNow: Warp = null;
 
   constructor(
     readonly id: string,
@@ -96,12 +109,24 @@ export class Villager {
     return this.visit !== null;
   }
 
+  get warp(): WarpState | null {
+    const warp = this.warpNow;
+    if (warp === null) return null;
+    const total = warp.phase === 'out' ? WARP_OUT_TIME : WARP_IN_TIME;
+    return { phase: warp.phase, progress: 1 - Math.max(0, warp.timer) / total };
+  }
+
   get note(): string | null {
     return this.visit?.note ?? null;
   }
 
   get atStation(): boolean {
-    return isWorkingActivity(this.activityNow) && !this.moving && this.visit === null;
+    return (
+      isWorkingActivity(this.activityNow) &&
+      !this.moving &&
+      this.visit === null &&
+      this.warpNow === null
+    );
   }
 
   get doing(): IdlePlan | null {
@@ -119,7 +144,7 @@ export class Villager {
   }
 
   get pose(): Pose {
-    if (this.stalled) return 'idle';
+    if (this.stalled || this.warpNow !== null) return 'idle';
     if (this.moving) return 'walk';
     if (this.cheer > 0) return 'cheer';
     if (this.visit !== null) return 'idle';
@@ -138,13 +163,18 @@ export class Villager {
     this.planTimer = 0;
     this.idleFor = 0;
     this.lounging = false;
-    if (this.visit === null) this.walkTo(this.homeTarget());
+    if (this.visit !== null) return;
+    this.warpNow = null;
+    const home = this.homeTarget();
+    if (anchorOf(activity) === 'work') this.goTo(home);
+    else this.walkTo(home);
   }
 
   startVisit(host: Point, note: string | null = null): void {
     this.leaveChat();
     const guest = guestSpot(this.layout.nav, this.position, host);
     this.layout.release(this.id);
+    this.warpNow = null;
     this.cheer = 0;
     this.visit = {
       phase: 'going',
@@ -152,7 +182,7 @@ export class Villager {
       timer: 0,
       note,
     };
-    this.walkTo({ point: guest, facing: null, free: true });
+    this.goTo({ point: guest, facing: null, free: true });
   }
 
   hostChat(guest: Villager): void {
@@ -175,6 +205,10 @@ export class Villager {
   update(dt: number): void {
     this.tire(dt);
     if (this.cheer > 0) this.cheer = Math.max(0, this.cheer - dt);
+    if (this.warpNow !== null) {
+      this.updateWarp(dt, this.warpNow);
+      return;
+    }
     if (this.moving) {
       this.advance(dt);
       return;
@@ -183,7 +217,7 @@ export class Villager {
       this.visit.timer -= dt;
       if (this.visit.timer <= 0) {
         this.visit = null;
-        this.walkTo(this.homeTarget());
+        this.goTo(this.homeTarget());
       }
       return;
     }
@@ -193,6 +227,37 @@ export class Villager {
     if (this.planTimer > 0) return;
     if (this.chat !== null) this.leaveChat();
     this.nextPlan();
+  }
+
+  private farFrom(point: Point): boolean {
+    return Math.hypot(point.x - this.position.x, point.y - this.position.y) >= WARP_MIN_DISTANCE;
+  }
+
+  private goTo(target: Target): void {
+    if (this.farFrom(target.point)) this.startWarp(target);
+    else this.walkTo(target);
+  }
+
+  private startWarp(to: Target): void {
+    this.path = [];
+    this.length = 0;
+    this.travelled = 0;
+    this.stalledFor = 0;
+    this.destination = to;
+    this.warpNow = { phase: 'out', timer: WARP_OUT_TIME, to };
+  }
+
+  private updateWarp(dt: number, warp: NonNullable<Warp>): void {
+    warp.timer -= dt;
+    if (warp.timer > 0) return;
+    if (warp.phase === 'out') {
+      this.position = { ...warp.to.point };
+      if (warp.to.facing !== null) this.face(warp.to.facing);
+      this.warpNow = { phase: 'in', timer: WARP_IN_TIME + warp.timer, to: warp.to };
+      return;
+    }
+    this.warpNow = null;
+    this.arrive();
   }
 
   private tire(dt: number): void {

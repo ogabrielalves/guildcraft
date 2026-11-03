@@ -4,7 +4,7 @@ import type { Paint } from './paint.js';
 
 export const MAX_PARTICLES = 400;
 
-export type ParticleKind = Effect;
+export type ParticleKind = Effect | 'warp';
 
 export interface Emitter {
   key: string;
@@ -86,6 +86,14 @@ export const SPECS: Record<ParticleKind, Spec> = {
     gravity: 8,
     size: 2,
     spread: 6,
+  },
+  warp: {
+    colors: ['#ff8ad8', '#ff5fc0', '#ffc2ee', '#ffffff'],
+    life: [0.5, 1],
+    speed: { x: [-8, 8], y: [-55, -25] },
+    gravity: -20,
+    size: 2,
+    spread: 18,
   },
 };
 
