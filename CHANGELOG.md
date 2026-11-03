@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/ogabrielalves/guildcraft/compare/v1.5.0...v1.6.0) (2026-11-03)
+
+
+### Features
+
+* **game:** use green floo fire and warp only between rooms ([6dee746](https://github.com/ogabrielalves/guildcraft/commit/6dee746c3577678dda1bae57f03a29b88c29028d))
+
 ## [1.5.0](https://github.com/ogabrielalves/guildcraft/compare/v1.4.0...v1.5.0) (2026-11-03)
 
 
