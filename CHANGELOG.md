@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/ogabrielalves/guildcraft/compare/v1.4.0...v1.5.0) (2026-11-03)
+
+
+### Features
+
+* **game:** teleport villagers back to work and on visits ([cce1a00](https://github.com/ogabrielalves/guildcraft/commit/cce1a007edcdcd559f88e0b07e3202d3ddcd7a8c))
+
 ## [1.4.0](https://github.com/ogabrielalves/guildcraft/compare/v1.3.0...v1.4.0) (2026-11-02)
 
 
